@@ -15,12 +15,25 @@ class User(Base):
     items = relationship("Item", back_populates="owner")
 
 
+class Item(Base):
+    __tablename__ = "items"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String, index=True)
+    description = Column(String, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+
+    owner = relationship("User", back_populates="items")
+
+
 """
 One-to-One Relationship
 By using the joined-table inheritance strategy, 
 each record in the students or teachers table will correspond to a 
 single record in the users table, ensuring a one-to-one relationship.
 """
+
+
 class Student(User):
     __tablename__ = "students"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
@@ -40,13 +53,3 @@ class Teacher(User):
         'polymorphic_identity': 'teacher',
     }
 
-
-class Item(Base):
-    __tablename__ = "items"
-
-    id = Column(Integer, primary_key=True)
-    title = Column(String, index=True)
-    description = Column(String, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"))
-
-    owner = relationship("User", back_populates="items")
