@@ -1,6 +1,5 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.orm import relationship
-
 from src.app.database import Base
 
 
@@ -53,3 +52,35 @@ class Teacher(User):
         'polymorphic_identity': 'teacher',
     }
 
+
+# TEST DB MODELS
+
+class Account(Base):
+    __tablename__ = "accounts"
+    account_id = Column(Integer, primary_key=True)
+    email = Column(String(50), unique=True, index=True)
+    password = Column(String(200))
+
+
+class Admin(Base):
+    __tablename__ = "admins"
+    admin_id = Column(Integer, ForeignKey('accounts.account_id'), primary_key=True)
+
+class Student(Base):
+    __tablename__ = "students"
+    student_id = Column(Integer, ForeignKey('accounts.account_id'), primary_key=True)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    profile_picture = Column(LargeBinary, nullable=True)
+    is_premium = Column(Boolean, default=False)
+    is_deactivated = Column(Boolean, default=False)
+
+class Teacher(Base):
+    __tablename__ = "teachers"
+    teacher_id = Column(Integer, ForeignKey('accounts.account_id'), primary_key=True)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    profile_picture = Column(LargeBinary, nullable=True)
+    phone_number = Column(String(30), nullable=True)
+    linked_in = Column(String(200), nullable=True)
+    is_deactivated = Column(Boolean, default=False)

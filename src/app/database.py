@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
 # SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
 
+# factory that can create new database connections
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )   # argument is needed only for SQLite. It's not needed for other databases.
