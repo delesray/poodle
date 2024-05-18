@@ -165,19 +165,19 @@ DEFAULT CHARACTER SET = latin1;
 -- Table `poodle`.`students_progress`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `poodle`.`students_progress` (
-  `students_id` INT(11) NOT NULL,
+  `student_id` INT(11) NOT NULL,
   `course_id` INT(11) NOT NULL,
   `progress` INT(11) NULL DEFAULT NULL,
-  PRIMARY KEY (`students_id`, `course_id`),
+  PRIMARY KEY (`student_id`, `course_id`),
   INDEX `fk_students_has_courses1_courses1_idx` (`course_id` ASC) VISIBLE,
-  INDEX `fk_students_has_courses1_students1_idx` (`students_id` ASC) VISIBLE,
+  INDEX `fk_students_has_courses1_students1_idx` (`student_id` ASC) VISIBLE,
   CONSTRAINT `fk_students_has_courses1_courses1`
     FOREIGN KEY (`course_id`)
     REFERENCES `poodle`.`courses` (`course_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_students_has_courses1_students1`
-    FOREIGN KEY (`students_id`)
+    FOREIGN KEY (`student_id`)
     REFERENCES `poodle`.`students` (`student_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
@@ -213,18 +213,18 @@ DEFAULT CHARACTER SET = latin1;
 -- Table `poodle`.`students_sections`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `poodle`.`students_sections` (
-  `students_id` INT(11) NOT NULL,
+  `student_id` INT(11) NOT NULL,
   `section_id` INT(11) NOT NULL,
-  PRIMARY KEY (`students_id`, `section_id`),
+  PRIMARY KEY (`student_id`, `section_id`),
   INDEX `fk_students_has_sections_sections1_idx` (`section_id` ASC) VISIBLE,
-  INDEX `fk_students_has_sections_students1_idx` (`students_id` ASC) VISIBLE,
+  INDEX `fk_students_has_sections_students1_idx` (`student_id` ASC) VISIBLE,
   CONSTRAINT `fk_students_has_sections_sections1`
     FOREIGN KEY (`section_id`)
     REFERENCES `poodle`.`sections` (`section_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_students_has_sections_students1`
-    FOREIGN KEY (`students_id`)
+    FOREIGN KEY (`student_id`)
     REFERENCES `poodle`.`students` (`student_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
