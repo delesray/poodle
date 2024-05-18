@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, LargeBinary, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, LargeBinary, String, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from src.app.database import Base
 
@@ -55,6 +55,7 @@ class Student(Base):
     # using all() on that object would retrieve the actual course records
     courses_enrolled = relationship("Course", secondary="students_progress")
     courses_rated = relationship("Course", secondary="students_rating")
+    sections_visited = relationship("Section", secondary="students_sections")
 
 
 class Course(Base):
@@ -75,6 +76,8 @@ class Course(Base):
         "Student", secondary="students_progress")
     students_rated = relationship(
         "Student", secondary="students_rating")
+    sections = relationship("Section", backref="course")
+    tags = relationship("Tag", secondary="courses_tags", backref="courses")
 
 
 class StudentProgress(Base):
@@ -102,3 +105,40 @@ class Account(Base):
     admin = relationship("Admin", uselist=False, backref="account")
     student = relationship("Student", uselist=False, backref="account")
     teacher = relationship("Teacher", uselist=False, backref="account")
+
+   
+class Section(Base):
+    __tablename__ = 'sections'
+
+    section_id = Column(Integer, primary_key=True)
+    title = Column(String(45), nullable=False)
+    content = Column(Text, nullable=False)
+    description = Column(String(45), nullable=True)
+    external_link = Column(String(200), nullable=True)
+    course_id = Column(Integer, ForeignKey('courses.id'), nullable=False)
+
+    course = relationship("Course")
+    students_visited = relationship("Student", secondary="students_sections", backref="sections_visited")
+ 
+class StudentsSections(Base):
+    __tablename__ = 'students_sections'
+
+    student_id = Column(Integer, ForeignKey('students.student_id'), primary_key=True)
+    section_id = Column(Integer, ForeignKey('sections.section_id'), primary_key=True)
+
+
+class Tag(Base):
+    __tablename__ = 'tags'
+
+    tag_id = Column(Integer, primary_key=True)
+    name = Column(String(45), nullable=False)
+    courses = relationship("Course", secondary="courses_tags")
+   
+
+class CourseTag(Base):
+    __tablename__ = 'courses_tags'
+
+    course_id = Column(Integer, ForeignKey('courses.id'), primary_key=True)
+    tag_id = Column(Integer, ForeignKey('tags.tag_id'), primary_key=True)
+    
+    
