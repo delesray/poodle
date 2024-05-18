@@ -34,7 +34,7 @@ class Teacher(Base):
     linked_in = Column(String(200), nullable=True)
     is_deactivated = Column(Boolean, default=False, nullable=True)
 
-    courses = relationship("Course", backref="teacher")
+    courses = relationship("Course", back_populates="teacher")  # back_populates is bi-directional, backref is not
 
 
 class Student(Base):
@@ -69,11 +69,12 @@ class Course(Base):
     home_page_picture = Column(LargeBinary, nullable=True)
     rating = Column(Integer, default=0)
 
-    owner = relationship("Teacher")
+    owner = relationship("Teacher", back_populates="courses")
+
     students_enrolled = relationship(
-        "Student", secondary="students_progress", backref="courses_enrolled")
+        "Student", secondary="students_progress")
     students_rated = relationship(
-        "Student", secondary="students_rating", backref="courses_rated")
+        "Student", secondary="students_rating")
 
 
 class StudentProgress(Base):
