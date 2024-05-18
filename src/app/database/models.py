@@ -76,8 +76,8 @@ class Course(Base):
         "Student", secondary="students_progress")
     students_rated = relationship(
         "Student", secondary="students_rating")
-    sections = relationship("Section", backref="course")
-    tags = relationship("Tag", secondary="courses_tags", backref="courses")
+    sections = relationship("Section", back_populates="course")
+    tags = relationship("Tag", secondary="courses_tags")
 
 
 class StudentProgress(Base):
@@ -117,8 +117,8 @@ class Section(Base):
     external_link = Column(String(200), nullable=True)
     course_id = Column(Integer, ForeignKey('courses.id'), nullable=False)
 
-    course = relationship("Course")
-    students_visited = relationship("Student", secondary="students_sections", backref="sections_visited")
+    course = relationship("Course", back_populates = "sections")
+    students_visited = relationship("Student", secondary="students_sections")
  
 class StudentsSections(Base):
     __tablename__ = 'students_sections'
