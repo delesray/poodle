@@ -6,7 +6,7 @@ from src.app.database import Base
 # -------------------- DB MODELS with Column --------------------
 class Account(Base):
     __tablename__ = "accounts"
-    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, primary_key=True)
     email = Column(String(50), unique=True, index=True)
     password = Column(String(200))
 
@@ -19,14 +19,14 @@ class Account(Base):
 
 class Admin(Base):
     __tablename__ = "admins"
-    id = Column(Integer, ForeignKey(
-        'accounts.id'), primary_key=True)
+    admin_id = Column(Integer, ForeignKey(
+        'accounts.account_id'), primary_key=True)
 
 
 class Teacher(Base):
     __tablename__ = "teachers"
-    id = Column(Integer, ForeignKey(
-        'accounts.id'), primary_key=True)
+    teacher_id = Column(Integer, ForeignKey(
+        'accounts.account_id'), primary_key=True)
     first_name = Column(String(50))
     last_name = Column(String(50))
     profile_picture = Column(LargeBinary, nullable=True)
@@ -39,8 +39,8 @@ class Teacher(Base):
 
 class Student(Base):
     __tablename__ = "students"
-    id = Column(Integer, ForeignKey(
-        'accounts.id'), primary_key=True)
+    student_id = Column(Integer, ForeignKey(
+        'accounts.account_id'), primary_key=True)
     first_name = Column(String(50))
     last_name = Column(String(50))
     profile_picture = Column(LargeBinary, nullable=True)
