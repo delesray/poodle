@@ -1,10 +1,9 @@
 from enum import Enum
 from fastapi import HTTPException, Depends
 from typing import Annotated
-from app.database.models import Teacher
-from src.app.core.security import verify_token_access, oauth2_scheme, oauth2_scheme_optional, TokenData
-from app.schemas.user import AnonymousUser, User
-from ..crud.crud_user import find_by_email
+from core.security import verify_token_access, oauth2_scheme, oauth2_scheme_optional, TokenData
+from schemas.user import AnonymousUser, User
+from crud.crud_user import find_by_email
 
 class Role(Enum):
     admin = 'admin'
