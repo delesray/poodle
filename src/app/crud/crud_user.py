@@ -1,19 +1,19 @@
 from sqlalchemy.orm import Session
 from schemas.user import User
-from schemas.teacher import Teacher
-# from src.app.schemas.student import Student
+from schemas.teacher import TeacherCreate, TeacherResponseModel
+from src.app.schemas.student import StudentCreate, StudentResponseModel
 from database.models import Account, Teacher, Admin, Student
 from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError, DataError
 from fastapi import HTTPException, status
+from typing import Union, Generic, TypeVar, Type
 
 
-async def create_user(db: Session, user: User):
-    # await send_email([schema.email], new_user)
+async def create_user(db: Session, user: Union[StudentCreate, TeacherCreate]):
     new_user = Account(
         email=user.email,
         password=hash_pass(user.password),
-        role=user.role
+        role=user.get_type
     )
 
     try:
@@ -22,20 +22,65 @@ async def create_user(db: Session, user: User):
     except IntegrityError as err:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail=err.args)
-    except DataError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail='Invalid role type. Please choose between <teacher> and <student>')
+    #except DataError:
+        #raise HTTPException(
+            #status_code=status.HTTP_409_CONFLICT, detail='Invalid role type. Please choose between <teacher> and <student>')
     else:
         db.refresh(new_user)
         return new_user.account_id
 
+class TeacherFactory():
+    @staticmethod
+    async def create_db_user(db: Session, user_schema: Union[StudentCreate, TeacherCreate]):
+        new_user_account_id = await create_user(db, user_schema)
 
-# def create_user_factory(user_type: str):
-#     factories = {
-#         "teacher": Teacher,
-#         "student": Student
-#     }
-#     return factories.get(user_type,
+        new_teacher = Teacher(
+            teacher_id=new_user_account_id,
+            first_name=user_schema.first_name,
+            last_name=user_schema.last_name,
+            phone_number=user_schema.phone_number,
+            linked_in=user_schema.linked_in,
+            profile_picture=user_schema.profile_picture
+        )
+
+        db.add(new_teacher)
+        db.commit()
+        db.refresh(new_teacher)
+        return new_user_account_id
+
+
+class StudentFactory():
+    @staticmethod
+    async def create_db_user(db: Session, user_schema: Union[StudentCreate, TeacherCreate]):
+        new_user_account_id = await create_user(db, user_schema)
+
+        new_student = Student(
+            student_id=new_user_account_id,
+            first_name=user_schema.first_name,
+            last_name=user_schema.last_name,
+            profile_picture=user_schema.profile_picture 
+        )
+
+        db.add(new_student)
+        db.commit()
+        db.refresh(new_student)
+        return new_user_account_id
+    
+
+def create_user_factory(user_type: str):
+    factories = {
+        "teacher": TeacherFactory,
+        "student": StudentFactory
+    }
+    return factories.get(user_type)
+
+
+async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]):
+    user_type = user_schema.get_type()
+    factory = create_user_factory(user_type)
+    new_user_id = await factory.create_db_user(db, user_schema)
+    return f"User with ID:{new_user_id} registered"
+
 
 # TODO discuss - other join or role column in accounts
 async def find_by_email(db: Session, email: str):

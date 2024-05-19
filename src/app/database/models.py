@@ -31,9 +31,9 @@ class Teacher(Base):
         'accounts.account_id'), primary_key=True)
     first_name = Column(String(50))
     last_name = Column(String(50))
-    profile_picture = Column(LargeBinary, nullable=True)
     phone_number = Column(String(30), nullable=True)
     linked_in = Column(String(200), nullable=True)
+    profile_picture = Column(LargeBinary, nullable=True)
     is_deactivated = Column(Boolean, default=False, nullable=True)
 
     # back_populates is bi-directional, backref is not
