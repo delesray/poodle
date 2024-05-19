@@ -39,3 +39,4 @@ def get_current_user(token):
 UserAuthDep = Annotated[User, Depends(get_user_required)]
 AdminAuthDep = Annotated[User, Depends(get_admin_required)]
 OptionalUser = Annotated[User | AnonymousUser, Depends(get_user_optional)]
+#TeacherAuthDep = Annotated[User, Depends(   )]
