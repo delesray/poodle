@@ -1,6 +1,7 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, LargeBinary, String, Text
+from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, LargeBinary, String, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from src.app.database import Base
+from database.database import Base
+
 
 
 # -------------------- DB MODELS with Column --------------------
@@ -9,6 +10,7 @@ class Account(Base):
     account_id = Column(Integer, primary_key=True)
     email = Column(String(50), unique=True, index=True)
     password = Column(String(200))
+    role = Column(String)
 
     # 1:1 relationship with Admin, Student, Teacher
     # calling student.account would return the Account record of the corresponding Student
@@ -35,7 +37,7 @@ class Teacher(Base):
     is_deactivated = Column(Boolean, default=False, nullable=True)
 
     # back_populates is bi-directional, backref is not
-    courses = relationship("Course", back_populates="teacher")
+    courses = relationship("Course", back_populates="owner")
 
 
 class Student(Base):
@@ -65,7 +67,7 @@ class Course(Base):
     title = Column(String(50), unique=True)
     description = Column(String)
     objectives = Column(String)
-    owner_id = Column(Integer, ForeignKey('teachers.id'))
+    owner_id = Column(Integer, ForeignKey('teachers.teacher_id'))
     is_premium = Column(Boolean, default=False, nullable=True)
     is_hidden = Column(Boolean, default=False, nullable=True)
     home_page_picture = Column(LargeBinary, nullable=True)
@@ -83,14 +85,14 @@ class Course(Base):
 
 class StudentProgress(Base):
     __tablename__ = 'students_progress'
-    student_id = Column(Integer, ForeignKey('students.id'), primary_key=True)
+    student_id = Column(Integer, ForeignKey('students.student_id'), primary_key=True)
     course_id = Column(Integer, ForeignKey('courses.id'), primary_key=True)
     progress = Column(Integer, default=0)
 
 
 class StudentRating(Base):
     __tablename__ = 'students_rating'
-    student_id = Column(Integer, ForeignKey('students.id'), primary_key=True)
+    student_id = Column(Integer, ForeignKey('students.student_id'), primary_key=True)
     course_id = Column(Integer, ForeignKey('courses.id'), primary_key=True)
     rating = Column(Integer, default=0)
 
@@ -135,12 +137,12 @@ class CourseTag(Base):
 # -------------------- DB MODELS with Mapped --------------------
 
 
-class Account(Base):
-    __tablename__ = "accounts"
-    account_id = Mapped[int] = mapped_column(primary_key=True)
-    email = Mapped[str] = mapped_column(String(30))
-    password = Mapped[str] = mapped_column(String(200))
+# class Account(Base):
+#     __tablename__ = "accounts"
+#     account_id: Mapped[int] = mapped_column(primary_key=True)
+#     email: Mapped[str] = mapped_column(String(30))
+#     password: Mapped[str] = mapped_column(String(200))
 
-    admin = relationship("Admin", uselist=False, backref="account")
-    student = relationship("Student", uselist=False, backref="account")
-    teacher = relationship("Teacher", uselist=False, backref="account")
+#     admin = relationship("Admin", uselist=False, backref="account")
+#     student = relationship("Student", uselist=False, backref="account")
+#     teacher = relationship("Teacher", uselist=False, backref="account")
