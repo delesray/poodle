@@ -1,10 +1,10 @@
-from pydantic import BaseModel, StringConstraints
-from typing import Annotated
+from pydantic import BaseModel, EmailStr
+from typing import Annotated, Literal
 
 class AnonymousUser:
     pass
 
 class User(BaseModel):
-    email: str
+    email: EmailStr
     password: str
-    role: Annotated[str, StringConstraints(pattern=r'^(teacher|student)$')]
+    role: Annotated[str, Literal["teacher", "student"]]

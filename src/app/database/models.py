@@ -136,7 +136,7 @@ class CourseTag(Base):
 
 # -------------------- DB MODELS with Mapped --------------------
 
-
+# TODO discuss Mapped
 # class Account(Base):
 #     __tablename__ = "accounts"
 #     account_id: Mapped[int] = mapped_column(primary_key=True)

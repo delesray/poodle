@@ -4,7 +4,7 @@ from schemas.teacher import Teacher
 # from src.app.schemas.student import Student
 from database.models import Account, Teacher, Admin, Student
 from core.hashing import hash_pass
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 from fastapi import HTTPException, status
 
 
@@ -22,6 +22,9 @@ async def create_user(db: Session, user: User):
     except IntegrityError as err:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail=err.args)
+    except DataError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail='Invalid role type. Please choose between <teacher> and <student>')
     else:
         db.refresh(new_user)
         return new_user.account_id
