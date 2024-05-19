@@ -7,7 +7,7 @@ class Teacher(BaseModel):
     last_name: str
     phone_number: str | None = None
     linkedin: str | None = None
-    profile_picture: LargeBinary | None = None
+    profile_picture: bytes | None = None
     is_deactivated: bool | None = None
     
     
@@ -15,7 +15,7 @@ class Teacher(BaseModel):
 class TeacherEditInfo(BaseModel):
     phone_number: str | None = None
     linkedin: str | None = None
-    profile_picture: LargeBinary | None = None
+    profile_picture: bytes | None = None
     
     
     

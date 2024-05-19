@@ -4,4 +4,6 @@ class AnonymousUser:
     pass
 
 class User(BaseModel):
-    pass
+    email: str
+    password: str
+    role: str
