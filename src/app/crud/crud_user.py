@@ -24,7 +24,7 @@ async def create_user(db: Session, user: User):
             status_code=status.HTTP_409_CONFLICT, detail=err.args)
     else:
         db.refresh(new_user)
-        return new_user
+        return new_user.account_id
 
 
 # def create_user_factory(user_type: str):

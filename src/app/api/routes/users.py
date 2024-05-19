@@ -6,6 +6,7 @@ from core.oauth import AdminAuthDep
 from sqlalchemy.orm import Session
 from database.database import get_db
 
+
 users_router = APIRouter(
     prefix="/users",
     tags=["users"],
@@ -20,7 +21,7 @@ async def register_user(db: Annotated[Session, Depends(get_db)], user: User):
     """
     result = await create_user(db, user)
 
-    # if not isinstance(result, int):
-    #     raise HTTPException(status_code=400, detail=result.msg)
+    if not isinstance(result, int):
+        raise HTTPException(status_code=400, detail=result.msg)
 
     return f"User with ID: {result} registered"
