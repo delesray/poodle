@@ -2,8 +2,11 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+#from src.app.core.config import settings
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
+#SQLALCHEMY_DATABASE_URL = settings.DB_URL
+
 # SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
 # SQLALCHEMY_DATABASE_URL = "mysql+pymysql://user:pass@some_mariadb/dbname?charset=utf8mb4"
 # MARIADB EXAMPLE: "mysql+pymysql://scott:tiger@localhost/test?charset=utf8mb4"
@@ -19,3 +22,11 @@ Base = sqlalchemy.orm.declarative_base()  # The declarative_base() function is n
 
 # to create all tables:
 # Base.metadata.create_all(engine)
+
+def get_db():
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
