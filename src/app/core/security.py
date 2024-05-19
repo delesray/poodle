@@ -7,7 +7,8 @@ from fastapi.security import OAuth2PasswordBearer
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
-oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/users/login", auto_error=False)
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl="/users/login", auto_error=False)
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
@@ -21,7 +22,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: str
-    is_admin: bool
+    role: str
 
 
 def create_access_token(data: TokenData) -> Token:
@@ -41,14 +42,14 @@ def is_token_exp_valid(exp: str) -> bool:
 def verify_token_access(token: str) -> Union[TokenData, str]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
-        username: str = payload.get("username")
-        is_admin: bool = payload.get("is_admin")
+        email: str = payload.get("email")
+        role: str = payload.get("role")
         exp_at: str = payload.get("expire")
 
         if not is_token_exp_valid(exp_at):
             raise ExpiredSignatureError()
 
-        token_data = TokenData(username=username, is_admin=is_admin)
+        token_data = TokenData(email=email, role=role)
         return token_data
 
     except ExpiredSignatureError:

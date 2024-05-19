@@ -11,7 +11,7 @@ class Account(Base):
     password = Column(String(200))
 
     # 1:1 relationship with Admin, Student, Teacher
-    # calling student.account would return the Account record of the corresponging Student
+    # calling student.account would return the Account record of the corresponding Student
     admin = relationship("Admin", uselist=False, backref="account")
     student = relationship("Student", uselist=False, backref="account")
     teacher = relationship("Teacher", uselist=False, backref="account")
@@ -34,7 +34,8 @@ class Teacher(Base):
     linked_in = Column(String(200), nullable=True)
     is_deactivated = Column(Boolean, default=False, nullable=True)
 
-    courses = relationship("Course", back_populates="teacher")  # back_populates is bi-directional, backref is not
+    # back_populates is bi-directional, backref is not
+    courses = relationship("Course", back_populates="teacher")
 
 
 class Student(Base):
@@ -94,19 +95,6 @@ class StudentRating(Base):
     rating = Column(Integer, default=0)
 
 
-# -------------------- DB MODELS with Mapped --------------------
-
-class Account(Base):
-    __tablename__ = "accounts"
-    account_id = Mapped[int] = mapped_column(primary_key=True)
-    email = Mapped[str] = mapped_column(String(30))
-    password = Mapped[str] = mapped_column(String(200))
-
-    admin = relationship("Admin", uselist=False, backref="account")
-    student = relationship("Student", uselist=False, backref="account")
-    teacher = relationship("Teacher", uselist=False, backref="account")
-
-   
 class Section(Base):
     __tablename__ = 'sections'
 
@@ -117,14 +105,17 @@ class Section(Base):
     external_link = Column(String(200), nullable=True)
     course_id = Column(Integer, ForeignKey('courses.id'), nullable=False)
 
-    course = relationship("Course", back_populates = "sections")
+    course = relationship("Course", back_populates="sections")
     students_visited = relationship("Student", secondary="students_sections")
- 
+
+
 class StudentsSections(Base):
     __tablename__ = 'students_sections'
 
-    student_id = Column(Integer, ForeignKey('students.student_id'), primary_key=True)
-    section_id = Column(Integer, ForeignKey('sections.section_id'), primary_key=True)
+    student_id = Column(Integer, ForeignKey(
+        'students.student_id'), primary_key=True)
+    section_id = Column(Integer, ForeignKey(
+        'sections.section_id'), primary_key=True)
 
 
 class Tag(Base):
@@ -133,12 +124,23 @@ class Tag(Base):
     tag_id = Column(Integer, primary_key=True)
     name = Column(String(45), nullable=False)
     courses = relationship("Course", secondary="courses_tags")
-   
+
 
 class CourseTag(Base):
     __tablename__ = 'courses_tags'
 
     course_id = Column(Integer, ForeignKey('courses.id'), primary_key=True)
     tag_id = Column(Integer, ForeignKey('tags.tag_id'), primary_key=True)
-    
-    
+
+# -------------------- DB MODELS with Mapped --------------------
+
+
+class Account(Base):
+    __tablename__ = "accounts"
+    account_id = Mapped[int] = mapped_column(primary_key=True)
+    email = Mapped[str] = mapped_column(String(30))
+    password = Mapped[str] = mapped_column(String(200))
+
+    admin = relationship("Admin", uselist=False, backref="account")
+    student = relationship("Student", uselist=False, backref="account")
+    teacher = relationship("Teacher", uselist=False, backref="account")
