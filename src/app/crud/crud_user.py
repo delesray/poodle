@@ -13,7 +13,7 @@ async def create_user(db: Session, user: Union[StudentCreate, TeacherCreate]):
     new_user = Account(
         email=user.email,
         password=hash_pass(user.password),
-        role=user.get_type
+        role=user.get_type()
     )
 
     try:
@@ -22,9 +22,6 @@ async def create_user(db: Session, user: Union[StudentCreate, TeacherCreate]):
     except IntegrityError as err:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail=err.args)
-    #except DataError:
-        #raise HTTPException(
-            #status_code=status.HTTP_409_CONFLICT, detail='Invalid role type. Please choose between <teacher> and <student>')
     else:
         db.refresh(new_user)
         return new_user.account_id
@@ -78,16 +75,13 @@ def create_user_factory(user_type: str):
 async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]):
     user_type = user_schema.get_type()
     factory = create_user_factory(user_type)
-    new_user_id = await factory.create_db_user(db, user_schema)
-    return f"User with ID:{new_user_id} registered"
+    await factory.create_db_user(db, user_schema)
+    
+    return user_schema
 
 
-# TODO discuss - other join or role column in accounts
-async def find_by_email(db: Session, email: str):
-    query = db.query(Account) \
-        .outerjoin(Student) \
-        .outerjoin(Teacher) \
-        .outerjoin(Admin) \
-        .filter(Account.email == email)
+async def exists(db: Session, email: str):
+    query = db.query(Account).filter(Account.email == email).first()
 
-    return query.first()
+    if query:
+        return query.first()

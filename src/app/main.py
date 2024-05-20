@@ -5,7 +5,7 @@ from database import models
 # from schemas import schemas
 import crud
 from database.database import SessionLocal, engine
-from api.routes.users import users_router
+from api.routes.students import users_router
 
 models.Base.metadata.create_all(bind=engine)
 

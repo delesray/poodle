@@ -3,7 +3,7 @@ from fastapi import HTTPException, Depends
 from typing import Annotated
 from core.security import verify_token_access, oauth2_scheme, oauth2_scheme_optional, TokenData
 from schemas.user import AnonymousUser, User
-from crud.crud_user import find_by_email
+from crud.crud_user import exists
 
 class Role(Enum):
     admin = 'admin'
@@ -48,7 +48,7 @@ def get_current_user(token):
     if not isinstance(token_data, TokenData):
         raise HTTPException(status_code=400, detail=token_data)
 
-    user = find_by_email(token_data.email)
+    user = exists(token_data.email)
     
     if not user:
         raise HTTPException(status_code=404, detail="No such user")
