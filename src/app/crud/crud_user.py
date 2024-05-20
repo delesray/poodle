@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from schemas.user import User
 from schemas.teacher import TeacherCreate, TeacherResponseModel
-from src.app.schemas.student import StudentCreate, StudentResponseModel
+from schemas.student import StudentCreate, StudentResponseModel
 from database.models import Account, Teacher, Admin, Student
 from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError, DataError
