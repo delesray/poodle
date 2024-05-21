@@ -1,7 +1,10 @@
+from typing import Annotated
+from fastapi import Depends
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from hidden import USER, PASS
+from app.hidden import USER, PASS
+from sqlalchemy.orm import Session
 #from src.app.core.config import settings
 
 # SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db" # connect_args={"check_same_thread": False}
@@ -9,19 +12,12 @@ from hidden import USER, PASS
 
 # SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
 SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{USER}:{PASS}@localhost/poodle?charset=utf8mb4"
-# MARIADB EXAMPLE: "mysql+pymysql://scott:tiger@localhost/test?charset=utf8mb4"
 
 # factory that can create new database connections
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL
-)   # argument is needed only for SQLite. It's not needed for other databases.
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = sqlalchemy.orm.declarative_base()  # The declarative_base() function is now available as sqlalchemy.orm.declarative_base(). (deprecated since: 2.0)
-
-# to create all tables:
-# Base.metadata.create_all(engine)
+Base = sqlalchemy.orm.declarative_base()
 
 def get_db():
     Base.metadata.create_all(bind=engine)
@@ -30,3 +26,5 @@ def get_db():
         yield db
     finally:
         db.close()
+
+DbSession = Annotated[Session, Depends(get_db)]
