@@ -2,8 +2,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from core.oauth import StudentAuthDep
 from crud import crud_user, crud_student
-from schemas.student import StudentCreate
-from database.database import DbSession, get_db
+from schemas.student import StudentCreate, StudentEdit
+from database.database import get_db
 from sqlalchemy.orm import Session
 
 
@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.post('/register', status_code=201)
-async def register_student(db: DbSession, student: StudentCreate):
+async def register_student(db: Annotated[Session, Depends(get_db)], student: StudentCreate):
     """
     Registers a student.
 
@@ -40,7 +40,7 @@ async def register_student(db: DbSession, student: StudentCreate):
 @router.get('/')
 async def view_account(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
     """
-    Shows student's profile information.
+    Shows authenticated student's profile information.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
@@ -52,3 +52,36 @@ async def view_account(db: Annotated[Session, Depends(get_db)], student: Student
 
     """
     return await crud_student.get_student(db=db, email=student.email)
+
+
+@router.put('/')
+async def edit_account(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, updates: StudentEdit):
+    """
+    Edits authenticated student's profile information.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    - `updates` (StudentEdit): StudentEdit object that specifies the desired account updates.
+
+    **Returns**: a StudentResponseModel object with the student's edited account details.
+
+    **Raises**: HTTPException 401, if the student is not authenticated.
+
+    """
+    return await crud_student.edit_account(db=db, email=student.email, password=updates)
+
+@router.patch('/', status_code=204)
+async def change_password(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, updates: StudentEdit):
+    """
+    Changes authenticated student's password.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    - `password` (UserChangePassword):
+
+    **Raises**: HTTPException 401, if the student is not authenticated.
+
+    """
+    pass
