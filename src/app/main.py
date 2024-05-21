@@ -1,14 +1,14 @@
 import uvicorn
 from fastapi import FastAPI
-from database import models
-from database.database import engine
-from api.routes.students import users_router
+from app.database import models
+from app.database.database import engine
+from api_v1.api import api_router
 
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-app.include_router(users_router)
+app.include_router(api_router)
 
 
 if __name__ == '__main__':

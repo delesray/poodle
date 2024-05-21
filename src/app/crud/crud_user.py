@@ -4,9 +4,10 @@ from schemas.teacher import TeacherCreate, TeacherResponseModel
 from schemas.student import StudentCreate, StudentResponseModel
 from database.models import Account, Teacher, Admin, Student
 from core.hashing import hash_pass
-from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
-from typing import Union, Generic, TypeVar, Type
+from typing import Union
+from core.hashing import verify_password
 
 
 async def create_user(db: Session, user: Union[StudentCreate, TeacherCreate]):
@@ -85,3 +86,10 @@ async def exists(db: Session, email: str):
 
     if query:
         return query.first()
+
+
+async def try_login(db: Session, username: str, password: str) -> User | None:
+    user = exists(db, username)
+
+    if user and verify_password(password, user.password):
+        return user

@@ -1,21 +1,18 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from crud.crud_user import create, exists
 from schemas.student import StudentCreate
-from core.oauth import StudentAuthDep
-from sqlalchemy.orm import Session
-from database.database import get_db
+from database.database import DbSession
 
 
-users_router = APIRouter(
+router = APIRouter(
     prefix="/students",
     tags=["students"],
     responses={404: {"description": "Not found"}},
 )
 
 
-@users_router.post('/register', status_code=201)
-async def register_student(db: Annotated[Session, Depends(get_db)], student: StudentCreate):
+@router.post('/register', status_code=201)
+async def register_student(db: DbSession, student: StudentCreate):
     """
     Registers a student.
 
