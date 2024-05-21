@@ -4,7 +4,6 @@ from database import models
 from database.database import engine
 from api_v1.api import api_router
 
-
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()

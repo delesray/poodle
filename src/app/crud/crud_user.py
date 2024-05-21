@@ -85,7 +85,7 @@ async def exists(db: Session, email: str):
     query = db.query(Account).filter(Account.email == email).first()
 
     if query:
-        return query.first()
+        return query
 
 
 async def try_login(db: Session, username: str, password: str) -> User | None:
