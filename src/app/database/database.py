@@ -1,7 +1,7 @@
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.hidden import USER, PASS
+from hidden import USER, PASS
 #from src.app.core.config import settings
 
 # SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db" # connect_args={"check_same_thread": False}
