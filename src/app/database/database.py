@@ -3,7 +3,7 @@ from fastapi import Depends
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.hidden import USER, PASS
+from hidden import USER, PASS
 from sqlalchemy.orm import Session
 #from src.app.core.config import settings
 

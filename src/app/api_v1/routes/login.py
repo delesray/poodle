@@ -5,7 +5,8 @@ from database.database import DbSession
 from crud import crud_user
 from core.security import create_access_token, TokenData
 
-router = APIRouter()
+
+router = APIRouter(tags=['login'])
 
 
 @router.post('/login', include_in_schema=False)

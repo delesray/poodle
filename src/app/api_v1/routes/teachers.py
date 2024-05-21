@@ -1,15 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import Annotated
-from app.database.database import get_db
+from database.database import get_db
 from sqlalchemy.orm import Session
-from app.schemas.user import User
-from app.database.models import Account
-from app.crud.crud_user import create
-from app.crud.crud_teacher import update, create_new_course, edit_course
-from app.schemas.teacher import Teacher, TeacherEditInfo, TeacherCreate
-from app.schemas.course import Course, CourseUpdate
-from app.schemas.student import EnrollmentApproveRequest
-from app.core.oauth import TeacherAuthDep 
+from database.models import Account
+from crud.crud_user import create
+from crud.crud_teacher import update, create_new_course, edit_course
+from schemas.teacher import TeacherEditInfo, TeacherCreate
+from schemas.course import Course, CourseUpdate
+from schemas.student import EnrollmentApproveRequest
+from core.oauth import TeacherAuthDep 
 
 router = APIRouter(prefix='/teachers', tags=['teachers'])
 
