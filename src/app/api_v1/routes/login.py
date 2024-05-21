@@ -12,10 +12,18 @@ router = APIRouter(tags=['login'])
 @router.post('/login', include_in_schema=False)
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: DbSession):
     """
-    - Logs the user, if username and password are correct
-    - Returns access Token
+    Logs a user.
+
+    **Parameters:**
+    - `form_data` (OAuth2PasswordRequestForm): the class dependency that implements the OAuth2 password flow
+    - `db` (Session): The SQLAlchemy database session.
+
+    **Returns**: a Token object (JWT)
+
+    **Raises**: HTTPException 401, if the user's credentials are incorrect.
+
     """
-    user = crud_user.try_login(db, form_data.username, form_data.password)
+    user = await crud_user.try_login(db, form_data.username, form_data.password)
 
     if not user:
         raise HTTPException(
@@ -24,6 +32,6 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: 
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = create_access_token(
+    token = await create_access_token(
         TokenData(email=user.email, role=user.role))
     return token

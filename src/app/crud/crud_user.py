@@ -6,7 +6,7 @@ from database.models import Account, Teacher, Admin, Student
 from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
-from typing import Union
+from typing import Union, Type
 from core.hashing import verify_password
 
 
@@ -88,8 +88,8 @@ async def exists(db: Session, email: str):
         return query
 
 
-async def try_login(db: Session, username: str, password: str) -> User | None:
-    user = exists(db, username)
+async def try_login(db: Session, username: str, password: str) -> Type[Account]:
+    user = await exists(db, username)
 
     if user and verify_password(password, user.password):
         return user
