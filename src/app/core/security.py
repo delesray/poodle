@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Union
 from datetime import timedelta, datetime
 from jose import jwt, JWTError, ExpiredSignatureError
-import secrets
+from secret_key import SECRET_KEY
 from fastapi.security import OAuth2PasswordBearer
 
 
@@ -12,7 +12,6 @@ oauth2_scheme_optional = OAuth2PasswordBearer(
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
-SECRET_KEY = secrets.token_urlsafe(32)
 
 
 class Token(BaseModel):
