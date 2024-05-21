@@ -1,16 +1,17 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from database.database import DbSession
+from database.database import get_db
 from crud import crud_user
 from core.security import create_access_token, TokenData
+from sqlalchemy.orm import Session
 
 
 router = APIRouter(tags=['login'])
 
 
 @router.post('/login', include_in_schema=False)
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: DbSession):
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]):
     """
     Logs a user.
 
