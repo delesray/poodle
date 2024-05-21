@@ -1,19 +1,31 @@
-from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, LargeBinary, String, Text
+from typing import List, Optional
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from database.database import Base
+from enum import Enum
 
 
+class Role(Enum):
+    admin = "admin"
+    student = "student"
+    teacher = "teacher"
 
-# -------------------- DB MODELS with Column --------------------
+
+class ContentType(Enum):
+    video = 'video'
+    image = 'image'
+    text = 'text'
+    quiz = 'quiz'
+
+
 class Account(Base):
     __tablename__ = "accounts"
-    account_id = Column(Integer, primary_key=True)
-    email = Column(String(50), unique=True, index=True)
-    password = Column(String(200))
-    role = Column(String)
 
-    # 1:1 relationship with Admin, Student, Teacher
-    # calling student.account would return the Account record of the corresponding Student
+    account_id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(30))
+    password: Mapped[str] = mapped_column(String(200))
+    role: Mapped[Role]
+
     admin = relationship("Admin", uselist=False, backref="account")
     student = relationship("Student", uselist=False, backref="account")
     teacher = relationship("Teacher", uselist=False, backref="account")
@@ -21,34 +33,37 @@ class Account(Base):
 
 class Admin(Base):
     __tablename__ = "admins"
-    admin_id = Column(Integer, ForeignKey(
+
+    admin_id: Mapped[int] = mapped_column(ForeignKey(
         'accounts.account_id'), primary_key=True)
 
 
 class Teacher(Base):
     __tablename__ = "teachers"
-    teacher_id = Column(Integer, ForeignKey(
+
+    teacher_id: Mapped[int] = mapped_column(ForeignKey(
         'accounts.account_id'), primary_key=True)
-    first_name = Column(String(50))
-    last_name = Column(String(50))
-    phone_number = Column(String(30), nullable=True)
-    linked_in = Column(String(200), nullable=True)
-    profile_picture = Column(LargeBinary, nullable=True)
-    is_deactivated = Column(Boolean, default=False, nullable=True)
+    first_name: Mapped[str] = mapped_column(String(50))
+    last_name: Mapped[str] = mapped_column(String(50))
+    phone_number: Mapped[Optional[str]] = mapped_column(String(30))
+    linked_in: Mapped[Optional[str]] = mapped_column(String(200))
+    profile_picture: Mapped[Optional[bytes]]
+    is_deactivated: Mapped[Optional[bool]] = mapped_column(default=False)
 
     # back_populates is bi-directional, backref is not
-    courses = relationship("Course", back_populates="owner")
+    courses: Mapped[List['Course']] = relationship(back_populates="owner")
 
 
 class Student(Base):
     __tablename__ = "students"
-    student_id = Column(Integer, ForeignKey(
+
+    student_id: Mapped[int] = mapped_column(ForeignKey(
         'accounts.account_id'), primary_key=True)
-    first_name = Column(String(50))
-    last_name = Column(String(50))
-    profile_picture = Column(LargeBinary, nullable=True)
-    is_premium = Column(Boolean, default=False, nullable=True)
-    is_deactivated = Column(Boolean, default=False, nullable=True)
+    first_name: Mapped[str] = mapped_column(String(50))
+    last_name: Mapped[str] = mapped_column(String(50))
+    profile_picture: Mapped[Optional[bytes]]
+    is_premium: Mapped[Optional[bool]] = mapped_column(default=False)
+    is_deactivated: Mapped[Optional[bool]] = mapped_column(default=False)
 
     """Relationships in SQLAlchemy return query objects to provide flexibility, efficiency, and lazy loading. 
     You need to use methods like all() on the query object to get the actual list of related model objects. 
@@ -56,93 +71,93 @@ class Student(Base):
 
     # calling student.courses_enrolled should return a query object with all courses the student has enrolled in
     # using all() on that object would retrieve the actual course records
-    courses_enrolled = relationship("Course", secondary="students_progress")
-    courses_rated = relationship("Course", secondary="students_rating")
-    sections_visited = relationship("Section", secondary="students_sections")
+    courses_enrolled: Mapped[List['Course']] = relationship(
+        secondary="students_progress")
+    courses_rated: Mapped[List['Course']] = relationship(
+        secondary="students_rating")
+    sections_visited: Mapped[List['Section']] = relationship(
+        secondary="students_sections")
 
 
 class Course(Base):
     __tablename__ = "courses"
-    id = Column(Integer, primary_key=True)
-    title = Column(String(50), unique=True)
-    description = Column(String)
-    objectives = Column(String)
-    owner_id = Column(Integer, ForeignKey('teachers.teacher_id'))
-    is_premium = Column(Boolean, default=False, nullable=True)
-    is_hidden = Column(Boolean, default=False, nullable=True)
-    home_page_picture = Column(LargeBinary, nullable=True)
-    rating = Column(Integer, default=0)
 
-    owner = relationship("Teacher", back_populates="courses")
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(50), unique=True)
+    description: Mapped[str] = mapped_column(String(250))
+    objectives: Mapped[str] = mapped_column(String(250))
+    owner_id: Mapped[int] = mapped_column(ForeignKey('teachers.teacher_id'))
+    is_premium: Mapped[Optional[bool]] = mapped_column(default=False)
+    is_hidden: Mapped[Optional[bool]] = mapped_column(default=False)
+    home_page_picture: Mapped[Optional[bytes]] = mapped_column(default=False)
+    rating: Mapped[int] = mapped_column(default=0)
 
-    students_enrolled = relationship(
-        "Student", secondary="students_progress")
-    students_rated = relationship(
-        "Student", secondary="students_rating")
-    sections = relationship("Section", back_populates="course")
-    tags = relationship("Tag", secondary="courses_tags")
+    owner: Mapped['Teacher'] = relationship(back_populates="courses")
+    students_enrolled: Mapped[List['Student']] = relationship(
+        secondary="students_progress")
+    students_rated: Mapped[List['Student']] = relationship(
+        secondary="students_rating")
+    sections: Mapped[List['Section']] = relationship(back_populates="course")
+    tags: Mapped['Tag'] = relationship(secondary="courses_tags")
 
 
 class StudentProgress(Base):
     __tablename__ = 'students_progress'
-    student_id = Column(Integer, ForeignKey('students.student_id'), primary_key=True)
-    course_id = Column(Integer, ForeignKey('courses.id'), primary_key=True)
-    progress = Column(Integer, default=0)
+
+    student_id: Mapped[int] = mapped_column(
+        ForeignKey('students.student_id'), primary_key=True)
+    course_id: Mapped[int] = mapped_column(
+        ForeignKey('courses.id'), primary_key=True)
+    progress: Mapped[int] = mapped_column(default=0)
 
 
 class StudentRating(Base):
     __tablename__ = 'students_rating'
-    student_id = Column(Integer, ForeignKey('students.student_id'), primary_key=True)
-    course_id = Column(Integer, ForeignKey('courses.id'), primary_key=True)
-    rating = Column(Integer, default=0)
+
+    student_id: Mapped[int] = mapped_column(
+        ForeignKey('students.student_id'), primary_key=True)
+    course_id: Mapped[int] = mapped_column(
+        ForeignKey('courses.id'), primary_key=True)
+    rating: Mapped[int] = mapped_column(default=0)
 
 
 class Section(Base):
     __tablename__ = 'sections'
 
-    section_id = Column(Integer, primary_key=True)
-    title = Column(String(45), nullable=False)
-    content = Column(Text, nullable=False)
-    description = Column(String(45), nullable=True)
-    external_link = Column(String(200), nullable=True)
-    course_id = Column(Integer, ForeignKey('courses.id'), nullable=False)
+    section_id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[Optional[str]] = mapped_column(String(45))
+    content: Mapped[Optional[ContentType]]
+    description: Mapped[Optional[str]] = mapped_column(String(250))
+    external_link: Mapped[Optional[str]] = mapped_column(String(500))
+    course_id: Mapped[Optional[int]] = mapped_column(ForeignKey('courses.id'))
 
-    course = relationship("Course", back_populates="sections")
-    students_visited = relationship("Student", secondary="students_sections")
+    course: Mapped['Course'] = relationship(back_populates="sections")
+    students_visited: Mapped['Student'] = relationship(
+        secondary="students_sections")
 
 
 class StudentsSections(Base):
     __tablename__ = 'students_sections'
 
-    student_id = Column(Integer, ForeignKey(
+    student_id: Mapped[int] = mapped_column(ForeignKey(
         'students.student_id'), primary_key=True)
-    section_id = Column(Integer, ForeignKey(
+    section_id: Mapped[int] = mapped_column(ForeignKey(
         'sections.section_id'), primary_key=True)
 
 
 class Tag(Base):
     __tablename__ = 'tags'
 
-    tag_id = Column(Integer, primary_key=True)
-    name = Column(String(45), nullable=False)
+    tag_id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(45))
+
     courses = relationship("Course", secondary="courses_tags")
 
 
 class CourseTag(Base):
     __tablename__ = 'courses_tags'
 
-    course_id = Column(Integer, ForeignKey('courses.id'), primary_key=True)
-    tag_id = Column(Integer, ForeignKey('tags.tag_id'), primary_key=True)
-
-# -------------------- DB MODELS with Mapped --------------------
-
-# TODO discuss Mapped
-# class Account(Base):
-#     __tablename__ = "accounts"
-#     account_id: Mapped[int] = mapped_column(primary_key=True)
-#     email: Mapped[str] = mapped_column(String(30))
-#     password: Mapped[str] = mapped_column(String(200))
-
-#     admin = relationship("Admin", uselist=False, backref="account")
-#     student = relationship("Student", uselist=False, backref="account")
-#     teacher = relationship("Teacher", uselist=False, backref="account")
+    course_id: Mapped[int] = mapped_column(
+        ForeignKey('courses.id'), primary_key=True)
+    tag_id: Mapped[int] = mapped_column(
+        ForeignKey('tags.tag_id'), primary_key=True)
