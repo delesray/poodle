@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from schemas.user import User
-from schemas.teacher import TeacherCreate, TeacherResponseModel
-from schemas.student import StudentCreate, StudentResponseModel
-from database.models import Account, Teacher, Admin, Student
+from schemas.teacher import TeacherCreate
+from schemas.student import StudentCreate
+from database.models import Account, Teacher, Student
 from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
@@ -93,3 +93,5 @@ async def try_login(db: Session, username: str, password: str) -> Type[Account]:
 
     if user and verify_password(password, user.password):
         return user
+
+
