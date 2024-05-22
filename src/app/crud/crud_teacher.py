@@ -1,15 +1,20 @@
 from sqlalchemy.orm import Session
 from database.models import Teacher
-from schemas.teacher import TeacherResponseModel
+from schemas.teacher import TeacherResponseModel, TeacherEdit
 
-async def update(existing_teacher, teacher):
-    pass
 
-async def create_new_course(new_course, existing_teacher):
-    pass
+async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):  
+    teacher.first_name = updates.first_name
+    teacher.last_name = updates.last_name
+    teacher.phone_number = updates.phone_number
+    teacher.linked_in = updates.linked_in
+    teacher.profile_picture = updates.profile_picture
 
-async def edit_course(course_id, course_update):
-    pass
+    db.commit()
+    #db.refresh(teacher)
+
+    return f"Your account has been successfully updated"
+
 
 async def get_teacher_by_id(db: Session, id: int):
     teacher = (db.query(Teacher).filter(Teacher.teacher_id == id, Teacher.is_deactivated == False).first())
@@ -22,6 +27,7 @@ async def get_info(teacher, teacher_email):
             first_name=teacher.first_name,
             last_name=teacher.last_name,
             phone_number=teacher.phone_number,
-            linkedin=teacher.linked_in, 
+            linked_in=teacher.linked_in, 
             profile_picture=teacher.profile_picture
         )
+
