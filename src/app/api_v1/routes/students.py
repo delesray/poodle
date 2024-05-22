@@ -7,7 +7,7 @@ from database.database import DbSession
 router = APIRouter(
     prefix="/students",
     tags=["students"],
-    responses={404: {"description": "Not found"}},
+    responses={404: {"description": "Not found"}}
 )
 
 

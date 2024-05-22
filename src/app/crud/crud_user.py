@@ -25,15 +25,15 @@ async def create_user(db: Session, user: Union[StudentCreate, TeacherCreate]):
             status_code=status.HTTP_409_CONFLICT, detail=err.args)
     else:
         db.refresh(new_user)
-        return new_user.account_id
+        return new_user
 
 class TeacherFactory():
     @staticmethod
     async def create_db_user(db: Session, user_schema: Union[StudentCreate, TeacherCreate]):
-        new_user_account_id = await create_user(db, user_schema)
+        new_user = await create_user(db, user_schema)
 
         new_teacher = Teacher(
-            teacher_id=new_user_account_id,
+            teacher_id=new_user.account_id,
             first_name=user_schema.first_name,
             last_name=user_schema.last_name,
             phone_number=user_schema.phone_number,
@@ -44,7 +44,16 @@ class TeacherFactory():
         db.add(new_teacher)
         db.commit()
         db.refresh(new_teacher)
-        return new_user_account_id
+        #await send_verification_email([schema.email], new_user)
+        return TeacherResponseModel(
+            teacher_id=new_teacher.teacher_id,
+            email=new_user.email,
+            first_name=new_teacher.first_name,
+            last_name=new_teacher.last_name,
+            phone_number=new_teacher.phone_number,
+            linkedin=new_teacher.linked_in, 
+            profile_picture=new_teacher.profile_picture
+        )
 
 
 class StudentFactory():
@@ -76,9 +85,9 @@ def create_user_factory(user_type: str):
 async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]):
     user_type = user_schema.get_type()
     factory = create_user_factory(user_type)
-    await factory.create_db_user(db, user_schema)
+    new_user = await factory.create_db_user(db, user_schema)
     
-    return user_schema
+    return new_user
 
 
 async def exists(db: Session, email: str):
