@@ -7,7 +7,7 @@ from crud.crud_user import exists
 from database.models import Role
 from database.database import get_db
 from sqlalchemy.orm import Session
-
+from database.models import Account
 
 async def get_admin_required(token: Annotated[str, Depends(oauth2_scheme)]):
     user = await get_current_user(token)
@@ -50,7 +50,7 @@ async def get_current_user(db, token):
     return user
 
 
-AdminAuthDep = Annotated[User, Depends(get_admin_required)]
-TeacherAuthDep = Annotated[User, Depends(get_teacher_required)]
-StudentAuthDep = Annotated[User, Depends(get_student_required)]
-OptionalUser = Annotated[User | AnonymousUser, Depends(get_user_optional)]
+AdminAuthDep = Annotated[Account, Depends(get_admin_required)]
+TeacherAuthDep = Annotated[Account, Depends(get_teacher_required)]
+StudentAuthDep = Annotated[Account, Depends(get_student_required)]
+OptionalUser = Annotated[Account | AnonymousUser, Depends(get_user_optional)]

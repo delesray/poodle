@@ -2,19 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import Annotated
 from database.database import get_db
 from sqlalchemy.orm import Session
-from database.models import Account
 from crud.crud_user import create, exists
-from crud.crud_teacher import update, create_new_course, edit_course
+from crud.crud_teacher import update, create_new_course, get_teacher_by_id, get_info
 from schemas.teacher import TeacherEditInfo, TeacherCreate
 from schemas.course import Course, CourseUpdate
 from schemas.student import EnrollmentApproveRequest
 from core.oauth import TeacherAuthDep
-from database.database import DbSession 
+ 
 
 router = APIRouter(prefix='/teachers', tags=['teachers'], responses={404: {"description": "Not found"}})
 
 @router.post("/register")
-async def register_teacher(db: DbSession, teacher: TeacherCreate):
+async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: TeacherCreate):
     """
     Registers a teacher.
 
@@ -32,8 +31,32 @@ async def register_teacher(db: DbSession, teacher: TeacherCreate):
             status_code=409,
             detail="Email already registered",
         )
+    new_teacher = create(db, teacher)   
+    return await get_info(new_teacher, new_teacher.email)
+    # return f"User with ID:{new_teacher.teacher_id} registered"
+
+@router.get('/')
+async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep):
+    """
+    Shows authenticated teacher's profile information.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+
+    **Returns**: a TeacherResponseModel object with the teacher's account details.
+
+    **Raises**: HTTPException 401, if the teacher is not authenticated.
+
+    """
+    teacher =  get_teacher_by_id(db=db, id=user.account_id)
+    if not teacher:
+        raise HTTPException(
+            status_code=404,
+            detail="User is deactivated",
+        )
         
-    return await create(db, teacher)
+    return await get_info(teacher, user.email)
 
 
 @router.put('/')
