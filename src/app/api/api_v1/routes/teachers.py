@@ -9,12 +9,11 @@ from schemas.teacher import TeacherEditInfo, TeacherCreate
 from schemas.course import Course, CourseUpdate
 from schemas.student import EnrollmentApproveRequest
 from core.oauth import TeacherAuthDep
-from database.database import DbSession 
 
 router = APIRouter(prefix='/teachers', tags=['teachers'], responses={404: {"description": "Not found"}})
 
 @router.post("/register")
-async def register_teacher(db: DbSession, teacher: TeacherCreate):
+async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: TeacherCreate):
     """
     Registers a teacher.
 
