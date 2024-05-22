@@ -45,24 +45,16 @@ class TeacherFactory():
         db.commit()
         db.refresh(new_teacher)
         #await send_verification_email([schema.email], new_user)
-        return TeacherResponseModel(
-            teacher_id=new_teacher.teacher_id,
-            email=new_user.email,
-            first_name=new_teacher.first_name,
-            last_name=new_teacher.last_name,
-            phone_number=new_teacher.phone_number,
-            linkedin=new_teacher.linked_in, 
-            profile_picture=new_teacher.profile_picture
-        )
+        return new_teacher
 
 
 class StudentFactory():
     @staticmethod
     async def create_db_user(db: Session, user_schema: Union[StudentCreate, TeacherCreate]):
-        new_user_account_id = await create_user(db, user_schema)
+        new_user = await create_user(db, user_schema)
 
         new_student = Student(
-            student_id=new_user_account_id,
+            student_id=new_user.account_id,
             first_name=user_schema.first_name,
             last_name=user_schema.last_name,
             profile_picture=user_schema.profile_picture 
@@ -71,7 +63,7 @@ class StudentFactory():
         db.add(new_student)
         db.commit()
         db.refresh(new_student)
-        return new_user_account_id
+        return new_student
     
 
 def create_user_factory(user_type: str):
@@ -82,7 +74,7 @@ def create_user_factory(user_type: str):
     return factories.get(user_type)
 
 
-async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]):
+async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate])-> Union[Teacher, Student]:
     user_type = user_schema.get_type()
     factory = create_user_factory(user_type)
     new_user = await factory.create_db_user(db, user_schema)

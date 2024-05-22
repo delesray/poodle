@@ -7,7 +7,7 @@ from crud.crud_user import exists
 from database.models import Account, Role
 from database.database import get_db
 from sqlalchemy.orm import Session
-
+from database.models import Account
 
 async def get_admin_required(db: Annotated[Session, Depends(get_db)], token: Annotated[str, Depends(oauth2_scheme)]):
     user = await get_current_user(db, token)
