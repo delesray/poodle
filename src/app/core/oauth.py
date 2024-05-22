@@ -4,19 +4,19 @@ from typing import Annotated
 from core.security import verify_token_access, oauth2_scheme, oauth2_scheme_optional, TokenData
 from schemas.user import AnonymousUser, User
 from crud.crud_user import exists
-from database.models import Role
+from database.models import Account, Role
 from database.database import get_db
 from sqlalchemy.orm import Session
 
 
-async def get_admin_required(token: Annotated[str, Depends(oauth2_scheme)]):
-    user = await get_current_user(token)
+async def get_admin_required(db: Annotated[Session, Depends(get_db)], token: Annotated[str, Depends(oauth2_scheme)]):
+    user = await get_current_user(db, token)
     if not user.role == Role.admin:
         raise HTTPException(status_code=403, detail="Admin required")
     return user
 
 
-async def get_teacher_required(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_teacher_required(db: Annotated[Session, Depends(get_db)], token: Annotated[str, Depends(oauth2_scheme)]):
     user = await get_current_user(token)
     if not user.role == Role.teacher:
         raise HTTPException(status_code=403, detail="Teacher required")
@@ -43,14 +43,14 @@ async def get_current_user(db, token):
         raise HTTPException(status_code=400, detail=token_data)
 
     user = await exists(db=db, email=token_data.email)
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="No such user")
 
     return user
 
 
-AdminAuthDep = Annotated[User, Depends(get_admin_required)]
-TeacherAuthDep = Annotated[User, Depends(get_teacher_required)]
-StudentAuthDep = Annotated[User, Depends(get_student_required)]
-OptionalUser = Annotated[User | AnonymousUser, Depends(get_user_optional)]
+AdminAuthDep = Annotated[Account, Depends(get_admin_required)]
+TeacherAuthDep = Annotated[Account, Depends(get_teacher_required)]
+StudentAuthDep = Annotated[Account, Depends(get_student_required)]
+OptionalUser = Annotated[Account | AnonymousUser, Depends(get_user_optional)]
