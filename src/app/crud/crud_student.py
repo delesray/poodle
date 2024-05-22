@@ -1,4 +1,3 @@
-from sqlalchemy import update
 from sqlalchemy.orm import Session
 from database.models import Account, Student
 from schemas.student import StudentEdit, StudentResponseModel
@@ -28,7 +27,8 @@ async def get_student(db: Session, email: str):
 async def edit_account(db: Session, email: str, updates: StudentEdit):
     student = await get_by_email(db, email)
 
-    student.first_name, student.last_name, student.profile_picture = updates.first_name, updates.last_name, updates.profile_picture
+    student.first_name, student.last_name, student.profile_picture = updates.first_name, \
+        updates.last_name, updates.profile_picture
 
     db.commit()
 

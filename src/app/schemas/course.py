@@ -9,5 +9,10 @@ class Course(BaseModel):
     rating: int
 
 
+class PublicCourseInfo(BaseModel):
+    title: str
+    description: str
+    tags: list | None = []
+
 class CourseUpdate(BaseModel):
     pass

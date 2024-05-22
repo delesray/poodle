@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import StringConstraints
+from schemas.course import PublicCourseInfo
 from database.database import get_db
 from crud import crud_user, crud_courses
 from core.security import create_access_token, TokenData
@@ -39,27 +39,31 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: 
     return token
 
 
-@router.get('/courses')
+@router.get('/courses', response_model=list[PublicCourseInfo])
 async def get_public_courses(db: Annotated[Session, Depends(get_db)],
-    title: str | None = None,
+    tag: str | None = None,
     rating: int | None = None,
     pages: int = 1,
     items_per_page: int = 5
     ):
 
     """
-    Displays title and description of all public courses.
-    Courses can be searched by tag and/or rating.
-    Course titles can be sorted in ascending or descending order.
-    Course rating appears in descending order.
+    - Displays title, description and tags of all public courses.
+    - Courses can be searched by tag and/or rating.
+    - Number of pages and items per page can also be specified.
+    - By default, courses are ordered by rating in descending order.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
+    - `tag` (string): the course tags to filter by.
+    - `rating` (integer): the minimum desired course rating to filter by.
+    - `pages` (integer): the number of pages to be returned.
+    - `items_per_page`: the number of items per page to be returned.
 
-    **Returns**: a list of CourseInfo models.
+    **Returns**: a list of PublicCourseInfo models.
     """
 
     return await crud_courses.get_all_public_courses(
-        db=db, title=title, rating=rating, pages=pages, items_per_page=items_per_page
+        db=db, tag=tag, rating=rating, pages=pages, items_per_page=items_per_page
     )
 
