@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from core.oauth import StudentAuthDep
 from crud import crud_user, crud_student
-from schemas.student import StudentCreate, StudentEdit
+from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from database.database import get_db
 from sqlalchemy.orm import Session
 
@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-@router.post('/register', status_code=201)
+@router.post('/register', status_code=201, response_model=StudentCreate)
 async def register_student(db: Annotated[Session, Depends(get_db)], student: StudentCreate):
     """
     Registers a student.
@@ -37,7 +37,7 @@ async def register_student(db: Annotated[Session, Depends(get_db)], student: Stu
     return await crud_user.create(db, student)
 
 
-@router.get('/')
+@router.get('/', response_model=StudentResponseModel)
 async def view_account(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
     """
     Shows authenticated student's profile information.
@@ -54,7 +54,7 @@ async def view_account(db: Annotated[Session, Depends(get_db)], student: Student
     return await crud_student.get_student(db=db, email=student.email)
 
 
-@router.put('/')
+@router.put('/', status_code=201, response_model=StudentResponseModel)
 async def edit_account(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, updates: StudentEdit):
     """
     Edits authenticated student's profile information.
@@ -69,7 +69,7 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], student: Student
     **Raises**: HTTPException 401, if the student is not authenticated.
 
     """
-    return await crud_student.edit_account(db=db, email=student.email, password=updates)
+    return await crud_student.edit_account(db=db, email=student.email, updates=updates)
 
 @router.patch('/', status_code=204)
 async def change_password(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, updates: StudentEdit):
