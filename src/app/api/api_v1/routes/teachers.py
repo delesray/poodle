@@ -3,21 +3,33 @@ from typing import Annotated
 from database.database import get_db
 from sqlalchemy.orm import Session
 from database.models import Account
-from crud.crud_user import create
+from crud.crud_user import create, exists
 from crud.crud_teacher import update, create_new_course, edit_course
 from schemas.teacher import TeacherEditInfo, TeacherCreate
 from schemas.course import Course, CourseUpdate
 from schemas.student import EnrollmentApproveRequest
-from core.oauth import TeacherAuthDep 
+from core.oauth import TeacherAuthDep
+from database.database import DbSession 
 
-router = APIRouter(prefix='/teachers', tags=['teachers'])
+router = APIRouter(prefix='/teachers', tags=['teachers'], responses={404: {"description": "Not found"}})
 
 @router.post("/register")
-async def register_teacher(teacher: TeacherCreate, db: Annotated[Session, Depends(get_db)]):
-    db_user = db.query(Account).filter(Account.email == teacher.email).first()
-    if db_user:
+async def register_teacher(db: DbSession, teacher: TeacherCreate):
+    """
+    Registers a teacher.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherCreate): The information of the teacher to register.
+
+    **Returns**: a TeacherResponseModel object with the created teacher's details.
+
+    **Raises**: HTTPException 409, if a user with the same email has already been registered.
+
+    """
+    if await exists(db=db, email=teacher.email):
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Email already registered",
         )
         
