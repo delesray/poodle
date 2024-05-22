@@ -106,7 +106,7 @@ class Course(Base):
         back_populates="courses_rated")
     
     sections: Mapped[List['Section']] = relationship(back_populates="course")
-    tags: Mapped['Tag'] = relationship(secondary="courses_tags", back_populates="courses")
+    tags: Mapped[List['Tag']] = relationship(secondary="courses_tags", back_populates="courses")
 
 
 class StudentProgress(Base):
@@ -159,7 +159,7 @@ class Tag(Base):
     tag_id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(45))
 
-    courses = relationship("Course", secondary="courses_tags", back_populates="tags")
+    courses: Mapped[List['Course']] = relationship(secondary="courses_tags", back_populates="tags")
 
 
 class CourseTag(Base):
