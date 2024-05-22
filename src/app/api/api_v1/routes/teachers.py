@@ -13,7 +13,7 @@ from core.oauth import TeacherAuthDep
 router = APIRouter(prefix='/teachers', tags=['teachers'], responses={404: {"description": "Not found"}})
 
 @router.post("/register")
-async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: TeacherCreate):
+async def register_teacher(db: Annotated[Session, Depends(get_db)], user: TeacherCreate):
     """
     Registers a teacher.
 
@@ -26,13 +26,13 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: Tea
     **Raises**: HTTPException 409, if a user with the same email has already been registered.
 
     """
-    if await exists(db=db, email=teacher.email):
+    if await exists(db=db, email=user.email):
         raise HTTPException(
             status_code=409,
             detail="Email already registered",
         )
-    new_teacher = create(db, teacher)   
-    return await get_info(new_teacher, new_teacher.email)
+    new_teacher = create(db, user)   
+    return await get_info(new_teacher, user.email)
     # return f"User with ID:{new_teacher.teacher_id} registered"
 
 @router.get('/')

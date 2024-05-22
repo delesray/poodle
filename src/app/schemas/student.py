@@ -28,7 +28,6 @@ class StudentResponseModel(BaseModel):
     last_name: str
     profile_picture: bytes | None = None
     is_premium: bool = False
-    is_deactivated: bool = False
 
 
 class StudentEdit(BaseModel):
