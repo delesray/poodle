@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from schemas.user import User
+from schemas.user import UserChangePassword
 from schemas.teacher import TeacherCreate
 from schemas.student import StudentCreate
 from database.models import Account, Teacher, Student
@@ -7,7 +7,7 @@ from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from typing import Union, Type
-from core.hashing import verify_password
+from core import hashing
 
 
 async def create_user(db: Session, user: Union[StudentCreate, TeacherCreate]):
@@ -92,7 +92,12 @@ async def exists(db: Session, email: str):
 async def try_login(db: Session, username: str, password: str) -> Type[Account]:
     user = await exists(db, username)
 
-    if user and verify_password(password, user.password):
+    if user and hashing.verify_password(password, user.password):
         return user
 
 
+async def change_password(db: Session, pass_update: UserChangePassword, account: Account):
+    hashed_pass = hashing.hash_pass(pass_update.new_password)
+    account.password = hashed_pass
+
+    db.commit()
