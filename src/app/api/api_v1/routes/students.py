@@ -1,8 +1,10 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from core.oauth import StudentAuthDep
+from core.hashing import verify_password
 from crud import crud_user, crud_student
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
+from schemas.user import UserChangePassword
 from database.database import get_db
 from sqlalchemy.orm import Session
 
@@ -71,17 +73,130 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], student: Student
     """
     return await crud_student.edit_account(db=db, email=student.email, updates=updates)
 
+
 @router.patch('/', status_code=204)
-async def change_password(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, updates: StudentEdit):
+async def change_password(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, pass_update: UserChangePassword):
     """
     Changes authenticated student's password.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
-    - `password` (UserChangePassword):
+    - `pass_update` (UserChangePassword):
 
-    **Raises**: HTTPException 401, if the student is not authenticated.
+    **Raises**:
+    - HTTPException 401, if old password does not match.
+    - HTTPException 400, if new password is the same as the old one.
+    - HTTPException 400, if new password confirmation does not match.
 
     """
-    pass
+
+    if not pass_update.old_password != pass_update.new_password:
+        raise HTTPException(status_code=400, detail="New password must be different")
+    if not verify_password(pass_update.old_password, student.password):
+        raise HTTPException(status_code=401, detail="Current password does not match")
+    if not pass_update.new_password == pass_update.confirm_password:
+        raise HTTPException(status_code=400, detail="New password does not match")
+    
+    await crud_user.change_password(db, pass_update, student)
+
+
+# @router.get('/')
+# async def view_courses(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+#     """
+#     TODO seacrh by name | tag
+    
+#     **Parameters:**
+
+#     **Returns**: 
+
+#     **Raises**: 
+
+#     """
+#     pass
+
+
+# @router.get('/')
+# async def get_course_progress(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+#     """
+    
+#     **Parameters:**
+
+#     **Returns**: 
+
+#     **Raises**: 
+
+#     """
+#     pass
+
+
+# @router.get('/')
+# async def get_enrolled_courses(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+#     """
+#     TODO seacrh by name | tag
+    
+#     **Parameters:**
+
+#     **Returns**: 
+
+#     **Raises**: 
+
+#     """
+#     pass
+
+
+# @router.put('/')
+# async def get_premium_tier(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+#     """
+#     TODO discuss?
+#     set expiration?
+#     **Parameters:**
+
+#     **Returns**: 
+
+#     **Raises**: 
+
+#     """
+#     pass
+
+
+# @router.put('/')
+# async def subscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+#     """
+#     TODO max 5 premium
+#     **Parameters:**
+
+#     **Returns**: 
+
+#     **Raises**: 
+
+#     """
+#     pass
+
+
+# @router.put('/')
+# async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+#     """
+    
+#     **Parameters:**
+
+#     **Returns**: 
+
+#     **Raises**: 
+
+#     """
+#     pass
+
+
+# @router.put('/')
+# async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+#     """
+    
+#     **Parameters:**
+
+#     **Returns**: 
+
+#     **Raises**: 
+
+#     """
+#     pass

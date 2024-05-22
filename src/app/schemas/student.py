@@ -14,7 +14,7 @@ class EnrollmentApproveRequest(BaseModel):
 
 class StudentCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: Annotated[str, StringConstraints(min_length=4)] = None
     first_name: Annotated[str, StringConstraints(min_length=2)] = None
     last_name: Annotated[str, StringConstraints(min_length=2)] = None
     profile_picture: bytes | None = None

@@ -7,7 +7,7 @@ from core.security import create_access_token, TokenData
 from sqlalchemy.orm import Session
 
 
-router = APIRouter(tags=['login'])
+router = APIRouter()
 
 
 @router.post('/login', include_in_schema=False)
