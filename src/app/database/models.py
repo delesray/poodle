@@ -72,11 +72,15 @@ class Student(Base):
     # calling student.courses_enrolled should return a query object with all courses the student has enrolled in
     # using all() on that object would retrieve the actual course records
     courses_enrolled: Mapped[List['Course']] = relationship(
-        secondary="students_progress")
+        secondary="students_progress",
+        back_populates="students_enrolled"
+    )
     courses_rated: Mapped[List['Course']] = relationship(
-        secondary="students_rating")
+        secondary="students_rating",
+        back_populates="students_rated")
+    
     sections_visited: Mapped[List['Section']] = relationship(
-        secondary="students_sections")
+        secondary="students_sections", back_populates="students_visited")
 
 
 class Course(Base):
@@ -94,11 +98,15 @@ class Course(Base):
 
     owner: Mapped['Teacher'] = relationship(back_populates="courses")
     students_enrolled: Mapped[List['Student']] = relationship(
-        secondary="students_progress")
+        secondary="students_progress",
+        back_populates="courses_enrolled"
+    )
     students_rated: Mapped[List['Student']] = relationship(
-        secondary="students_rating")
+        secondary="students_rating",
+        back_populates="courses_rated")
+    
     sections: Mapped[List['Section']] = relationship(back_populates="course")
-    tags: Mapped['Tag'] = relationship(secondary="courses_tags")
+    tags: Mapped['Tag'] = relationship(secondary="courses_tags", back_populates="courses")
 
 
 class StudentProgress(Base):
@@ -132,8 +140,8 @@ class Section(Base):
     course_id: Mapped[Optional[int]] = mapped_column(ForeignKey('courses.id'))
 
     course: Mapped['Course'] = relationship(back_populates="sections")
-    students_visited: Mapped['Student'] = relationship(
-        secondary="students_sections")
+    students_visited: Mapped[List['Student']] = relationship(
+        secondary="students_sections", back_populates="sections_visited")
 
 
 class StudentsSections(Base):
@@ -151,7 +159,7 @@ class Tag(Base):
     tag_id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(45))
 
-    courses = relationship("Course", secondary="courses_tags")
+    courses = relationship("Course", secondary="courses_tags", back_populates="tags")
 
 
 class CourseTag(Base):

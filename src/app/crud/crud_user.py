@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session
 from schemas.user import User
-from schemas.teacher import TeacherCreate, TeacherResponseModel
-from schemas.student import StudentCreate, StudentResponseModel
-from database.models import Account, Teacher, Admin, Student
+from schemas.teacher import TeacherCreate
+from schemas.student import StudentCreate
+from database.models import Account, Teacher, Student
 from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
-from typing import Union
+from typing import Union, Type
 from core.hashing import verify_password
 
 
@@ -94,11 +94,13 @@ async def exists(db: Session, email: str):
     query = db.query(Account).filter(Account.email == email).first()
 
     if query:
-        return query.first()
+        return query
 
 
-async def try_login(db: Session, username: str, password: str) -> User | None:
-    user = exists(db, username)
+async def try_login(db: Session, username: str, password: str) -> Type[Account]:
+    user = await exists(db, username)
 
     if user and verify_password(password, user.password):
         return user
+
+
