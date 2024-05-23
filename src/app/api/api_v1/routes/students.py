@@ -114,6 +114,7 @@ async def view_my_courses(student: StudentAuthDep):
     my_courses = await crud_student.get_my_courses(student.student)
     return my_courses
 
+
 # @router.get('/')
 # async def get_course_progress(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
 #     """
@@ -158,19 +159,21 @@ async def view_my_courses(student: StudentAuthDep):
 #     pass
 
 
-# @router.put('/')
-# async def subscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
-#     """
-#     TODO max 5 premium
-#     **Parameters:**
+@router.post('/courses/{course_id}/subscription')
+async def subscribe_for_course(
+        course_id: int,
+        db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+    """
+    TODO max 5 premium
+    **Parameters:**
 
-#     **Returns**: 
+    **Returns**:
 
-#     **Raises**: 
+    **Raises**:
 
-#     """
-#     pass
-
+    """
+    new_enrollment = await crud_student.subscribe_for_course(db, student.student, course_id)
+    return new_enrollment
 
 # @router.put('/')
 # async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):

@@ -1,5 +1,7 @@
+from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from database.models import Account, Student
+from database.models import Account, Student, StudentProgress
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo
 
@@ -51,3 +53,20 @@ async def get_my_courses(student: Student):
         my_courses_pydantic.append(CourseInfo.from_query(*(c.title, c.description, c.is_premium, tags)))
 
     return my_courses_pydantic
+
+
+async def subscribe_for_course(db, student: Student, course_id):
+    new_enrollment = StudentProgress(
+        student_id=student.student_id,
+        course_id=course_id,
+    )
+
+    try:
+        db.add(new_enrollment)
+        db.commit()
+    except IntegrityError as err:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=err.args)
+    else:
+        db.refresh(new_enrollment)
+        return new_enrollment

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from database.models import Course, Tag, Teacher
-from schemas.course import PublicCourseInfo, CourseCreate, CourseUpdate, CourseBase, CourseInfo
+from schemas.course import CourseCreate, CourseUpdate, CourseBase, CourseInfo
 from typing import List
 
 
@@ -11,7 +11,7 @@ async def get_all_courses(
         tag: str = None,
         rating: int = None
 ):
-    base_query = db.query(Course).filter(Course.is_hidden is not False)
+    base_query = db.query(Course).filter(Course.is_hidden == False)
 
     filters = []
     if tag:
@@ -33,9 +33,9 @@ async def get_all_courses(
     return courses_list
 
 
-async def get_by_id(course_id):
-    # Teachers must be able to view their own courses
-    pass
+async def get_by_id(db, course_id):
+    course = db.query(Course).filter(Course.is_hidden is not False, Course.id == course_id).first()
+    return course
 
 
 async def get_courses(existing_teacher):
@@ -52,9 +52,9 @@ async def make_course(db: Session, teacher: Teacher, course: CourseCreate):
         is_premium=course.is_premium,
         is_hidden=False,
         home_page_picture=course.home_page_picture,
-        rating=0    
+        rating=0
     )
-    
+
     db.add(new_course)
     db.commit()
     db.refresh(new_course)
@@ -74,15 +74,6 @@ async def make_course(db: Session, teacher: Teacher, course: CourseCreate):
 async def edit_course(course_id, course_update):
     pass
 
-async def get_all_courses(
-    #Admins could be able to view a list with all public and premium courses, the number of students in them and their rating
-        page: int,
-        size: int,
-        search: str = None,
-        owner_id: int = None,
-        student_id: int = None
-        ):
-    pass
 
 async def course_exists(db: Session, title: str):
     query = db.query(Course).filter(Course.title == title).first()

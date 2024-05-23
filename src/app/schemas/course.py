@@ -9,7 +9,8 @@ class Course(BaseModel):
     is_premium: bool
     home_page_picture: bytes
     rating: int
- 
+
+
 class CourseBase(BaseModel):
     course_id: int
     title: str
@@ -20,7 +21,8 @@ class CourseBase(BaseModel):
     is_hidden: bool = False
     home_page_picture: bytes = None
     rating: int = 0
-       
+
+
 class CourseInfo(BaseModel):
     title: str
     description: str
