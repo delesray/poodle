@@ -36,6 +36,7 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], user: Teache
     return await get_info(new_teacher, user.email)
     # return f"User with ID:{new_teacher.teacher_id} registered"
 
+
 @router.get('/', response_model=TeacherResponseModel)
 async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep):
     """

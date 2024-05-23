@@ -25,6 +25,7 @@ class Account(Base):
     email: Mapped[str] = mapped_column(String(30))
     password: Mapped[str] = mapped_column(String(200))
     role: Mapped[Role]
+    is_deactivated: Mapped[Optional[bool]] = mapped_column(default=False)
 
     admin = relationship("Admin", uselist=False, backref="account")
     student = relationship("Student", uselist=False, backref="account")
@@ -48,7 +49,6 @@ class Teacher(Base):
     phone_number: Mapped[Optional[str]] = mapped_column(String(30))
     linked_in: Mapped[Optional[str]] = mapped_column(String(200))
     profile_picture: Mapped[Optional[bytes]]
-    is_deactivated: Mapped[Optional[bool]] = mapped_column(default=False)
 
     # back_populates is bi-directional, backref is not
     courses: Mapped[List['Course']] = relationship(back_populates="owner")
@@ -63,7 +63,6 @@ class Student(Base):
     last_name: Mapped[str] = mapped_column(String(50))
     profile_picture: Mapped[Optional[bytes]]
     is_premium: Mapped[Optional[bool]] = mapped_column(default=False)
-    is_deactivated: Mapped[Optional[bool]] = mapped_column(default=False)
 
     """Relationships in SQLAlchemy return query objects to provide flexibility, efficiency, and lazy loading. 
     You need to use methods like all() on the query object to get the actual list of related model objects. 

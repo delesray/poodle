@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from schemas.course import PublicCourseInfo
 from database.database import get_db
-from crud import crud_user, crud_courses
+from crud import crud_user, crud_course
 from core.security import create_access_token, TokenData
 from sqlalchemy.orm import Session
 
@@ -63,7 +63,7 @@ async def get_public_courses(db: Annotated[Session, Depends(get_db)],
     **Returns**: a list of PublicCourseInfo models.
     """
 
-    return await crud_courses.get_all_public_courses(
+    return await crud_course.get_all_public_courses(
         db=db, tag=tag, rating=rating, pages=pages, items_per_page=items_per_page
     )
 

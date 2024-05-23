@@ -77,13 +77,13 @@ def create_user_factory(user_type: str):
 async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate])-> Union[Teacher, Student]:
     user_type = user_schema.get_type()
     factory = create_user_factory(user_type)
-    new_user = await factory.create_db_user(db, user_schema)
+    await factory.create_db_user(db, user_schema)
     
-    return new_user
+    return user_schema
 
 
 async def exists(db: Session, email: str):
-    query = db.query(Account).filter(Account.email == email).first()
+    query = db.query(Account).filter(Account.email == email, Account.is_deactivated == False).first()
 
     if query:
         return query
