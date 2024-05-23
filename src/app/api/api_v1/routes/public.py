@@ -1,12 +1,12 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from schemas.course import PublicCourseInfo
+from schemas.course import CourseInfo
 from database.database import get_db
 from crud import crud_user, crud_course
 from core.security import create_access_token, TokenData
 from sqlalchemy.orm import Session
-
+from core.oauth import OptionalUser
 
 router = APIRouter(tags=['public'])
 
@@ -39,16 +39,16 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: 
     return token
 
 
-@router.get('/courses', response_model=list[PublicCourseInfo])
-async def get_public_courses(db: Annotated[Session, Depends(get_db)],
-    tag: str | None = None,
-    rating: int | None = None,
-    pages: int = 1,
-    items_per_page: int = 5
-    ):
-
+@router.get('/courses', response_model=list[CourseInfo])
+async def get_courses(
+        db: Annotated[Session, Depends(get_db)],
+        tag: str | None = None,
+        rating: int | None = None,
+        pages: int = 1,
+        items_per_page: int = 5
+):
     """
-    - Displays title, description and tags of all public courses.
+    - Displays title, description and tags of all courses.
     - Courses can be searched by tag and/or rating.
     - Number of pages and items per page can also be specified.
     - By default, courses are ordered by rating in descending order.
@@ -63,7 +63,6 @@ async def get_public_courses(db: Annotated[Session, Depends(get_db)],
     **Returns**: a list of PublicCourseInfo models.
     """
 
-    return await crud_course.get_all_public_courses(
+    return await crud_course.get_all_courses(
         db=db, tag=tag, rating=rating, pages=pages, items_per_page=items_per_page
     )
-

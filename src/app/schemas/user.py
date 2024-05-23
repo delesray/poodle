@@ -1,8 +1,10 @@
 from pydantic import BaseModel, EmailStr, StringConstraints
 from typing import Annotated, Literal
 
+
 class AnonymousUser:
     pass
+
 
 class User(BaseModel):
     email: EmailStr

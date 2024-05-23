@@ -50,7 +50,7 @@ class Teacher(Base):
     linked_in: Mapped[Optional[str]] = mapped_column(String(200))
     profile_picture: Mapped[Optional[bytes]]
 
-    # back_populates is bi-directional, backref is not
+    # todo back_populates is bidirectional, backref is maybe not
     courses: Mapped[List['Course']] = relationship(back_populates="owner")
 
 
@@ -77,7 +77,7 @@ class Student(Base):
     courses_rated: Mapped[List['Course']] = relationship(
         secondary="students_rating",
         back_populates="students_rated")
-    
+
     sections_visited: Mapped[List['Section']] = relationship(
         secondary="students_sections", back_populates="students_visited")
 
@@ -103,7 +103,7 @@ class Course(Base):
     students_rated: Mapped[List['Student']] = relationship(
         secondary="students_rating",
         back_populates="courses_rated")
-    
+
     sections: Mapped[List['Section']] = relationship(back_populates="course")
     tags: Mapped[List['Tag']] = relationship(secondary="courses_tags", back_populates="courses")
 
@@ -159,6 +159,9 @@ class Tag(Base):
     name: Mapped[str] = mapped_column(String(45))
 
     courses: Mapped[List['Course']] = relationship(secondary="courses_tags", back_populates="tags")
+
+    def __str__(self):
+        return f'#{self.name}'
 
 
 class CourseTag(Base):

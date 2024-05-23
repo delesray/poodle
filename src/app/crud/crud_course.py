@@ -1,18 +1,17 @@
 from sqlalchemy.orm import Session
 from database.models import Course, Tag, Teacher
-from schemas.course import PublicCourseInfo, CourseCreate, CourseUpdate, CourseBase
+from schemas.course import PublicCourseInfo, CourseCreate, CourseUpdate, CourseBase, CourseInfo
 from typing import List
 
 
-async def get_all_public_courses(db: Session,
-                                 pages: int,
-                                 items_per_page: int,
-                                 tag: str = None,
-                                 rating: int = None
-                                 ):
-
-    base_query = db.query(Course) \
-        .filter(Course.is_premium == False, Course.is_hidden == False)
+async def get_all_courses(
+        db: Session,
+        pages: int,
+        items_per_page: int,
+        tag: str = None,
+        rating: int = None
+):
+    base_query = db.query(Course).filter(Course.is_hidden is not False)
 
     filters = []
     if tag:
@@ -25,25 +24,24 @@ async def get_all_public_courses(db: Session,
 
     courses = base_query.order_by(Course.rating.desc()).offset((pages - 1) * items_per_page).limit(items_per_page).all()
 
-    courses_list: List[PublicCourseInfo] = []
+    courses_list: List[CourseInfo] = []
 
     for course in courses:
         tags = [tag.name for tag in course.tags]
-        pydantic_model = PublicCourseInfo(title=course.title,
-                                        description=course.description,
-                                        tags=tags)
+        pydantic_model = CourseInfo.from_query(*(course.title, course.description, course.is_premium, tags))
         courses_list.append(pydantic_model)
-        
     return courses_list
 
 
 async def get_by_id(course_id):
-    #Teachers must be able to view their own courses
+    # Teachers must be able to view their own courses
     pass
 
+
 async def get_courses(existing_teacher):
-    #Teachers must be able to view their own courses
+    # Teachers must be able to view their own courses
     pass
+
 
 async def make_course(db: Session, teacher: Teacher, course: CourseCreate):
     new_course = Course(
@@ -71,7 +69,7 @@ async def make_course(db: Session, teacher: Teacher, course: CourseCreate):
         home_page_picture=new_course.home_page_picture,
         rating=new_course.rating
     )
- 
+
 
 async def edit_course(course_id, course_update):
     pass
