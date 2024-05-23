@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import Annotated
 from database.database import get_db
 from sqlalchemy.orm import Session
-from crud.crud_user import create, exists
+from crud.crud_user import create, exists, check_deactivated
 from crud.crud_teacher import edit_account, get_teacher_by_id, get_info
 from crud.crud_course import create_course
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherResponseModel
@@ -51,11 +51,7 @@ async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
 
     """
     teacher =  get_teacher_by_id(db, user.account_id)
-    if not teacher:
-        raise HTTPException(
-            status_code=404,
-            detail="User is deactivated",
-        )
+    check_deactivated(teacher)
         
     return await get_info(teacher, user.email)
 
@@ -82,11 +78,8 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
             )
         
     teacher =  get_teacher_by_id(db, user.account_id)
-    if not teacher:
-        raise HTTPException(
-            status_code=404,
-            detail="User is deactivated",
-        )
+    check_deactivated(teacher)
+    
     return await edit_account(db, teacher, updates)
 
 
