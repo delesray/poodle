@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from app.core.hashing import verify_password
+from core.hashing import verify_password
 
 
 async def change_pass_raise(student, pass_update):

@@ -1,13 +1,14 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from core.oauth import StudentAuthDep
-from app.api.api_v1.routes import utils
+from api.api_v1.routes import utils
 from crud import crud_user, crud_student
+from schemas.course import CourseInfo
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
 from database.database import get_db
 from sqlalchemy.orm import Session
-
+from database.models import Student
 
 router = APIRouter(
     prefix="/students",
@@ -75,7 +76,8 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], student: Student
 
 
 @router.patch('/', status_code=204)
-async def change_password(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, pass_update: UserChangePassword):
+async def change_password(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep,
+                          pass_update: UserChangePassword):
     """
     Changes authenticated student's password.
 
@@ -92,35 +94,36 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
     """
 
     await utils.change_pass_raise(student, pass_update)
-    
+
     await crud_user.change_password(db, pass_update, student)
 
 
-# @router.get('/')
-# async def view_courses(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
-#     """
-#     TODO seacrh by name | tag
-    
-#     **Parameters:**
+@router.get('/mycourses', response_model=CourseInfo)
+async def view_my_courses(student: StudentAuthDep):
+    """
+    Returns student's courses.
 
-#     **Returns**: 
+    **Parameters:**
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
 
-#     **Raises**: 
+    **Raises**:
+    - HTTPException 401, if old password does not match.
 
-#     """
-#     pass
-
+    **Returns**: CourseInfo
+    """
+    my_courses = await crud_student.get_my_courses(student.student)
+    return my_courses
 
 # @router.get('/')
 # async def get_course_progress(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
 #     """
-    
+#
 #     **Parameters:**
-
-#     **Returns**: 
-
-#     **Raises**: 
-
+#
+#     **Returns**:
+#
+#     **Raises**:
+#
 #     """
 #     pass
 
@@ -129,7 +132,7 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
 # async def get_enrolled_courses(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
 #     """
 #     TODO seacrh by name | tag
-    
+
 #     **Parameters:**
 
 #     **Returns**: 
@@ -172,7 +175,7 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
 # @router.put('/')
 # async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
 #     """
-    
+
 #     **Parameters:**
 
 #     **Returns**: 
@@ -186,7 +189,7 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
 # @router.put('/')
 # async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
 #     """
-    
+
 #     **Parameters:**
 
 #     **Returns**: 
