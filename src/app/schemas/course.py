@@ -9,8 +9,18 @@ class Course(BaseModel):
     is_premium: bool
     home_page_picture: bytes
     rating: int
-
-
+ 
+class CourseBase(BaseModel):
+    course_id: int
+    title: str
+    description: str
+    objectives: str
+    owner_id: int
+    is_premium: bool = False
+    is_hidden: bool = False
+    home_page_picture: bytes = None
+    rating: int = 0
+       
 class CourseInfo(BaseModel):
     title: str
     description: str
