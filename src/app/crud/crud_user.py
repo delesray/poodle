@@ -103,7 +103,7 @@ async def change_password(db: Session, pass_update: UserChangePassword, account:
     db.commit()
     
 async def check_deactivated(user: Union[Student, Teacher]):
-    if user.is_deactivated == True:
+    if user.is_deactivated:
         raise HTTPException(
             status_code=404,
             detail="User is deactivated",

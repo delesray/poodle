@@ -32,7 +32,7 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], user: Teache
             status_code=409,
             detail="Email already registered",
         )
-    new_teacher = create(db, user)   
+    new_teacher = await create(db, user)   
     return await get_info(new_teacher, user.email)
     # return f"User with ID:{new_teacher.teacher_id} registered"
 
@@ -50,8 +50,8 @@ async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
     **Raises**: HTTPException 401, if the teacher is not authenticated.
 
     """
-    teacher =  get_teacher_by_id(db, user.account_id)
-    check_deactivated(teacher)
+    teacher = await get_teacher_by_id(db, user.account_id)
+    await check_deactivated(teacher)
         
     return await get_info(teacher, user.email)
 
@@ -77,8 +77,8 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
             detail=f"Data not provided to make changes"
             )
         
-    teacher =  get_teacher_by_id(db, user.account_id)
-    check_deactivated(teacher)
+    teacher = await get_teacher_by_id(db, user.account_id)
+    await check_deactivated(teacher)
     
     return await edit_account(db, teacher, updates)
 

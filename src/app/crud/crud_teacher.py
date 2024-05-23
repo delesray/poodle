@@ -17,7 +17,7 @@ async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):
 
 
 async def get_teacher_by_id(db: Session, id: int):
-    teacher = (db.query(Teacher).filter(Teacher.teacher_id == id, Teacher.is_deactivated == False).first())
+    teacher = (db.query(Teacher).filter(Teacher.teacher_id == id).first())
     return teacher
 
 async def get_info(teacher, teacher_email):

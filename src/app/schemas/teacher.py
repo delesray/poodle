@@ -22,9 +22,9 @@ class TeacherEdit(BaseModel):
 
 class TeacherCreate(BaseModel):
     email: EmailStr
-    password: str
-    first_name: str
-    last_name: str
+    password: Annotated[str, StringConstraints(min_length=4)] = None
+    first_name: Annotated[str, StringConstraints(min_length=2)] = None
+    last_name: Annotated[str, StringConstraints(min_length=2)] = None
     phone_number: str | None = None
     linked_in: str | None = None
     profile_picture: bytes | None = None
