@@ -5,7 +5,7 @@ from schemas.student import StudentEdit, StudentResponseModel
 
 async def get_by_email(db: Session, email: str):
     student = (db.query(Student).join(Student.account).filter(
-        Account.email == email, Student.is_deactivated == False).first())
+        Account.email == email).first())
 
     if student:
         return student

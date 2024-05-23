@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from core.oauth import StudentAuthDep
-from core.hashing import verify_password
+from app.api.api_v1.routes import utils
 from crud import crud_user, crud_student
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
@@ -91,12 +91,7 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
 
     """
 
-    if not pass_update.old_password != pass_update.new_password:
-        raise HTTPException(status_code=400, detail="New password must be different")
-    if not verify_password(pass_update.old_password, student.password):
-        raise HTTPException(status_code=401, detail="Current password does not match")
-    if not pass_update.new_password == pass_update.confirm_password:
-        raise HTTPException(status_code=400, detail="New password does not match")
+    await utils.change_pass_raise(student, pass_update)
     
     await crud_user.change_password(db, pass_update, student)
 
