@@ -1,15 +1,17 @@
 from pydantic import BaseModel, StringConstraints
 from typing import Annotated
 
-class Course(BaseModel):
+class CourseBase(BaseModel):
+    course_id: int
     title: str
     description: str
-    owner: int
-    is_premium: bool
-    home_page_picture: bytes
-    rating: int
-
-
+    objectives: str
+    owner_id: int
+    is_premium: bool = False
+    is_hidden: bool = False
+    home_page_picture: bytes = None
+    rating: int = 0
+       
 class PublicCourseInfo(BaseModel):
     title: str
     description: str
