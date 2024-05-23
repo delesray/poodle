@@ -1,5 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
+from crud import crud_course
 from core.oauth import StudentAuthDep
 from api.api_v1.routes import utils
 from crud import crud_user, crud_student
@@ -8,7 +9,7 @@ from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
 from database.database import get_db
 from sqlalchemy.orm import Session
-from database.models import Student
+from database.models import Course, Student, StudentProgress
 
 router = APIRouter(
     prefix="/students",
@@ -98,7 +99,7 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
     await crud_user.change_password(db, pass_update, student)
 
 
-@router.get('/mycourses', response_model=CourseInfo)
+@router.get('/mycourses', response_model=list[CourseInfo])
 async def view_my_courses(student: StudentAuthDep):
     """
     Returns student's courses.
@@ -109,7 +110,7 @@ async def view_my_courses(student: StudentAuthDep):
     **Raises**:
     - HTTPException 401, if old password does not match.
 
-    **Returns**: CourseInfo
+    **Returns**: A list of CourseInfo response models with the information for each course the student is enrolled in.
     """
     my_courses = await crud_student.get_my_courses(student.student)
     return my_courses
@@ -164,16 +165,35 @@ async def subscribe_for_course(
         course_id: int,
         db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
     """
-    TODO max 5 premium
-    **Parameters:**
+    Enrolls student in a course.
 
-    **Returns**:
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    - `course_id` (integer): the ID of the course the student wants to enroll in.
 
     **Raises**:
+    - HTTPException 401, if the student is not authenticated.
+    - HTTPException 403, if the student does not have a premium account but is attempting to enroll in a premium course.
+    - HTTPException 400, if the student has reached their premium courses limit (5).
+    - HTTPException 409, if the student is attempting to duplicate a course enrollment.
+
+    TODO return object?
+    **Returns**: Successful message, if the student is enrolled in the course.
 
     """
-    new_enrollment = await crud_student.subscribe_for_course(db, student.student, course_id)
-    return new_enrollment
+
+    course: Course = await crud_course.get_by_id(db, course_id)
+
+    if course.is_premium and not student.student.is_premium:
+        raise HTTPException(status_code=403, detail='Upgrade to premium to enroll in this course')
+    
+    if await crud_student.get_premium_courses_count(student.student) >= 5:
+        raise HTTPException(status_code=400, detail='Premium courses limit reached')
+    
+    await crud_student.subscribe_for_course(db, student.student, course_id)
+    return f'Subscription for course {course_id} successful!'
+
 
 # @router.put('/')
 # async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):

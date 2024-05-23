@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from database.models import Account, Student, StudentProgress
+from database.models import Account, Course, Student, StudentProgress
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo
 
@@ -55,7 +55,8 @@ async def get_my_courses(student: Student):
     return my_courses_pydantic
 
 
-async def subscribe_for_course(db, student: Student, course_id):
+async def subscribe_for_course(db: Session, student: Student, course_id: int):
+
     new_enrollment = StudentProgress(
         student_id=student.student_id,
         course_id=course_id,
@@ -70,3 +71,7 @@ async def subscribe_for_course(db, student: Student, course_id):
     else:
         db.refresh(new_enrollment)
         return new_enrollment
+
+
+async def get_premium_courses_count(student):
+    return len([course for course in student.courses_enrolled if course.is_premium])

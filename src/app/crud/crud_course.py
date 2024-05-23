@@ -34,7 +34,8 @@ async def get_all_courses(
 
 
 async def get_by_id(db, course_id):
-    course = db.query(Course).filter(Course.is_hidden is not False, Course.id == course_id).first()
+    course = db.query(Course).filter(Course.is_hidden == False, Course.id == course_id).first()
+
     return course
 
 
