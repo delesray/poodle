@@ -83,7 +83,7 @@ async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate])-
 
 
 async def exists(db: Session, email: str):
-    query = db.query(Account).filter(Account.email == email).first()
+    query = db.query(Account).filter(Account.email == email, Account.is_deactivated == False).first()
 
     if query:
         return query
