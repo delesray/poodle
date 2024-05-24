@@ -117,7 +117,7 @@ async def view_my_courses(student: StudentAuthDep):
 
 
 # @router.get('/')
-# async def get_course_progress(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+# async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
 #     """
 #
 #     **Parameters:**
@@ -131,31 +131,15 @@ async def view_my_courses(student: StudentAuthDep):
 
 
 # @router.get('/')
-# async def get_enrolled_courses(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+# async def view_course_section(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
 #     """
-#     TODO seacrh by name | tag
-
+#
 #     **Parameters:**
-
-#     **Returns**: 
-
-#     **Raises**: 
-
-#     """
-#     pass
-
-
-# @router.put('/')
-# async def get_premium_tier(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
-#     """
-#     TODO discuss?
-#     set expiration?
-#     **Parameters:**
-
-#     **Returns**: 
-
-#     **Raises**: 
-
+#
+#     **Returns**:
+#
+#     **Raises**:
+#
 #     """
 #     pass
 
