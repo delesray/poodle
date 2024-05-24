@@ -23,6 +23,14 @@ class StudentResponseModel(BaseModel):
     profile_picture: bytes | None = None
     is_premium: bool = False
 
+    @classmethod
+    def from_query(cls, first_name, last_name, profile_picture, is_premium=False):
+        return cls(
+            first_name=first_name,
+            last_name=last_name,
+            profile_picture=profile_picture,
+            is_premium=is_premium
+        )
 
 class StudentEdit(BaseModel):
     first_name: Annotated[str, StringConstraints(min_length=2)] = None

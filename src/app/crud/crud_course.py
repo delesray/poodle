@@ -39,10 +39,11 @@ async def get_course_tags(course: Course):
     return [tag.name for tag in course.tags]
 
 
-async def get_course_by_id(db, course_id):
+async def get_course_by_id(db, course_id) -> Course:
     course = db.query(Course).filter(Course.is_hidden == False, Course.id == course_id).first()
 
-    return course
+    if course:
+        return course
 
 async def course_exists(db: Session, title: str):
     query = db.query(Course).filter(Course.title == title).first()

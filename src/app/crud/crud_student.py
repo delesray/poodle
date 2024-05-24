@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from crud import crud_course
 from database.models import Account, Course, Student, StudentProgress, StudentRating
 from schemas.student import StudentEdit, StudentResponseModel
-from schemas.course import CourseInfo, CourseRateResponse
+from schemas.course import CourseInfo, CourseRateResponse, StudentCourse
 
 
 async def get_by_email(db: Session, email: str):
@@ -19,13 +19,7 @@ async def get_student(db: Session, email: str):
     student = await get_by_email(db, email)
 
     if student:
-        return StudentResponseModel(
-            first_name=student.first_name,
-            last_name=student.last_name,
-            profile_picture=student.profile_picture,
-            is_premium=student.is_premium,
-            is_deactivated=student.is_deactivated
-        )
+        return StudentResponseModel.from_query(student.first_name, student.last_name, student.profile_picture, student.is_premium)
 
 
 async def edit_account(db: Session, email: str, updates: StudentEdit):
@@ -36,13 +30,7 @@ async def edit_account(db: Session, email: str, updates: StudentEdit):
 
     db.commit()
 
-    return StudentResponseModel(
-        first_name=updates.first_name,
-        last_name=updates.last_name,
-        profile_picture=updates.profile_picture,
-        is_premium=student.is_premium,
-        is_deactivated=student.is_deactivated
-    )
+    return StudentResponseModel.from_query(student.first_name, student.last_name, student.profile_picture, student.is_premium)
 
 
 async def get_my_courses(student: Student):
@@ -97,19 +85,51 @@ async def get_premium_courses_count(student: Student):
     return len([course for course in student.courses_enrolled if course.is_premium])
 
 
-async def has_student_rated_course(db: Session, student_id: int, course_id: int):
-    query = db.query(StudentRating).filter(StudentRating.student_id == student_id, StudentRating.course_id == course_id).first()
+async def get_student_rating(db: Session, student_id: int, course_id: int):
+    query = db.query(StudentRating).filter(StudentRating.student_id ==
+                                           student_id, StudentRating.course_id == course_id).first()
 
-    return True if query else False
+    if query:
+        return query
+    
+
+async def get_student_progress(db: Session, student_id: int, course_id: int):
+    query = db.query(StudentProgress).filter(StudentProgress.student_id ==
+                                           student_id, StudentProgress.course_id == course_id).first()
+
+    if query:
+        return query.progress
 
 
 async def add_student_rating(db: Session, student: Student, course_id: int, rating: int):
-    new_rating = StudentRating(student_id=student.student_id, course_id=course_id, rating=rating)
+    new_rating = StudentRating(
+        student_id=student.student_id, course_id=course_id, rating=rating)
 
     db.add(new_rating)
     db.commit()
 
-    course = next((course for course in student.courses_enrolled if course.id==course_id), None)
+    course = next(
+        (course for course in student.courses_enrolled if course.id == course_id), None)
 
     return CourseRateResponse(course=course.title,
                               rating=rating)
+
+
+async def get_course_information(db: Session, course_id: int, student: Student):
+    course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
+    student_rating = await get_student_rating(db=db, student_id=student.student_id, course_id=course_id)
+    student_progress = await get_student_progress(db=db, student_id=student.student_id, course_id=course_id)
+    
+    if course:
+        return StudentCourse(course_id=course.id,
+                         title=course.title,
+                         description=course.description,
+                         objectives=course.objectives,
+                         owner_id=course.owner_id,
+                         owner_name=course.owner.first_name + ' ' + course.owner.last_name,
+                                     is_premium=course.is_premium,
+                                     home_page_picture=course.home_page_picture,
+                                     overall_rating=course.rating,
+                                     your_rating=student_rating if student_rating else 0,
+                                     your_progress=student_progress
+                         )

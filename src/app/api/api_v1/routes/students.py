@@ -4,7 +4,7 @@ from crud import crud_course
 from core.oauth import StudentAuthDep
 from api.api_v1.routes import utils
 from crud import crud_user, crud_student
-from schemas.course import CourseInfo, CourseRate, CourseRateResponse
+from schemas.course import CourseInfo, CourseRate, CourseRateResponse, StudentCourse
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
 from database.database import get_db
@@ -113,18 +113,28 @@ async def view_my_courses(student: StudentAuthDep):
     return my_courses
 
 
-# @router.get('/')
-# async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
-#     """
-#
-#     **Parameters:**
-#
-#     **Returns**:
-#
-#     **Raises**:
-#
-#     """
-#     pass
+@router.get('/courses/course_id', response_model=StudentCourse)
+async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
+    """
+    Returns authenticated student's chosen course with details.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    - `course_id` (integer): The ID of the course the student wants to view.
+
+    **Raises**:
+    - HTTPException 401, if old password does not match.
+    - HTTPException 409, if the student is not enrolled in the course.
+
+    **Returns**: A StudentCourse response object with detailed information about the course and the student's progress and rating of the course.
+    """
+    
+    if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
+        raise HTTPException(
+            status_code=409, detail='You have to enroll in this course to view details about it')
+    
+    return await crud_student.get_course_information(db=db, course_id=course_id, student=student.student)
 
 
 # @router.get('/')
@@ -213,8 +223,8 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
         raise HTTPException(
             status_code=409, detail='You have to enroll in this course to rate it')
 
-    if await crud_student.has_student_rated_course(db=db, student_id=student.account_id, course_id=course_id):
+    if await crud_student.get_student_rating(db=db, student_id=student.account_id, course_id=course_id):
         raise HTTPException(
             status_code=400, detail='You have already rated this course')
 
-    return await crud_student.add_student_rating(db=db, student=student.student, rating=rating.rating)
+    return await crud_student.add_student_rating(db=db, student=student.student, course_id=course_id, rating=rating.rating)
