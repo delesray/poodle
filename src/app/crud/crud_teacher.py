@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from database.models import Course, Teacher
 from schemas.course import CourseCreate, CourseBase, CourseSectionsTags
-from crud_section import create_sections
-from crud_tag import create_tags
+from crud.crud_section import create_sections
+from crud.crud_tag import create_tags
 from schemas.teacher import TeacherResponseModel, TeacherEdit
 
 
