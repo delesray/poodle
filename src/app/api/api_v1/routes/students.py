@@ -246,6 +246,9 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
     # add students_rated col in Course
     # add 1 count when rating to this col
     # update rating in Course
+    # rating = (rating * students_rated + current_student_rating) / (students_rated + 1)
+
+    # TODO discuss calculate progress in-memory
 
     if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
         raise HTTPException(
