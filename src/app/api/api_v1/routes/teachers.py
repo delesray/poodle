@@ -3,10 +3,10 @@ from typing import Annotated
 from database.database import get_db
 from sqlalchemy.orm import Session
 from crud.crud_user import create, exists, check_deactivated
-from crud.crud_teacher import edit_account, get_teacher_by_id, get_info, get_course_by_id
+from crud.crud_teacher import edit_account, get_teacher_by_id, get_info
 from crud.crud_course import make_course, course_exists
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherResponseModel
-from schemas.course import CourseCreate, CourseUpdate, CourseBase
+from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags
 from schemas.student import EnrollmentApproveRequest
 from core.oauth import TeacherAuthDep
  
@@ -56,8 +56,8 @@ async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
     return await get_info(teacher, user.email)
 
 
-@router.put('/', status_code=200)
-async def edit_account(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep, updates: TeacherEdit):
+@router.put('/', status_code=200, response_model=TeacherResponseModel)
+async def update_account(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep, updates: TeacherEdit):
     """
     Edits authenticated teacher's profile information.
 
@@ -79,10 +79,12 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
         
     teacher = await get_teacher_by_id(db, user.account_id)
     
-    return await edit_account(db, teacher, updates)
+    edited_teacher_account = await edit_account(db, teacher, updates)
+    
+    return await get_info(edited_teacher_account, user.email)
 
 
-@router.post("/courses", status_code=201, response_model=CourseBase)
+@router.post("/courses", status_code=201, response_model=CourseSectionsTags)
 async def create_course(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep, course: CourseCreate):
     """
     Creates a new course for an authenticated teacher.
@@ -109,6 +111,40 @@ async def create_course(db: Annotated[Session, Depends(get_db)], user: TeacherAu
      
     return await make_course(db, teacher, course)
 
+
+@router.get("/courses")
+async def get_courses(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep): 
+    pass
+
+
+@router.get("/courses/{course_id}")
+async def get_course_by_id(
+    db: Annotated[Session, Depends(get_db)],
+    course_id: int,
+    user: TeacherAuthDep,
+    sort: str | None = None,
+    sort_by: str | None = None):
+    
+    # if sort and sort.lower() not in ['asc', 'desc']:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail=f"Invalid sort parameter"
+    #     )
+
+    # if sort_by and sort_by.lower() not in ['section_id', 'title']:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail=f"Invalid sort_by parameter"
+    #     )
+        
+    # course = await get_course_by_id(db, course_id)
+    # if not course:
+    #     raise HTTPException(
+    #         status_code=404,
+    #         detail=f"Course #ID:{course_id} does not exist"
+    #     )
+    pass
+    
 
 @router.put("/courses/{course_id}")
 async def update_course(course_id: int, existing_teacher: TeacherAuthDep, course_update: CourseUpdate = Body(...)):

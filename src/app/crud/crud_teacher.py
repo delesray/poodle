@@ -11,9 +11,9 @@ async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):
     teacher.profile_picture = updates.profile_picture
 
     db.commit()
-    #db.refresh(teacher)
+    db.refresh(teacher)
 
-    return f"Your account has been successfully updated"
+    return teacher
 
 
 async def get_teacher_by_id(db: Session, id: int):
