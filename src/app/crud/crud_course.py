@@ -4,7 +4,6 @@ from schemas.course import CourseInfo
 from typing import List
 
 
-
 async def get_all_courses(
         db: Session,
         pages: int,
@@ -23,7 +22,8 @@ async def get_all_courses(
         filters.append(Course.title.like(f"%{name}%"))
 
     courses = db.query(Course).filter(*filters).order_by(Course.rating.desc()
-                                                         ).offset((pages - 1) * items_per_page).limit(items_per_page).all()
+                                                         ).offset((pages - 1) * items_per_page).limit(
+        items_per_page).all()
 
     courses_list: List[CourseInfo] = []
 
@@ -42,9 +42,11 @@ async def get_course_tags(course: Course):
 async def get_course_common_info(db, course_id) -> Course | None:
     course = db.query(Course).filter(Course.is_hidden == False, Course.id == course_id).first()
 
-    return course
+    if course:
+        return course
 
-async def course_exists(db: Session, title: str):
+
+async def course_exists(db: Session, title: str) -> bool:
     query = db.query(Course).filter(Course.title == title).first()
 
     return query is not None

@@ -1,16 +1,15 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
-from crud import crud_course
+from fastapi import APIRouter, Depends, HTTPException, status
+from crud import crud_course, crud_section
 from core.oauth import StudentAuthDep
 from api.api_v1.routes import utils
 from crud import crud_user, crud_student
-from schemas.course import CourseInfo, CourseRate, CourseRateResponse
+from schemas.course import CourseInfo, CourseRate, CourseRateResponse, StudentCourse
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
 from database.database import get_db
 from sqlalchemy.orm import Session
 from database.models import Course, Student, StudentProgress
-
 
 router = APIRouter(
     prefix="/students",
@@ -113,32 +112,65 @@ async def view_my_courses(student: StudentAuthDep):
     return my_courses
 
 
-# @router.get('/')
-# async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
-#     """
-#
-#     **Parameters:**
-#
-#     **Returns**:
-#
-#     **Raises**:
-#
-#     """
-#     pass
+@router.get('/courses/course_id', response_model=StudentCourse)
+async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
+    """
+    Returns authenticated student's chosen course with details.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    - `course_id` (integer): The ID of the course the student wants to view.
+
+    **Raises**:
+    - HTTPException 401, if old password does not match.
+    - HTTPException 409, if the student is not enrolled in the course.
+
+    **Returns**: A StudentCourse response object with detailed information about the course and the student's progress and rating of the course.
+    """
+
+    if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
+        raise HTTPException(
+            status_code=409, detail='You have to enroll in this course to view details about it')
+
+    return await crud_student.get_course_information(db=db, course_id=course_id, student=student.student)
 
 
-# @router.get('/')
-# async def view_course_section(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
-#     """
-#
-#     **Parameters:**
-#
-#     **Returns**:
-#
-#     **Raises**:
-#
-#     """
-#     pass
+@router.get('/courses/{course_id}/sections/{section_id}')
+async def view_course_section(
+        db: Annotated[Session, Depends(get_db)], student: StudentAuthDep,
+        course_id: int, section_id: int
+):
+    """
+
+    **Parameters:**
+
+    **Returns**:
+
+    **Raises**:
+
+    """
+    if not await crud_course.get_course_by_id(db, course_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='You have to enroll in this course to view details about it'
+        )
+
+    section = await crud_section.get_section_by_id(db, section_id)
+    if not section or not section.course_id == course_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='No such Section'
+        )
+
+    if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='You have to enroll in this course to view details about it'
+        )
+
+    await crud_section.add_student(db, section_id, student.account_id)
+    return section  # todo pydantic
 
 
 @router.post('/courses/{course_id}/subscription', response_model=CourseInfo, status_code=201)
@@ -191,7 +223,8 @@ async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentA
 
 
 @router.patch('/courses/{course_id}/rating', status_code=201, response_model=CourseRateResponse)
-async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int, rating: CourseRate):
+async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int,
+                      rating: CourseRate):
     """
     Enables authenticated student to rate a course, if the student is enrolled in the course.
 
@@ -209,12 +242,18 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
 
     **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
     """
+    # TODO
+    # add students_rated col in Course
+    # add 1 count when rating to this col
+    # update rating in Course
+
     if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
         raise HTTPException(
             status_code=409, detail='You have to enroll in this course to rate it')
 
-    if await crud_student.has_student_rated_course(db=db, student_id=student.account_id, course_id=course_id):
+    if await crud_student.get_student_rating(db=db, student_id=student.account_id, course_id=course_id):
         raise HTTPException(
             status_code=400, detail='You have already rated this course')
 
-    return await crud_student.add_student_rating(db=db, student=student.student, rating=rating.rating)
+    return await crud_student.add_student_rating(db=db, student=student.student, course_id=course_id,
+                                                 rating=rating.rating)

@@ -6,7 +6,6 @@ from database.database import get_db
 from crud import crud_user, crud_course
 from core.security import create_access_token, TokenData
 from sqlalchemy.orm import Session
-from core.oauth import OptionalUser
 
 router = APIRouter(tags=['public'])
 

@@ -72,10 +72,7 @@ class StudentFactory():
         db.add(new_student)
         db.commit()
         db.refresh(new_student)
-        return StudentResponseModel(
-            first_name=new_student.first_name, 
-            last_name=new_student.last_name, 
-            profile_picture=new_student.profile_picture)
+        return StudentResponseModel.from_query(first_name = new_student.first_name, last_name = new_student.last_name, profile_picture = new_student.profile_picture)
 
 
 def create_user_factory(user_type: str):
