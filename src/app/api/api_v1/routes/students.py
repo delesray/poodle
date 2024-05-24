@@ -137,18 +137,18 @@ async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentA
     return await crud_student.get_course_information(db=db, course_id=course_id, student=student.student)
 
 
-# @router.get('/')
-# async def view_course_section(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
-#     """
-#
-#     **Parameters:**
-#
-#     **Returns**:
-#
-#     **Raises**:
-#
-#     """
-#     pass
+@router.get('/courses/{course_id}/sections/{section_id}')
+async def view_course_section(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+    """
+
+    **Parameters:**
+
+    **Returns**:
+
+    **Raises**:
+
+    """
+    pass
 
 
 @router.post('/courses/{course_id}/subscription', response_model=CourseInfo, status_code=201)

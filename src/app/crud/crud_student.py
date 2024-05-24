@@ -90,7 +90,7 @@ async def get_student_rating(db: Session, student_id: int, course_id: int):
                                            student_id, StudentRating.course_id == course_id).first()
 
     if query:
-        return query
+        return query.rating
     
 
 async def get_student_progress(db: Session, student_id: int, course_id: int):

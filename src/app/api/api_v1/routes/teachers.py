@@ -4,7 +4,7 @@ from database.database import get_db
 from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
 from crud.crud_teacher import edit_account, get_teacher_by_id, get_info, get_my_courses
-from crud.crud_course import make_course, course_exists, get_course_by_id
+from crud.crud_course import course_exists, get_course_by_id
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherResponseModel
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
 from schemas.student import EnrollmentApproveRequest
