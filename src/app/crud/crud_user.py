@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from schemas.user import UserChangePassword
 from schemas.teacher import TeacherCreate, TeacherResponseModel
-from schemas.student import StudentCreate
+from schemas.student import StudentCreate, StudentResponseModel
 from database.models import Account, Teacher, Student
 from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError
@@ -26,6 +26,7 @@ async def create_user(db: Session, user: Union[StudentCreate, TeacherCreate]):
     else:
         db.refresh(new_user)
         return new_user
+
 
 class TeacherFactory():
     @staticmethod
@@ -65,14 +66,17 @@ class StudentFactory():
             student_id=new_user.account_id,
             first_name=user_schema.first_name,
             last_name=user_schema.last_name,
-            profile_picture=user_schema.profile_picture 
+            profile_picture=user_schema.profile_picture
         )
 
         db.add(new_student)
         db.commit()
         db.refresh(new_student)
-        return new_student
-    
+        return StudentResponseModel(
+            first_name=new_student.first_name, 
+            last_name=new_student.last_name, 
+            profile_picture=new_student.profile_picture)
+
 
 def create_user_factory(user_type: str):
     factories = {
@@ -82,16 +86,15 @@ def create_user_factory(user_type: str):
     return factories.get(user_type)
 
 
-async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate])-> Union[Teacher, Student]:
+async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]) -> Union[Teacher, Student]:
     user_type = user_schema.get_type()
     factory = create_user_factory(user_type)
-    await factory.create_db_user(db, user_schema)
-    
-    return user_schema
+    return await factory.create_db_user(db, user_schema)
 
 
 async def exists(db: Session, email: str):
-    query = db.query(Account).filter(Account.email == email, Account.is_deactivated == False).first()
+    query = db.query(Account).filter(Account.email == email,
+                                     Account.is_deactivated == False).first()
 
     if query:
         return query
@@ -109,11 +112,11 @@ async def change_password(db: Session, pass_update: UserChangePassword, account:
     account.password = hashed_pass
 
     db.commit()
-    
+
+
 async def check_deactivated(user: Union[Student, Teacher]):
     if user.is_deactivated:
         raise HTTPException(
             status_code=404,
             detail="User is deactivated",
         )
-    

@@ -11,15 +11,18 @@ async def get_all_courses(
         pages: int,
         items_per_page: int,
         tag: str = None,
-        rating: int = None
+        rating: int = None,
+        name: str = None
 ):
     base_query = db.query(Course).filter(Course.is_hidden == False)
 
     filters = []
     if tag:
-        filters.append(Course.tags.any(Tag.name.like(tag)))
+        filters.append(Course.tags.any(Tag.name.like(f"%{tag}%")))
     if rating:
         filters.append(Course.rating >= rating)
+    if name:
+        filters.append(Course.title.like(f"%{name}%"))
 
     if filters:
         base_query = base_query.filter(*filters)
@@ -29,10 +32,14 @@ async def get_all_courses(
     courses_list: List[CourseInfo] = []
 
     for course in courses:
-        tags = [tag.name for tag in course.tags]
+        tags = await get_course_tags(course)
         pydantic_model = CourseInfo.from_query(*(course.title, course.description, course.is_premium, tags))
         courses_list.append(pydantic_model)
     return courses_list
+
+
+async def get_course_tags(course):
+    return [tag.name for tag in course.tags]
 
 
 async def get_course_by_id(db, course_id):
