@@ -74,36 +74,6 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], student: Student
     return await crud_student.edit_account(db=db, email=student.email, updates=updates)
 
 
-@router.patch('/courses/{course_id}/myRating', status_code=201, response_model=CourseRateResponse)
-async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int, rating: CourseRate):
-    """
-    Enables authenticated student to rate a course, if the student is enrolled in the course.
-
-    **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
-    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
-    - `course_id` (integer): ID of the course to rate.
-    - `rating` (CourseRate): rating the student wants to give.
-
-    **Raises**:
-    - HTTPException 401, if the student is not authenticated.
-    - HTTPException 409, if the student is not enrolled in the course.
-    - HTTPException 409, if the student is not enrolled in the course.
-    - HTTPException 400, if the student has already rated the course.
-
-    **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
-    """
-    if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
-        raise HTTPException(
-            status_code=409, detail='You have to enroll in this course to rate it')
-
-    if await crud_student.has_student_rated_course(db=db, student_id=student.account_id, course_id=course_id):
-        raise HTTPException(
-            status_code=400, detail='You have already rated this course')
-
-    return await crud_student.add_student_rating(db=db, student=student.student, course_id=course_id, rating=rating.rating)
-
-
 @router.patch('/', status_code=204)
 async def change_password(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep,
                           pass_update: UserChangePassword):
@@ -126,7 +96,7 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
     await crud_user.change_password(db=db, pass_update=pass_update, account=student)
 
 
-@router.get('/myCourses', response_model=list[CourseInfo])
+@router.get('/courses', response_model=list[CourseInfo])
 async def view_my_courses(student: StudentAuthDep):
     """
     Returns authenticated student's courses.
@@ -220,7 +190,7 @@ async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentA
     await crud_student.unsubscribe_from_course(db=db, student_id=student.account_id, course_id=course_id)
 
 
-@router.patch('/courses/{course_id}/myRating', status_code=201, response_model=CourseRateResponse)
+@router.patch('/courses/{course_id}/rating', status_code=201, response_model=CourseRateResponse)
 async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int, rating: CourseRate):
     """
     Enables authenticated student to rate a course, if the student is enrolled in the course.
