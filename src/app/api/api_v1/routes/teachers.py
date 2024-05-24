@@ -143,7 +143,7 @@ async def view_course_by_id(
     sort_by: str | None = None):
     
     """
-    Retrieve a course by its ID along with associated tags and sections.
+    Retrieves a course by its ID along with associated tags and sections.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.

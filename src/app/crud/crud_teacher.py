@@ -96,7 +96,7 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
     )
 
 
-async def get_entire_course(db: Session, course: Course, teacher: Teacher):
+async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort: str | None, sort_by: str | None):
     course_info = CourseBase(
         course_id=course.id,
         title=course.title,
@@ -117,7 +117,13 @@ async def get_entire_course(db: Session, course: Course, teacher: Teacher):
         course_tags.append(tag_base)
     
     course_sections = []
-    sections = db.query(Section).filter(Section.course_id == course.id).all()
+    sections_query = db.query(Section).filter(Section.course_id == course.id)
+    if sort_by:
+        sections_query = sections_query.order_by(
+            getattr(Section, sort_by).desc() if sort and sort == 'desc' else getattr(Section, sort_by).asc()
+        )
+        
+    sections = sections_query.all()
     for section in sections:
         section_base = SectionBase.from_query(
             section_id=section.section_id,
@@ -128,7 +134,7 @@ async def get_entire_course(db: Session, course: Course, teacher: Teacher):
             course_id=section.course_id
         )
         course_sections.append(section_base) 
-    
+ 
     return CourseSectionsTags(
         course=course_info,
         tags=course_tags,
