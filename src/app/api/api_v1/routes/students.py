@@ -142,9 +142,7 @@ async def view_my_courses(student: StudentAuthDep):
 
 
 @router.post('/courses/{course_id}/subscription', response_model=CourseInfo, status_code=201)
-async def subscribe_for_course(
-        course_id: int,
-        db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
     """
     Enrolls authenticated student in a course.
 
@@ -163,7 +161,7 @@ async def subscribe_for_course(
     **Returns**: CourseInfo object with home page information about the subscribed course.
     """
 
-    course: Course = await crud_course.get_by_id(db=db, course_id=course)
+    course: Course = await crud_course.get_by_id(db=db, course_id=course_id)
 
     if course.is_premium and not student.student.is_premium:
         raise HTTPException(
@@ -177,7 +175,7 @@ async def subscribe_for_course(
 
 
 @router.delete('/courses/{course_id}/subscription', status_code=204)
-async def unsubscribe(course_id: int, db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
     """
     Unsubscribes authenticated student from a course.
 
@@ -193,15 +191,15 @@ async def unsubscribe(course_id: int, db: Annotated[Session, Depends(get_db)], s
 
 
 @router.patch('/courses/{course_id}/myRating', status_code=201, response_model=CourseRateResponse)
-async def rate_course(course_id: int, rating: CourseRate, db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int, rating: CourseRate):
     """
     Enables authenticated student to rate a course, if the student is enrolled in the course.
 
     **Parameters:**
-    - `course_id` (integer): ID of the course to rate.
-    - `rating` (CourseRate): rating the student wants to give.
     - `db` (Session): The SQLAlchemy database session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    - `course_id` (integer): ID of the course to rate.
+    - `rating` (CourseRate): rating the student wants to give.
 
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
