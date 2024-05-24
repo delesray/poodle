@@ -2,9 +2,9 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
-from database.models import Account, Course, Student, StudentProgress
+from database.models import Account, Course, Student, StudentProgress, StudentRating
 from schemas.student import StudentEdit, StudentResponseModel
-from schemas.course import CourseInfo
+from schemas.course import CourseInfo, CourseRateResponse
 
 
 async def get_by_email(db: Session, email: str):
@@ -89,5 +89,27 @@ async def unsubscribe_from_course(db: Session, student_id: int, course_id: int):
     db.commit()
 
 
+async def is_student_enrolled(student: Student, course_id: int):
+    return course_id in set([course.id for course in student.courses_enrolled])
+
+
 async def get_premium_courses_count(student: Student):
     return len([course for course in student.courses_enrolled if course.is_premium])
+
+
+async def has_student_rated_course(db: Session, student_id: int, course_id: int):
+    query = db.query(StudentRating).filter(StudentRating.student_id == student_id, StudentRating.course_id == course_id).first()
+
+    return True if query else False
+
+
+async def add_student_rating(db: Session, student: Student, course_id: int, rating: int):
+    new_rating = StudentRating(student_id=student.student_id, course_id=course_id, rating=rating)
+
+    db.add(new_rating)
+    db.commit()
+
+    course = next((course for course in student.courses_enrolled if course.id==course_id), None)
+
+    return CourseRateResponse(course=course.title,
+                              rating=rating)
