@@ -86,6 +86,7 @@ async def subscribe_for_course(db: Session, student: Student, course: Course):
 async def unsubscribe_from_course(db: Session, student_id: int, course_id: int):
     db.query(StudentProgress).filter(StudentProgress.student_id ==
                                      student_id, StudentProgress.course_id == course_id).delete()
+    db.commit()
 
 
 async def get_premium_courses_count(student: Student):
