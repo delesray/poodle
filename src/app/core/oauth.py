@@ -18,7 +18,7 @@ async def get_admin_required(db: Annotated[Session, Depends(get_db)], token: Ann
 
 
 async def get_teacher_required(db: Annotated[Session, Depends(get_db)], token: Annotated[str, Depends(oauth2_scheme)]):
-    user = await get_current_user(token)
+    user = await get_current_user(db, token)
     if not user.role == Role.teacher:
         raise HTTPException(status_code=403, detail="Teacher required")
     return user
@@ -31,13 +31,13 @@ async def get_student_required(db: Annotated[Session, Depends(get_db)], token: A
     return user
 
 
-async def get_user_optional(token: Annotated[str, Depends(oauth2_scheme_optional)]):
-    if not token:
-        return AnonymousUser()
-    return await get_current_user(token)
+# async def get_user_optional(token: Annotated[str, Depends(oauth2_scheme)]):
+#     if not token:
+#         return AnonymousUser()
+#     return await get_current_user(token)
 
 
-async def get_current_user(db, token):
+async def get_current_user(db: Session, token):
     token_data = await verify_token_access(token)
 
     if not isinstance(token_data, TokenData):
@@ -54,4 +54,4 @@ async def get_current_user(db, token):
 AdminAuthDep = Annotated[Account, Depends(get_admin_required)]
 TeacherAuthDep = Annotated[Account, Depends(get_teacher_required)]
 StudentAuthDep = Annotated[Account, Depends(get_student_required)]
-OptionalUser = Annotated[Account | AnonymousUser, Depends(get_user_optional)]
+# OptionalUser = Annotated[Account | AnonymousUser, Depends(get_user_optional)]
