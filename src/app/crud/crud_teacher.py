@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session
-from database.models import Teacher, Course
+from database.models import Course, Teacher
+from schemas.course import CourseCreate, CourseBase, CourseSectionsTags
+from crud_section import create_sections
+from crud_tag import create_tags
 from schemas.teacher import TeacherResponseModel, TeacherEdit
 
 
@@ -20,6 +23,7 @@ async def get_teacher_by_id(db: Session, id: int):
     teacher = (db.query(Teacher).filter(Teacher.teacher_id == id).first())
     return teacher
 
+
 async def get_info(teacher, teacher_email):
     return TeacherResponseModel(
             teacher_id=teacher.teacher_id,
@@ -31,6 +35,63 @@ async def get_info(teacher, teacher_email):
             profile_picture=teacher.profile_picture
         )
 
-async def get_course_by_id(db: Session, id: int):
-    course = (db.query(Course).filter(Course.id == id).first())
-    return course
+
+async def get_my_courses(db: Session, teacher: Teacher) -> list[CourseBase]:
+    courses = db.query(Course).filter(Course.owner_id == teacher.teacher_id).all()
+
+    teacher_courses = [
+        CourseBase(
+            course_id=course.id,
+            title=course.title,
+            description=course.description,
+            objectives=course.objectives,
+            owner_id=course.owner_id,
+            owner_names=f"{teacher.first_name} {teacher.last_name}",
+            is_premium=course.is_premium,
+            is_hidden=course.is_hidden,
+            home_page_picture=course.home_page_picture,
+            rating=course.rating
+        ) for course in courses
+    ]
+    
+    return teacher_courses
+
+async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
+    course_info = Course(
+        title=new_course.title,
+        description=new_course.description,
+        objectives=new_course.objectives,
+        owner_id=teacher.teacher_id,
+        is_premium=new_course.is_premium,
+        is_hidden=False,
+        home_page_picture=new_course.home_page_picture,
+        rating=0
+    )
+
+    db.add(course_info)
+    db.commit()
+    db.refresh(course_info)
+    course_info_response = CourseBase(
+        course_id=course_info.id,
+        title=course_info.title,
+        description=course_info.description,
+        objectives=course_info.objectives,
+        owner_id=course_info.owner_id,
+        owner_names=teacher.first_name + ' ' + teacher.last_name,
+        is_premium=course_info.is_premium,
+        is_hidden=course_info.is_hidden,
+        home_page_picture=course_info.home_page_picture,
+        rating=course_info.rating
+    )
+    course_tags = await create_tags(db, new_course.tags, course_info.id)
+    course_sections = await create_sections(db, new_course.sections, course_info.id)
+    
+    return CourseSectionsTags(
+        course=course_info_response,
+        tags=course_tags,
+        sections=course_sections
+    )
+
+
+async def edit_course(course_id, course_update):
+    pass

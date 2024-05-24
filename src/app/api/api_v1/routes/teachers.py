@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import Annotated
 from database.database import get_db
 from sqlalchemy.orm import Session
-from crud.crud_user import create, exists, check_deactivated
-from crud.crud_teacher import edit_account, get_teacher_by_id, get_info
-from crud.crud_course import make_course, course_exists
+from crud.crud_user import create, exists
+from crud.crud_teacher import edit_account, get_teacher_by_id, get_info, get_my_courses
+from crud.crud_course import make_course, course_exists, get_course_by_id
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherResponseModel
-from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags
+from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
 from schemas.student import EnrollmentApproveRequest
 from core.oauth import TeacherAuthDep
  
@@ -20,7 +20,7 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], user: Teache
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
-    - `teacher` (TeacherCreate): The information of the teacher to register.
+    - `user` (TeacherCreate): The information of the teacher to register.
 
     **Returns**: a TeacherResponseModel object with the created teacher's details.
 
@@ -44,7 +44,7 @@ async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
-    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
 
     **Returns**: a TeacherResponseModel object with the teacher's account details.
 
@@ -63,7 +63,7 @@ async def update_account(db: Annotated[Session, Depends(get_db)], user: TeacherA
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
-    - `student` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `updates` (TeacherEdit): TeacherEdit object that specifies the desired account updates.
 
     **Returns**: a TeacherResponseModel object with the teacher's edited account details.
@@ -94,7 +94,7 @@ async def create_course(db: Annotated[Session, Depends(get_db)], user: TeacherAu
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `course` (CourseCreate): CourseCreate object that specifies the details of the new course.
 
-    **Returns**: a CourseBase object with the details of the created course.
+    **Returns**: a CourseSectionsTags object with the details of the created course.
 
     **Raises**:
     - `HTTPException 409`: If a course with the same title already exists.
@@ -112,9 +112,23 @@ async def create_course(db: Annotated[Session, Depends(get_db)], user: TeacherAu
     return await make_course(db, teacher, course)
 
 
-@router.get("/courses")
+@router.get("/courses", response_model=list[CourseBase])
 async def get_courses(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep): 
-    pass
+    """
+    Returns teacher's courses.
+
+    **Parameters:**
+    - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+
+    **Raises**:
+    - HTTPException 401, if old password does not match.
+
+    **Returns**: A list of CourseBase response models containing information about courses owned by the teacher.
+    """
+    
+    teacher = await get_teacher_by_id(db, user.account_id)
+    
+    return await get_my_courses(db, teacher)
 
 
 @router.get("/courses/{course_id}")
@@ -125,24 +139,24 @@ async def get_course_by_id(
     sort: str | None = None,
     sort_by: str | None = None):
     
-    # if sort and sort.lower() not in ['asc', 'desc']:
-    #     raise HTTPException(
-    #         status_code=400,
-    #         detail=f"Invalid sort parameter"
-    #     )
+    if sort and sort.lower() not in ['asc', 'desc']:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid sort parameter"
+        )
 
-    # if sort_by and sort_by.lower() not in ['section_id', 'title']:
-    #     raise HTTPException(
-    #         status_code=400,
-    #         detail=f"Invalid sort_by parameter"
-    #     )
+    if sort_by and sort_by.lower() not in ['section_id', 'title']:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid sort_by parameter"
+        )
         
-    # course = await get_course_by_id(db, course_id)
-    # if not course:
-    #     raise HTTPException(
-    #         status_code=404,
-    #         detail=f"Course #ID:{course_id} does not exist"
-    #     )
+    course = await get_course_by_id(db, course_id)
+    if not course:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Course #ID:{course_id} does not exist"
+        )
     pass
     
 
