@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session
 from database.models import Course, Tag, Teacher
 from schemas.course import CourseCreate, CourseUpdate, CourseBase, CourseInfo, CourseSectionsTags
 from typing import List
-from crud_section import create_sections
-from crud_tag import create_tags
+from crud.crud_section import create_sections
+from crud.crud_tag import create_tags
 
 
 async def get_all_courses(
