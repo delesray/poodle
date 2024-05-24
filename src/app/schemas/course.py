@@ -1,15 +1,7 @@
 from pydantic import BaseModel, StringConstraints
 from typing import Annotated
-
-
-class Course(BaseModel):
-    title: str
-    description: str
-    owner: int
-    is_premium: bool
-    home_page_picture: bytes
-    rating: int
-
+from schemas.section import SectionBase
+from schemas.tag import TagBase
 
 class CourseBase(BaseModel):
     course_id: int
@@ -17,6 +9,7 @@ class CourseBase(BaseModel):
     description: str
     objectives: str
     owner_id: int
+    owner_names: str
     is_premium: bool = False
     is_hidden: bool = False
     home_page_picture: bytes = None
@@ -38,15 +31,25 @@ class CourseInfo(BaseModel):
             tags=tags,
         )
 
-
 class CourseUpdate(BaseModel):
-    pass
-
+    title: str #TODO discuss:  should title changes be limited?
+    description: str
+    objectives: str
+    home_page_picture: bytes = None
 
 class CourseCreate(BaseModel):
-    title: Annotated[str, StringConstraints(min_length=1)] = None
-    description: Annotated[str, StringConstraints(min_length=1)] = None
+    title: Annotated[str, StringConstraints(min_length=1)] 
+    description: Annotated[str, StringConstraints(min_length=1)] 
     objectives: Annotated[
-        str, StringConstraints(min_length=1)] = None  # what students are expected to learn by the end of course
+        str, StringConstraints(min_length=1)]  # what students are expected to learn by the end of course
     is_premium: bool = False
     home_page_picture: bytes | None = None
+    
+class CourseSectionsTags(BaseModel):
+    course: CourseBase
+    tags: list[TagBase]
+    Sections: list[SectionBase]
+   
+
+    
+    

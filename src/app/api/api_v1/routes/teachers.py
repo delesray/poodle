@@ -3,7 +3,7 @@ from typing import Annotated
 from database.database import get_db
 from sqlalchemy.orm import Session
 from crud.crud_user import create, exists, check_deactivated
-from crud.crud_teacher import edit_account, get_teacher_by_id, get_info
+from crud.crud_teacher import edit_account, get_teacher_by_id, get_info, get_course_by_id
 from crud.crud_course import make_course, course_exists
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherResponseModel
 from schemas.course import CourseCreate, CourseUpdate, CourseBase
@@ -11,7 +11,7 @@ from schemas.student import EnrollmentApproveRequest
 from core.oauth import TeacherAuthDep
  
 
-router = APIRouter(prefix='/teachers', tags=['teachers'], responses={404: {"description": "Not found"}})
+router = APIRouter(prefix='/teachers', tags=['teachers'])
 
 @router.post("/register", status_code=201, response_model=TeacherResponseModel)
 async def register_teacher(db: Annotated[Session, Depends(get_db)], user: TeacherCreate):
@@ -119,10 +119,7 @@ async def update_course(course_id: int, existing_teacher: TeacherAuthDep, course
 #             detail=f"Data not provided to make changes")
 # #add other validations        
 #     return await edit_course(course_id, course_update)
-
-@router.get("/courses/{course_id}")
-async def get_course_by_id(course_id: int, existing_teacher: TeacherAuthDep):
-    pass
+   
 
 @router.post("/approve-enrollment")
 def approve_enrollment(request: EnrollmentApproveRequest, db: Annotated[Session, Depends(get_db)]):

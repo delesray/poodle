@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from database.models import Teacher
+from database.models import Teacher, Course
 from schemas.teacher import TeacherResponseModel, TeacherEdit
 
 
@@ -31,3 +31,6 @@ async def get_info(teacher, teacher_email):
             profile_picture=teacher.profile_picture
         )
 
+async def get_course_by_id(db: Session, id: int):
+    course = (db.query(Course).filter(Course.id == id).first())
+    return course
