@@ -116,7 +116,7 @@ async def add_student_rating(db: Session, student: Student, course_id: int, rati
 
 
 async def get_course_information(db: Session, course_id: int, student: Student):
-    course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
+    course: Course = await crud_course.get_course_common_info(db=db, course_id=course_id)
     student_rating = await get_student_rating(db=db, student_id=student.student_id, course_id=course_id)
     student_progress = await get_student_progress(db=db, student_id=student.student_id, course_id=course_id)
 
