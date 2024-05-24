@@ -191,7 +191,7 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
     **Returns**: CourseInfo object with home page information about the subscribed course.
     """
 
-    course: Course = await crud_course.get_by_id(db=db, course_id=course_id)
+    course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
     if course.is_premium and not student.student.is_premium:
         raise HTTPException(
