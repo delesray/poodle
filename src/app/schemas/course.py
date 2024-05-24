@@ -1,4 +1,4 @@
-from pydantic import BaseModel, StringConstraints
+from pydantic import BaseModel, Field, StringConstraints
 from typing import Annotated
 from schemas.section import SectionBase
 from schemas.tag import TagBase
@@ -53,5 +53,10 @@ class CourseSectionsTags(BaseModel):
     sections: list[SectionBase]
    
 
-    
-    
+class CourseRate(BaseModel):
+    rating: int = Field(default=10, ge=1, le=10)
+
+
+class CourseRateResponse(BaseModel):
+    course: str
+    rating: int = Field(ge=1, le=10)

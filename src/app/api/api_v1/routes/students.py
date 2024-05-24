@@ -4,12 +4,13 @@ from crud import crud_course
 from core.oauth import StudentAuthDep
 from api.api_v1.routes import utils
 from crud import crud_user, crud_student
-from schemas.course import CourseInfo
+from schemas.course import CourseInfo, CourseRate, CourseRateResponse
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
 from database.database import get_db
 from sqlalchemy.orm import Session
 from database.models import Course, Student, StudentProgress
+
 
 router = APIRouter(
     prefix="/students",
@@ -30,7 +31,6 @@ async def register_student(db: Annotated[Session, Depends(get_db)], student: Stu
     **Returns**: a StudentCreate object with the created student's details.
 
     **Raises**: HTTPException 409, if a user with the same email has already been registered.
-
     """
     if await crud_user.exists(db=db, email=student.email):
         raise HTTPException(
@@ -38,7 +38,7 @@ async def register_student(db: Annotated[Session, Depends(get_db)], student: Stu
             detail="Email already registered",
         )
 
-    return await crud_user.create(db, student)
+    return await crud_user.create(db=db, user_schema=student)
 
 
 @router.get('/', response_model=StudentResponseModel)
@@ -53,7 +53,6 @@ async def view_account(db: Annotated[Session, Depends(get_db)], student: Student
     **Returns**: a StudentResponseModel object with the student's account details.
 
     **Raises**: HTTPException 401, if the student is not authenticated.
-
     """
     return await crud_student.get_student(db=db, email=student.email)
 
@@ -71,7 +70,6 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], student: Student
     **Returns**: a StudentResponseModel object with the student's edited account details.
 
     **Raises**: HTTPException 401, if the student is not authenticated.
-
     """
     return await crud_student.edit_account(db=db, email=student.email, updates=updates)
 
@@ -91,18 +89,17 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
     - HTTPException 401, if old password does not match.
     - HTTPException 400, if new password is the same as the old one.
     - HTTPException 400, if new password confirmation does not match.
-
     """
 
-    await utils.change_pass_raise(student, pass_update)
+    await utils.change_pass_raise(account=student, pass_update=pass_update)
 
-    await crud_user.change_password(db, pass_update, student)
+    await crud_user.change_password(db=db, pass_update=pass_update, account=student)
 
 
-@router.get('/mycourses', response_model=list[CourseInfo])
+@router.get('/courses', response_model=list[CourseInfo])
 async def view_my_courses(student: StudentAuthDep):
     """
-    Returns student's courses.
+    Returns authenticated student's courses.
 
     **Parameters:**
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
@@ -112,7 +109,7 @@ async def view_my_courses(student: StudentAuthDep):
 
     **Returns**: A list of CourseInfo response models with the information for each course the student is enrolled in.
     """
-    my_courses = await crud_student.get_my_courses(student.student)
+    my_courses = await crud_student.get_my_courses(student=student.student)
     return my_courses
 
 
@@ -144,12 +141,10 @@ async def view_my_courses(student: StudentAuthDep):
 #     pass
 
 
-@router.post('/courses/{course_id}/subscription', response_model=CourseInfo)
-async def subscribe_for_course(
-        course_id: int,
-        db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+@router.post('/courses/{course_id}/subscription', response_model=CourseInfo, status_code=201)
+async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
     """
-    Enrolls student in a course.
+    Enrolls authenticated student in a course.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
@@ -164,43 +159,62 @@ async def subscribe_for_course(
 
 
     **Returns**: CourseInfo object with home page information about the subscribed course.
-
     """
 
-    course: Course = await crud_course.get_by_id(db, course_id)
+    course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
     if course.is_premium and not student.student.is_premium:
-        raise HTTPException(status_code=403, detail='Upgrade to premium to enroll in this course')
-    
-    if course.is_premium and await crud_student.get_premium_courses_count(student.student) >= 5:
-        raise HTTPException(status_code=400, detail='Premium courses limit reached')
-    
-    return await crud_student.subscribe_for_course(db, student.student, course)
+        raise HTTPException(
+            status_code=403, detail='Upgrade to premium to enroll in this course')
+
+    if course.is_premium and await crud_student.get_premium_courses_count(student=student.student) >= 5:
+        raise HTTPException(
+            status_code=400, detail='Premium courses limit reached')
+
+    return await crud_student.subscribe_for_course(db=db, student=student.student, course=course)
 
 
-# @router.put('/')
-# async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
-#     """
+@router.delete('/courses/{course_id}/subscription', status_code=204)
+async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
+    """
+    Unsubscribes authenticated student from a course.
 
-#     **Parameters:**
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    - `course_id` (integer): the ID of the course the student wants to enroll in.
 
-#     **Returns**: 
-
-#     **Raises**: 
-
-#     """
-#     pass
+    **Raises**:
+    - HTTPException 401, if the student is not authenticated.
+    """
+    await crud_student.unsubscribe_from_course(db=db, student_id=student.account_id, course_id=course_id)
 
 
-# @router.put('/')
-# async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
-#     """
+@router.patch('/courses/{course_id}/rating', status_code=201, response_model=CourseRateResponse)
+async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int, rating: CourseRate):
+    """
+    Enables authenticated student to rate a course, if the student is enrolled in the course.
 
-#     **Parameters:**
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    - `course_id` (integer): ID of the course to rate.
+    - `rating` (CourseRate): rating the student wants to give.
 
-#     **Returns**: 
+    **Raises**:
+    - HTTPException 401, if the student is not authenticated.
+    - HTTPException 409, if the student is not enrolled in the course.
+    - HTTPException 409, if the student is not enrolled in the course.
+    - HTTPException 400, if the student has already rated the course.
 
-#     **Raises**: 
+    **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
+    """
+    if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
+        raise HTTPException(
+            status_code=409, detail='You have to enroll in this course to rate it')
 
-#     """
-#     pass
+    if await crud_student.has_student_rated_course(db=db, student_id=student.account_id, course_id=course_id):
+        raise HTTPException(
+            status_code=400, detail='You have already rated this course')
+
+    return await crud_student.add_student_rating(db=db, student=student.student, rating=rating.rating)
