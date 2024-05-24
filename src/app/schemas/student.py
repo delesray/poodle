@@ -2,15 +2,9 @@ from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, StringConstraints
 
-
-class Student(BaseModel):
-    pass
-
-
 class EnrollmentApproveRequest(BaseModel):
     student_id: int
     course_id: int
-
 
 class StudentCreate(BaseModel):
     email: EmailStr

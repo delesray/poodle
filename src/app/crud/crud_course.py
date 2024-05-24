@@ -65,6 +65,7 @@ async def make_course(db: Session, teacher: Teacher, course: CourseCreate):
         description=new_course.description,
         objectives=new_course.objectives,
         owner_id=new_course.owner_id,
+        owner_names=teacher.first_name + ' ' + teacher.last_name,
         is_premium=new_course.is_premium,
         is_hidden=new_course.is_hidden,
         home_page_picture=new_course.home_page_picture,
