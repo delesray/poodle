@@ -8,13 +8,24 @@ class ContentType(str, Enum):
     text = 'text'
     quiz = 'quiz'
 
-class SectionCreate(BaseModel):
+class SectionBase(BaseModel):
+    section_id: int | None = None
     title: Annotated[str, StringConstraints(min_length=1)] 
     content: ContentType 
-    description: Annotated[str, StringConstraints(min_length=1)] 
-    external_link: Annotated[str, StringConstraints(min_length=1)] 
-    course_id: int    
-     
-class SectionBase(BaseModel):
-    pass
+    description: Annotated[str, StringConstraints(min_length=1)] | None = None 
+    external_link: Annotated[str, StringConstraints(min_length=1)] | None = None
+    course_id: int | None = None
+    
+    @classmethod
+    def from_query(cls, section_id, title, content, description, external_link, course_id):
+        return cls(
+            section_id=section_id,
+            title=title,
+            content=content,
+            description=description,
+            external_link=external_link,
+            course_id=course_id
+        )
+        
+
     

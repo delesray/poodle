@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from schemas.user import UserChangePassword
-from schemas.teacher import TeacherCreate
+from schemas.teacher import TeacherCreate, TeacherResponseModel
 from schemas.student import StudentCreate
 from database.models import Account, Teacher, Student
 from core.hashing import hash_pass
@@ -45,7 +45,15 @@ class TeacherFactory():
         db.commit()
         db.refresh(new_teacher)
         #await send_verification_email([schema.email], new_user)
-        return new_teacher
+        return TeacherResponseModel(
+            teacher_id=new_user.account_id,
+            email=new_user.email,
+            first_name=new_teacher.first_name,
+            last_name=new_teacher.last_name,
+            phone_number=new_teacher.phone_number,
+            linked_in=new_teacher.linked_in,
+            profile_picture=new_teacher.profile_picture   
+        )
 
 
 class StudentFactory():
