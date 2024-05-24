@@ -4,7 +4,7 @@ from schemas.section import SectionBase
 from schemas.tag import TagBase
 
 class CourseBase(BaseModel):
-    course_id: int
+    course_id: int 
     title: str
     description: str
     objectives: str
@@ -41,14 +41,16 @@ class CourseCreate(BaseModel):
     title: Annotated[str, StringConstraints(min_length=1)] 
     description: Annotated[str, StringConstraints(min_length=1)] 
     objectives: Annotated[
-        str, StringConstraints(min_length=1)]  # what students are expected to learn by the end of course
+        str, StringConstraints(min_length=1)]  # what students are expected to learn and accomplish by the end of the course
     is_premium: bool = False
     home_page_picture: bytes | None = None
+    tags: list[TagBase]
+    sections: list[SectionBase]
     
 class CourseSectionsTags(BaseModel):
     course: CourseBase
     tags: list[TagBase]
-    Sections: list[SectionBase]
+    sections: list[SectionBase]
    
 
     

@@ -26,9 +26,9 @@ class TeacherResponseModel(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
-    phone_number: str 
-    linked_in: str 
-    profile_picture: bytes 
+    phone_number: str = None
+    linked_in: str = None
+    profile_picture: bytes = None
     
     
     
