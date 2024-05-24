@@ -44,6 +44,7 @@ async def get_courses(
         db: Annotated[Session, Depends(get_db)],
         tag: str | None = None,
         rating: int | None = None,
+        name: str | None = None,
         pages: int = 1,
         items_per_page: int = 5
 ):
@@ -64,5 +65,5 @@ async def get_courses(
     """
 
     return await crud_course.get_all_courses(
-        db=db, tag=tag, rating=rating, pages=pages, items_per_page=items_per_page
+        db=db, tag=tag, rating=rating, name=name, pages=pages, items_per_page=items_per_page
     )
