@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
-from database.models import Course, Teacher
+from database.models import Course, Teacher, Tag, CourseTag, Section
 from schemas.course import CourseCreate, CourseBase, CourseSectionsTags
 from crud.crud_section import create_sections
 from crud.crud_tag import create_tags
 from schemas.teacher import TeacherResponseModel, TeacherEdit
+from schemas.tag import TagBase
+from schemas.section import SectionBase
 
 
 async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):  
@@ -56,6 +58,7 @@ async def get_my_courses(db: Session, teacher: Teacher) -> list[CourseBase]:
     
     return teacher_courses
 
+
 async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
     course_info = Course(
         title=new_course.title,
@@ -93,5 +96,44 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
     )
 
 
-async def edit_course(course_id, course_update):
+async def get_entire_course(db: Session, course: Course, teacher: Teacher):
+    course_info = CourseBase(
+        course_id=course.id,
+        title=course.title,
+        description=course.description,
+        objectives=course.objectives,
+        owner_id=course.owner_id,
+        owner_names=f"{teacher.first_name} {teacher.last_name}",
+        is_premium=course.is_premium,
+        is_hidden=course.is_hidden,
+        home_page_picture=course.home_page_picture,
+        rating=course.rating
+    )
+    
+    course_tags = []
+    tags = db.query(Tag).join(CourseTag).filter(CourseTag.course_id == course.id).all()
+    for tag in tags:
+        tag_base = TagBase(tag_id=tag.tag_id, name=tag.name)
+        course_tags.append(tag_base)
+    
+    course_sections = []
+    sections = db.query(Section).filter(Section.course_id == course.id).all()
+    for section in sections:
+        section_base = SectionBase.from_query(
+            section_id=section.section_id,
+            title=section.title,
+            content=section.content,
+            description=section.description,
+            external_link=section.external_link,
+            course_id=section.course_id
+        )
+        course_sections.append(section_base) 
+    
+    return CourseSectionsTags(
+        course=course_info,
+        tags=course_tags,
+        sections=course_sections
+    )
+    
+async def edit_course_info(course_id, course_update):
     pass

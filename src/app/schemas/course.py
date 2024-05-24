@@ -32,10 +32,10 @@ class CourseInfo(BaseModel):
         )
 
 class CourseUpdate(BaseModel):
-    title: str #TODO discuss:  should title changes be limited?
-    description: str
-    objectives: str
-    home_page_picture: bytes = None
+    title: Annotated[str, StringConstraints(min_length=1)] #TODO discuss:  should title changes be limited?
+    description: Annotated[str, StringConstraints(min_length=1)] 
+    objectives: Annotated[str, StringConstraints(min_length=1)] 
+    home_page_picture: bytes | None = None
 
 class CourseCreate(BaseModel):
     title: Annotated[str, StringConstraints(min_length=1)] 

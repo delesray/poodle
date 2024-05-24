@@ -27,5 +27,9 @@ class SectionBase(BaseModel):
             course_id=course_id
         )
         
+class SectionUpdate(BaseModel):
+    pass
 
+class SectionCreate(BaseModel):
+    pass
     

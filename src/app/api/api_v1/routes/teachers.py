@@ -3,11 +3,13 @@ from typing import Annotated
 from database.database import get_db
 from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
-from crud.crud_teacher import edit_account, get_teacher_by_id, get_info, get_my_courses
-from crud.crud_course import make_course, course_exists, get_course_by_id
+from crud.crud_teacher import edit_account, get_teacher_by_id, get_info, get_my_courses, make_course, get_entire_course
+from crud.crud_course import course_exists, get_course_common_info
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherResponseModel
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
 from schemas.student import EnrollmentApproveRequest
+from schemas.section import SectionUpdate, SectionCreate
+from schemas.tag import TagBase
 from core.oauth import TeacherAuthDep
  
 
@@ -94,7 +96,7 @@ async def create_course(db: Annotated[Session, Depends(get_db)], user: TeacherAu
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `course` (CourseCreate): CourseCreate object that specifies the details of the new course.
 
-    **Returns**: a CourseSectionsTags object with the details of the created course.
+    **Returns**: a CourseSectionsTags object with the details, tags, and sections of the created course.
 
     **Raises**:
     - `HTTPException 409`: If a course with the same title already exists.
@@ -118,10 +120,11 @@ async def get_courses(db: Annotated[Session, Depends(get_db)], user: TeacherAuth
     Returns teacher's courses.
 
     **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
 
     **Raises**:
-    - HTTPException 401, if old password does not match.
+    - HTTPException 401, If the teacher is not authenticated.
 
     **Returns**: A list of CourseBase response models containing information about courses owned by the teacher.
     """
@@ -131,14 +134,31 @@ async def get_courses(db: Annotated[Session, Depends(get_db)], user: TeacherAuth
     return await get_my_courses(db, teacher)
 
 
-@router.get("/courses/{course_id}")
-async def get_course_by_id(
+@router.get("/courses/{course_id}", response_model=CourseSectionsTags)
+async def view_course_by_id(
     db: Annotated[Session, Depends(get_db)],
     course_id: int,
     user: TeacherAuthDep,
     sort: str | None = None,
     sort_by: str | None = None):
     
+    """
+    Retrieve a course by its ID along with associated tags and sections.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `course_id` (int): The ID of the course to retrieve.
+    - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `sort` (str, optional): Sort order, either 'asc' or 'desc'.
+    - `sort_by` (str, optional): Field to sort by, either 'section_id' or 'title'.
+    
+    **Returns**: A `CourseSectionsTags` object containing the course details, tags, and sections.
+
+    **Raises**:
+    - `HTTPException 400`: If the sort or sort_by parameters are invalid.
+    - `HTTPException 404`: If the course with the given ID does not exist.
+    - `HTTPException 403`: If the authenticated teacher does not have permission to access the course.
+    """
     if sort and sort.lower() not in ['asc', 'desc']:
         raise HTTPException(
             status_code=400,
@@ -151,17 +171,25 @@ async def get_course_by_id(
             detail=f"Invalid sort_by parameter"
         )
         
-    course = await get_course_by_id(db, course_id)
+    course = await get_course_common_info(db, course_id)
     if not course:
         raise HTTPException(
             status_code=404,
             detail=f"Course #ID:{course_id} does not exist"
         )
-    pass
+    if course.owner_id != user.account_id:
+        raise HTTPException(
+                status_code=403,
+                detail=f'You do not have permission to access this course'
+            )
+    teacher = await get_teacher_by_id(db, user.account_id)
+    
+    return await get_entire_course(db, course, teacher)
+    
     
 
 @router.put("/courses/{course_id}")
-async def update_course(course_id: int, existing_teacher: TeacherAuthDep, course_update: CourseUpdate = Body(...)):
+async def update_course_info(db: Annotated[Session, Depends(get_db)], course_id: int, user: TeacherAuthDep, updates: CourseUpdate = Body(...)):
     pass
 #     if not course_update:
 #         raise HTTPException(
@@ -169,10 +197,29 @@ async def update_course(course_id: int, existing_teacher: TeacherAuthDep, course
 #             detail=f"Data not provided to make changes")
 # #add other validations        
 #     return await edit_course(course_id, course_update)
-   
+
+@router.put("/courses/{course_id}/sections/{section_id}")
+async def update_section(db: Annotated[Session, Depends(get_db)], course_id: int, section_id: int, user: TeacherAuthDep, updates: SectionUpdate = Body(...)):
+    pass  
+
+@router.post("/courses/{course_id}/sections")
+async def add_section(db: Annotated[Session, Depends(get_db)], course_id: int, user: TeacherAuthDep, section: SectionCreate):
+    pass 
+
+@router.delete("/courses/{course_id}/sections/{section_id}")
+async def remove_section(db: Annotated[Session, Depends(get_db)], course_id: int, section_id: int, user: TeacherAuthDep):
+    pass 
+
+@router.post("/courses/{course_id}/tags")
+async def add_tag(db: Annotated[Session, Depends(get_db)], course_id: int, user: TeacherAuthDep, tag: TagBase):
+    pass 
+
+@router.delete("/courses/{course_id}/tags/{tag_id}")
+async def remove_tag(db: Annotated[Session, Depends(get_db)], course_id: int, tag_id: int, user: TeacherAuthDep):
+    pass
 
 @router.post("/approve-enrollment")
-def approve_enrollment(request: EnrollmentApproveRequest, db: Annotated[Session, Depends(get_db)]):
+def approve_enrollment(db: Annotated[Session, Depends(get_db)], request: EnrollmentApproveRequest, user: TeacherAuthDep):
     pass
 
 @router.patch("/courses/{course_id}/deactivate")
