@@ -219,6 +219,11 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
 
     **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
     """
+    # TODO
+    # add students_rated col in Course
+    # add 1 count when rating to this col
+    # update rating in Course
+
     if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
         raise HTTPException(
             status_code=409, detail='You have to enroll in this course to rate it')

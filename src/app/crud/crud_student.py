@@ -91,11 +91,11 @@ async def get_student_rating(db: Session, student_id: int, course_id: int):
 
     if query:
         return query.rating
-    
+
 
 async def get_student_progress(db: Session, student_id: int, course_id: int):
     query = db.query(StudentProgress).filter(StudentProgress.student_id ==
-                                           student_id, StudentProgress.course_id == course_id).first()
+                                             student_id, StudentProgress.course_id == course_id).first()
 
     if query:
         return query.progress
@@ -119,17 +119,17 @@ async def get_course_information(db: Session, course_id: int, student: Student):
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
     student_rating = await get_student_rating(db=db, student_id=student.student_id, course_id=course_id)
     student_progress = await get_student_progress(db=db, student_id=student.student_id, course_id=course_id)
-    
+
     if course:
         return StudentCourse(course_id=course.id,
-                         title=course.title,
-                         description=course.description,
-                         objectives=course.objectives,
-                         owner_id=course.owner_id,
-                         owner_name=course.owner.first_name + ' ' + course.owner.last_name,
-                                     is_premium=course.is_premium,
-                                     home_page_picture=course.home_page_picture,
-                                     overall_rating=course.rating,
-                                     your_rating=student_rating if student_rating else 0,
-                                     your_progress=student_progress
-                         )
+                             title=course.title,
+                             description=course.description,
+                             objectives=course.objectives,
+                             owner_id=course.owner_id,
+                             owner_name=course.owner.first_name + ' ' + course.owner.last_name,
+                             is_premium=course.is_premium,
+                             home_page_picture=course.home_page_picture,
+                             overall_rating=course.rating,
+                             your_rating=student_rating if student_rating else 0,
+                             your_progress=student_progress
+                             )
