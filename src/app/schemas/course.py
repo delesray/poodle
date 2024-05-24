@@ -52,7 +52,7 @@ class CourseSectionsTags(BaseModel):
    
 
 class CourseRate(BaseModel):
-    rating: int = Field(ge=1, le=10)
+    rating: int = Field(default=10, ge=1, le=10)
 
 
 class CourseRateResponse(BaseModel):
