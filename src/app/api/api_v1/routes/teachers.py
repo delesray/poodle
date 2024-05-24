@@ -184,7 +184,7 @@ async def view_course_by_id(
             )
     teacher = await get_teacher_by_id(db, user.account_id)
     
-    return await get_entire_course(db, course, teacher)
+    return await get_entire_course(db=db, course=course, teacher=teacher, sort=sort, sort_by=sort_by)
     
     
 
