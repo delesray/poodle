@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 
-@router.post('/register', status_code=201, response_model=StudentCreate)
+@router.post('/register', status_code=201, response_model=StudentResponseModel)
 async def register_student(db: Annotated[Session, Depends(get_db)], student: StudentCreate):
     """
     Registers a student.
@@ -144,7 +144,7 @@ async def view_my_courses(student: StudentAuthDep):
 #     pass
 
 
-@router.post('/courses/{course_id}/subscription')
+@router.post('/courses/{course_id}/subscription', response_model=CourseInfo)
 async def subscribe_for_course(
         course_id: int,
         db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
@@ -162,8 +162,8 @@ async def subscribe_for_course(
     - HTTPException 400, if the student has reached their premium courses limit (5).
     - HTTPException 409, if the student is attempting to duplicate a course enrollment.
 
-    TODO return object?
-    **Returns**: Successful message, if the student is enrolled in the course.
+
+    **Returns**: CourseInfo object with home page information about the subscribed course.
 
     """
 
@@ -172,11 +172,10 @@ async def subscribe_for_course(
     if course.is_premium and not student.student.is_premium:
         raise HTTPException(status_code=403, detail='Upgrade to premium to enroll in this course')
     
-    if await crud_student.get_premium_courses_count(student.student) >= 5:
+    if course.is_premium and await crud_student.get_premium_courses_count(student.student) >= 5:
         raise HTTPException(status_code=400, detail='Premium courses limit reached')
     
-    await crud_student.subscribe_for_course(db, student.student, course_id)
-    return f'Subscription for course {course_id} successful!'
+    return await crud_student.subscribe_for_course(db, student.student, course)
 
 
 # @router.put('/')

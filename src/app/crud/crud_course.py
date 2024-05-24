@@ -27,10 +27,14 @@ async def get_all_courses(
     courses_list: List[CourseInfo] = []
 
     for course in courses:
-        tags = [tag.name for tag in course.tags]
+        tags = await get_course_tags(course)
         pydantic_model = CourseInfo.from_query(*(course.title, course.description, course.is_premium, tags))
         courses_list.append(pydantic_model)
     return courses_list
+
+
+async def get_course_tags(course):
+    return [tag.name for tag in course.tags]
 
 
 async def get_by_id(db, course_id):
