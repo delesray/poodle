@@ -1,8 +1,9 @@
 from fastapi import HTTPException, status
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from crud import crud_course
-from database.models import Account, Course, Student, StudentProgress, StudentRating
+from crud import crud_course, crud_section
+from database.models import Account, Course, Student, StudentProgress, StudentRating, StudentsSections, Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourse
 
@@ -30,7 +31,8 @@ async def edit_account(db: Session, email: str, updates: StudentEdit):
 
     db.commit()
 
-    return StudentResponseModel.from_query(student.first_name, student.last_name, student.profile_picture, student.is_premium)
+    return StudentResponseModel.from_query(student.first_name, student.last_name, student.profile_picture,
+                                           student.is_premium)
 
 
 async def get_my_courses(student: Student):
@@ -46,7 +48,6 @@ async def get_my_courses(student: Student):
 
 
 async def subscribe_for_course(db: Session, student: Student, course: Course):
-
     new_enrollment = StudentProgress(
         student_id=student.student_id,
         course_id=course.id,
@@ -93,12 +94,22 @@ async def get_student_rating(db: Session, student_id: int, course_id: int):
         return query.rating
 
 
-async def get_student_progress(db: Session, student_id: int, course_id: int):
-    query = db.query(StudentProgress).filter(StudentProgress.student_id ==
-                                             student_id, StudentProgress.course_id == course_id).first()
+async def get_student_progress(db: Session, student_id: int, course_id: int) -> float:
+    """Gets the count of sections and sections_viewed to calculate the progress in percentage"""
+    total_sections = db.query(Section).where(Section.course_id == course_id).count()
 
-    if query:
-        return query.progress
+    viewed_sections = (
+        db.query(StudentsSections)
+        .join(Section, StudentsSections.section_id == Section.section_id)
+        .filter(StudentsSections.student_id == student_id, Section.course_id == course_id)
+        .count()
+    )
+
+    progress = 0.0
+    if total_sections > 0:  # avoiding zero division
+        progress = (viewed_sections / total_sections) * 100
+
+    return progress
 
 
 async def add_student_rating(db: Session, student: Student, course_id: int, rating: int):
@@ -121,15 +132,39 @@ async def get_course_information(db: Session, course_id: int, student: Student):
     student_progress = await get_student_progress(db=db, student_id=student.student_id, course_id=course_id)
 
     if course:
-        return StudentCourse(course_id=course.id,
-                             title=course.title,
-                             description=course.description,
-                             objectives=course.objectives,
-                             owner_id=course.owner_id,
-                             owner_name=course.owner.first_name + ' ' + course.owner.last_name,
-                             is_premium=course.is_premium,
-                             home_page_picture=course.home_page_picture,
-                             overall_rating=course.rating,
-                             your_rating=student_rating if student_rating else 0,
-                             your_progress=student_progress
-                             )
+        return StudentCourse(
+            course_id=course.id,
+            title=course.title,
+            description=course.description,
+            objectives=course.objectives,
+            owner_id=course.owner_id,
+            owner_name=course.owner.first_name + ' ' + course.owner.last_name,
+            is_premium=course.is_premium,
+            home_page_picture=course.home_page_picture,
+            overall_rating=course.rating,
+            your_rating=student_rating if student_rating else 0,
+            your_progress=student_progress
+        )
+
+# def update_progress_for_course(db: Session, student_id, course_id) -> None:
+#     """Goes to students_progress table, calculates the new progress and updates it"""
+#
+#     # because we need the divisor to make the avg calculation
+#     sections_count = crud_section.get_sections_count_for_course(db, course_id)
+#
+#     stmt = (
+#         update(StudentProgress)
+#         .where(StudentProgress.student_id == student_id, StudentProgress.course_id == course_id)
+#         .values(progress=StudentProgress.progress + 6)
+#     )
+#     db.execute(stmt)
+#     db.commit()
+#     a = 2
+
+
+# def viewed_section(db: Session, student_id: int, section_id: int) -> bool:
+#     query = (db.query(StudentsSections)
+#              .filter(StudentsSections.student_id == student_id,
+#                      StudentsSections.section_id == section_id).first())
+#
+#     return query is not None

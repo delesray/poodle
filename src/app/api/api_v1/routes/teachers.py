@@ -176,7 +176,7 @@ async def view_course_by_id(
         )
         
     course = await get_course_common_info(db, course_id)    
-    user_has_access, msg = crud_teacher.validate_course_access(course, user)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, user)
     if not user_has_access:
         raise HTTPException(
             status_code=403,
@@ -197,7 +197,7 @@ async def update_course_info(
     ):
     
     course = await get_course_common_info(db, course_id)    
-    user_has_access, msg = crud_teacher.validate_course_access(course, user)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, user)
     if not user_has_access:
         raise HTTPException(
             status_code=403,
@@ -209,7 +209,12 @@ async def update_course_info(
 
 
 @router.put("/courses/{course_id}/sections/{section_id}")
-async def update_section(db: Annotated[Session, Depends(get_db)], course_id: int, section_id: int, user: TeacherAuthDep, updates: SectionUpdate = Body(...)):
+async def update_section(
+    db: Annotated[Session,
+                  Depends(get_db)], 
+    course_id: int, section_id: int,
+    user: TeacherAuthDep, 
+    updates: SectionUpdate = Body(...)):
     pass  
 
 @router.post("/courses/{course_id}/sections")

@@ -1,12 +1,14 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+
+from crud import crud_student
 from database.models import Section, StudentsSections
 from schemas.section import SectionBase
 from typing import List
 
 
 async def get_section_by_id(db, section_id) -> Section:
-    section = db.query(Section).where(Section.id == section_id).first()
+    section = db.query(Section).where(Section.section_id == section_id).first()
 
     if section:
         return section
@@ -37,26 +39,45 @@ async def create_sections(db: Session, sections: List[SectionBase], new_course_i
     return created_sections
 
 
-async def add_student(db: Session, section_id, student_id):
-    new = StudentsSections(section_id=section_id, student_id=student_id)
-    try:  # todo Nora refresh
-        db.add(new)
-        db.commit()
-    except IntegrityError:
-        pass
-    return SectionBase.from_query(
-        new.section_id,
-        new.title,
-        new.content,
-        new.description,
-        new.external_link,
-        new.course_id,
-    )
+async def student_viewed_section(db: Session, section_id, student_id):
+    data = (db.query(StudentsSections)
+            .where(StudentsSections.section_id == section_id, StudentsSections.student_id == student_id)
+            .first()
+            )
+    return data is not None
+
+
+async def add_student(db: Session, section: Section, student_id) -> None:
+    """
+    Student views a section (inserts a record in students_sections table)
+    IntegrityError means there is already such record and continues
+    """
+    if await student_viewed_section(db, section.section_id, student_id):
+        return
+    new = StudentsSections(section_id=section.section_id, student_id=student_id)
+    db.add(new)
+    db.commit()
 
 
 async def update_section(section_id, section_update):
     pass
 
-
 async def delete_section(section_id):
     pass
+
+
+async def get_sections_count_for_course(db: Session, course_id: int) -> int:
+    count = db.query(Section).where(Section.course_id == course_id).count()
+    return count
+
+
+def transfer_object(section: Section) -> SectionBase:
+    dto = SectionBase(
+        section_id=section.section_id,
+        title=section.title,
+        content=section.content,
+        description=section.description,
+        external_link=section.external_link,
+        course_id=section.course_id
+    )
+    return dto

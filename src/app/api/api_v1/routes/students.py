@@ -5,6 +5,7 @@ from core.oauth import StudentAuthDep
 from api.api_v1.routes import utils
 from crud import crud_user, crud_student
 from schemas.course import CourseInfo, CourseRate, CourseRateResponse, StudentCourse
+from schemas.section import SectionBase
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
 from database.database import get_db
@@ -134,7 +135,7 @@ async def view_my_courses(student: StudentAuthDep):
     return my_courses
 
 
-@router.get('/courses/course_id', response_model=StudentCourse)
+@router.get('/courses/{course_id}', response_model=StudentCourse)
 async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
     """
     Returns authenticated student's chosen course with details.
@@ -158,7 +159,7 @@ async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentA
     return await crud_student.get_course_information(db=db, course_id=course_id, student=student.student)
 
 
-@router.get('/courses/{course_id}/sections/{section_id}')
+@router.get('/courses/{course_id}/sections/{section_id}', response_model=SectionBase)
 async def view_course_section(
         db: Annotated[Session, Depends(get_db)], student: StudentAuthDep,
         course_id: int, section_id: int
@@ -168,14 +169,17 @@ async def view_course_section(
     **Parameters:**
 
     **Returns**:
+        SectionBase response object
 
     **Raises**:
+        - HTTPException 404, if no such course or section.
+        - HTTPException 403, if student is not enrolled in the course.
 
     """
     if not await crud_course.get_course_by_id(db, course_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='You have to enroll in this course to view details about it'
+            detail='No such course'
         )
 
     section = await crud_section.get_section_by_id(db, section_id)
@@ -191,8 +195,9 @@ async def view_course_section(
             detail='You have to enroll in this course to view details about it'
         )
 
-    await crud_section.add_student(db, section_id, student.account_id)
-    return section  # todo pydantic
+    await crud_section.add_student(db, section, student.account_id)
+    section_dto = crud_section.transfer_object(section)
+    return section_dto
 
 
 @router.post('/courses/{course_id}/subscription', response_model=CourseInfo, status_code=201)

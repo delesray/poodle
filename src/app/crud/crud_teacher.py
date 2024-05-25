@@ -145,14 +145,14 @@ async def edit_course_info(db: Session, course: Course, teacher: Teacher, update
 
 async def validate_course_access(course, user)-> tuple[bool, str]:
     if not course:
-        return False, f"Course #ID:{course.id} does not exist"
+        return False, f"Course does not exist"
         
     if course.owner_id != user.account_id:
-        return False, f'You do not have permission to access this course'
+        return False, f"You do not have permission to access this course"
     
     return True, "OK" 
 
-async def get_coursebase_model(teacher, course):
+def get_coursebase_model(teacher, course):
     return CourseBase(
         course_id=course.id,
         title=course.title,
