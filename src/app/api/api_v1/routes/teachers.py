@@ -22,7 +22,7 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], user: Teache
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
-    - `user` (TeacherCreate): The information of the teacher to register.
+    - `userr` (TeacherCreate): The information of the teacher to register.
 
     **Returns**: a TeacherSchema object with the created teacher's details.
 
@@ -39,7 +39,7 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], user: Teache
 
 
 @router.get('/', response_model=TeacherSchema)
-async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep):
+async def view_account(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
     """
     Shows authenticated teacher's profile information.
 
@@ -52,15 +52,14 @@ async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
     **Raises**: HTTPException 401, if the teacher is not authenticated.
 
     """
-    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
 
-    return await crud_teacher.get_info(teacher, user.email)
+    return await crud_teacher.get_info(teacher, teacher.account.email)
 
 
 @router.put('/', status_code=200, response_model=TeacherSchema)
 async def update_account(
         db: Annotated[Session, Depends(get_db)],
-        user: TeacherAuthDep,
+        teacher: TeacherAuthDep,
         updates: TeacherEdit = Body(...)
 ):
     """
@@ -74,17 +73,16 @@ async def update_account(
     **Returns**: a TeacherSchema object with the teacher's edited account details.
 
     **Raises**: HTTPException 401, if the teacher is not authenticated.
-    """      
-    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
+    """
 
     edited_teacher_account = await crud_teacher.edit_account(db, teacher, updates)
 
-    return await crud_teacher.get_info(edited_teacher_account, user.email)
+    return await crud_teacher.get_info(edited_teacher_account, teacher.account.email)
 
 
 @router.post("/courses", status_code=201, response_model=CourseSectionsTags)
 async def create_course(
-        db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep, course: CourseCreate
+        db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep, course: CourseCreate
 ) -> CourseSectionsTags:
     """
     Creates a new course for an authenticated teacher.
@@ -107,13 +105,11 @@ async def create_course(
             detail="Course with such title already exists",
         )
 
-    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
-
     return await crud_teacher.make_course(db, teacher, course)
 
 
 @router.get("/courses", response_model=list[CourseBase])
-async def get_courses(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep):
+async def get_courses(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
     """
     Returns teacher's courses.
 
@@ -127,8 +123,6 @@ async def get_courses(db: Annotated[Session, Depends(get_db)], user: TeacherAuth
     **Returns**: A list of CourseBase response models containing information about courses owned by the teacher.
     """
 
-    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
-
     return await crud_teacher.get_my_courses(db, teacher)
 
 
@@ -136,7 +130,7 @@ async def get_courses(db: Annotated[Session, Depends(get_db)], user: TeacherAuth
 async def view_course_by_id(
         db: Annotated[Session, Depends(get_db)],
         course_id: int,
-        user: TeacherAuthDep,
+        teacher: TeacherAuthDep,
         sort: str | None = None,
         sort_by: str | None = None
 ):
@@ -170,14 +164,12 @@ async def view_course_by_id(
         )
 
     course = await get_course_common_info(db, course_id)
-    user_has_access, msg = await crud_teacher.validate_course_access(course, user)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher.account)
     if not user_has_access:
         raise HTTPException(
             status_code=403,
             detail=msg
         )
-
-    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
 
     return await crud_teacher.get_entire_course(db=db, course=course, teacher=teacher, sort=sort, sort_by=sort_by)
 
@@ -186,66 +178,67 @@ async def view_course_by_id(
 async def update_course_info(
         db: Annotated[Session, Depends(get_db)],
         course_id: int,
-        user: TeacherAuthDep,
+        teacher: TeacherAuthDep,
         updates: CourseUpdate = Body(...)
 ):
     course = await get_course_common_info(db, course_id)
-    user_has_access, msg = await crud_teacher.validate_course_access(course, user)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher.account)
     if not user_has_access:
         raise HTTPException(
             status_code=403,
             detail=msg
         )
 
-    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
     return await crud_teacher.edit_course_info(db, course, teacher, updates)
 
 
 @router.put("/courses/{course_id}/sections/{section_id}")
 async def update_section(
-    db: Annotated[Session, Depends(get_db)], 
-    course_id: int, section_id: int,
-    user: TeacherAuthDep, 
-    updates: SectionUpdate = Body(...)
-    ):
-    pass  
+        db: Annotated[Session, Depends(get_db)],
+        course_id: int, section_id: int,
+        teacher: TeacherAuthDep,
+        updates: SectionUpdate = Body(...)
+):
+    pass
+
 
 @router.post("/courses/{course_id}/sections")
 async def add_section(
-    db: Annotated[Session, Depends(get_db)], 
-    course_id: int, 
-    user: TeacherAuthDep, 
-    section
-    ):
-    pass 
+        db: Annotated[Session, Depends(get_db)],
+        course_id: int,
+        teacher: TeacherAuthDep,
+        section
+):
+    pass
+
 
 @router.delete("/courses/{course_id}/sections/{section_id}")
 async def remove_section(db: Annotated[Session, Depends(get_db)], course_id: int, section_id: int,
-                         user: TeacherAuthDep):
+                         teacher: TeacherAuthDep):
     pass
 
 
 @router.post("/courses/{course_id}/tags")
-async def add_tag(db: Annotated[Session, Depends(get_db)], course_id: int, user: TeacherAuthDep, tag: TagBase):
+async def add_tag(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep, tag: TagBase):
     pass
 
 
 @router.delete("/courses/{course_id}/tags/{tag_id}")
-async def remove_tag(db: Annotated[Session, Depends(get_db)], course_id: int, tag_id: int, user: TeacherAuthDep):
+async def remove_tag(db: Annotated[Session, Depends(get_db)], course_id: int, tag_id: int, teacher: TeacherAuthDep):
     pass
 
 
 @router.post("/approve-enrollment")
 def approve_enrollment(db: Annotated[Session, Depends(get_db)], request: EnrollmentApproveRequest,
-                       user: TeacherAuthDep):
+                       teacher: TeacherAuthDep):
     pass
 
 
 @router.patch("/courses/{course_id}/deactivate")
-def deactivate_course(course_id, existing_teacher: TeacherAuthDep, db: Annotated[Session, Depends(get_db)]):
+def deactivate_course(course_id, teacher: TeacherAuthDep, db: Annotated[Session, Depends(get_db)]):
     pass
 
 
 @router.get("/courses/reports")
-def generate_course_reports(existing_teacher: TeacherAuthDep, db: Annotated[Session, Depends(get_db)]):
+def generate_course_reports(teacher: TeacherAuthDep, db: Annotated[Session, Depends(get_db)]):
     pass

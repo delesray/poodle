@@ -51,14 +51,14 @@ class TeacherFactory():
         db.add(new_teacher)
         db.commit()
         db.refresh(new_teacher)
-        #await send_verification_email([schema.email], new_user)
+        # await send_verification_email([schema.email], new_user)
         return TeacherSchema(
             teacher_id=new_user.account_id,
             email=new_user.email,
             first_name=new_teacher.first_name,
             last_name=new_teacher.last_name,
             phone_number=new_teacher.phone_number,
-            linked_in=new_teacher.linked_in           
+            linked_in=new_teacher.linked_in
         )
 
 
@@ -77,7 +77,8 @@ class StudentFactory():
         db.add(new_student)
         db.commit()
         db.refresh(new_student)
-        return StudentResponseModel.from_query(first_name=new_student.first_name, last_name=new_student.last_name, profile_picture=new_student.profile_picture)
+        return StudentResponseModel.from_query(first_name=new_student.first_name, last_name=new_student.last_name,
+                                               profile_picture=new_student.profile_picture)
 
 
 def create_user_factory(user_type: str):
@@ -94,9 +95,9 @@ async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]) 
     return await factory.create_db_user(db, user_schema)
 
 
-async def exists(db: Session, email: str):
-    query = db.query(Account).filter(Account.email == email,
-                                     Account.is_deactivated == False).first()
+async def exists(db: Session, email: str) -> Account:
+    query = db.query(Account).filter(
+        Account.email == email, Account.is_deactivated == False).first()
 
     if query:
         return query

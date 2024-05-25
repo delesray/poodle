@@ -52,6 +52,13 @@ async def course_exists(db: Session, title: str) -> bool:
     return query is not None
 
 
+async def get_course_by_id(db: Session, course_id: int) -> Course:
+    query = db.query(Course).filter(Course.course_id == course_id).first()
+
+    return query
+
+
+
 def update_rating(db: Session, course_id, new_st_rating, old_st_rating=None):
     # commit must happen in outer func
     course = db.query(Course).where(Course.course_id == course_id).first()
