@@ -109,7 +109,7 @@ async def get_student_progress(db: Session, student_id: int, course_id: int) -> 
     if total_sections > 0:  # avoiding zero division
         progress = (viewed_sections / total_sections) * 100
 
-    return progress
+    return f'{progress:.2f}'
 
 
 async def add_student_rating(db: Session, student: Student, course_id: int, rating: int):
