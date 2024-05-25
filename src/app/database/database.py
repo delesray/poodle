@@ -12,8 +12,7 @@ from sqlalchemy.orm import Session
 # SQLALCHEMY_DATABASE_URL = settings.DB_URL
 
 # SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
-# todo before merging poodle2 > poodle
-SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{USER}:{PASS}@localhost/poodle2?charset=utf8mb4"
+SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{USER}:{PASS}@localhost/poodle?charset=utf8mb4"
 
 # factory that can create new database connections
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
