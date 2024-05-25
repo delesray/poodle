@@ -3,8 +3,9 @@ from typing import Annotated
 from schemas.section import SectionBase
 from schemas.tag import TagBase
 
+
 class CourseBase(BaseModel):
-    course_id: int 
+    course_id: int
     title: str
     description: str
     objectives: str
@@ -12,7 +13,9 @@ class CourseBase(BaseModel):
     owner_names: str
     is_premium: bool = False
     is_hidden: bool = False
-    rating: float = 0
+    home_page_picture: bytes | None = None
+    rating: float | None = None
+    people_rated: int = 0
 
 
 class CourseInfo(BaseModel):
@@ -30,27 +33,29 @@ class CourseInfo(BaseModel):
             tags=tags,
         )
 
+
 class CourseUpdate(BaseModel):
     title: Annotated[str, StringConstraints(min_length=1)] #TODO discuss:  should title changes be limited?
     description: Annotated[str, StringConstraints(min_length=1)] 
     objectives: Annotated[str, StringConstraints(min_length=1)] 
-    
+
 
 class CourseCreate(BaseModel):
-    title: Annotated[str, StringConstraints(min_length=1)] 
-    description: Annotated[str, StringConstraints(min_length=1)] 
-    objectives: Annotated[
-        str, StringConstraints(min_length=1)]  # what students are expected to learn and accomplish by the end of the course
+    title: Annotated[str, StringConstraints(min_length=1)]
+    description: Annotated[str, StringConstraints(min_length=1)]
+    objectives: Annotated[  # what students are expected to learn and accomplish by the end of the course
+        str, StringConstraints(min_length=1)]
     is_premium: bool = False
     home_page_picture: bytes | None = None
-    tags: list[TagBase]
-    sections: list[SectionBase]
-    
+    tags: list[TagBase] | None = None
+    sections: list[SectionBase] | None = None
+
+
 class CourseSectionsTags(BaseModel):
     course: CourseBase
     tags: list[TagBase]
     sections: list[SectionBase]
-   
+
 
 class CourseRate(BaseModel):
     rating: int = Field(default=10, ge=1, le=10)
@@ -62,7 +67,7 @@ class CourseRateResponse(BaseModel):
 
 
 class StudentCourse(BaseModel):
-    course_id: int 
+    course_id: int
     title: str
     description: str
     objectives: str

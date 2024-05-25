@@ -1,3 +1,4 @@
+# TODO not valid
 create table accounts
 (
     account_id int auto_increment

@@ -9,7 +9,7 @@ from schemas.section import SectionBase
 
 
 
-async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):  
+async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):
     teacher.first_name = updates.first_name
     teacher.last_name = updates.last_name
     teacher.phone_number = updates.phone_number
@@ -27,6 +27,7 @@ async def get_teacher_by_id(db: Session, id: int):
 
 
 async def get_info(teacher, teacher_email):
+
     return TeacherSchema(
             teacher_id=teacher.teacher_id,
             email=teacher_email,
@@ -42,7 +43,7 @@ async def get_my_courses(db: Session, teacher: Teacher) -> list[CourseBase]:
 
     teacher_courses = [
         CourseBase(
-            course_id=course.id,
+            course_id=course.course_id,
             title=course.title,
             description=course.description,
             objectives=course.objectives,
@@ -53,7 +54,7 @@ async def get_my_courses(db: Session, teacher: Teacher) -> list[CourseBase]:
             rating=course.rating
         ) for course in courses
     ]
-    
+
     return teacher_courses
 
 
@@ -66,14 +67,13 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
         is_premium=new_course.is_premium,
         is_hidden=False,
         home_page_picture=new_course.home_page_picture,
-        rating=0
     )
 
     db.add(course_info)
     db.commit()
     db.refresh(course_info)
     course_info_response = CourseBase(
-        course_id=course_info.id,
+        course_id=course_info.course_id,
         title=course_info.title,
         description=course_info.description,
         objectives=course_info.objectives,
@@ -81,11 +81,17 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
         owner_names=teacher.first_name + ' ' + teacher.last_name,
         is_premium=course_info.is_premium,
         is_hidden=course_info.is_hidden,
-        rating=course_info.rating
+        home_page_picture=course_info.home_page_picture,
+        rating=course_info.rating,
+        people_rated=course_info.people_rated,
     )
-    course_tags = await create_tags(db, new_course.tags, course_info.id)
-    course_sections = await create_sections(db, new_course.sections, course_info.id)
-    
+
+    course_tags, course_sections = [], []
+    if new_course.tags:
+        course_tags = await create_tags(db, new_course.tags, course_info.course_id)
+    if new_course.sections:
+        course_sections = await create_sections(db, new_course.sections, course_info.course_id)
+
     return CourseSectionsTags(
         course=course_info_response,
         tags=course_tags,
@@ -95,20 +101,20 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
 
 async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort: str | None, sort_by: str | None):
     course_info = get_coursebase_model(teacher, course)
-    
+
     course_tags = []
-    tags = db.query(Tag).join(CourseTag).filter(CourseTag.course_id == course.id).all()
+    tags = db.query(Tag).join(CourseTag).filter(CourseTag.course_id == course.course_id).all()
     for tag in tags:
         tag_base = TagBase(tag_id=tag.tag_id, name=tag.name)
         course_tags.append(tag_base)
-    
+
     course_sections = []
-    sections_query = db.query(Section).filter(Section.course_id == course.id)
+    sections_query = db.query(Section).filter(Section.course_id == course.course_id)
     if sort_by:
         sections_query = sections_query.order_by(
             getattr(Section, sort_by).desc() if sort and sort == 'desc' else getattr(Section, sort_by).asc()
         )
-        
+
     sections = sections_query.all()
     for section in sections:
         section_base = SectionBase.from_query(
@@ -120,37 +126,38 @@ async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort:
             external_link=section.external_link,
             course_id=section.course_id
         )
-        course_sections.append(section_base) 
- 
+        course_sections.append(section_base)
+
     return CourseSectionsTags(
         course=course_info,
         tags=course_tags,
         sections=course_sections
     )
-    
+
+
 async def edit_course_info(db: Session, course: Course, teacher: Teacher, updates: CourseUpdate):
     course.title = updates.title
-    course.description= updates.description
+    course.description = updates.description
     course.objectives = updates.objectives
-      
     db.commit()
     db.refresh(course)
 
     return get_coursebase_model(teacher, course)
 
 
-async def validate_course_access(course, user)-> tuple[bool, str]:
+async def validate_course_access(course, user) -> tuple[bool, str]:
     if not course:
         return False, f"Course does not exist"
-        
+
     if course.owner_id != user.account_id:
         return False, f"You do not have permission to access this course"
-    
-    return True, "OK" 
+
+    return True, "OK"
+
 
 def get_coursebase_model(teacher, course):
     return CourseBase(
-        course_id=course.id,
+        course_id=course.course_id,
         title=course.title,
         description=course.description,
         objectives=course.objectives,
