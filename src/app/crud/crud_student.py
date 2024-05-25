@@ -96,7 +96,7 @@ async def get_student_rating(db: Session, student_id: int, course_id: int):
 
 
 async def get_student_progress(db: Session, student_id: int, course_id: int) -> float:
-    """Gets the count of sections and sections_viewed to calculate the progress"""
+    """Gets the count of sections and sections_viewed to calculate the progress in percentage"""
     total_sections = db.query(Section).where(Section.course_id == course_id).count()
 
     viewed_sections = (
@@ -108,7 +108,7 @@ async def get_student_progress(db: Session, student_id: int, course_id: int) -> 
 
     progress = 0.0
     if total_sections > 0:  # avoiding zero division
-        progress = viewed_sections / total_sections
+        progress = (viewed_sections / total_sections) * 100
 
     return progress
 
