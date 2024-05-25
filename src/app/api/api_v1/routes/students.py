@@ -10,6 +10,8 @@ from schemas.user import UserChangePassword
 from database.database import get_db
 from sqlalchemy.orm import Session
 from database.models import Course, Student, StudentProgress
+from fastapi import UploadFile
+
 
 router = APIRouter(
     prefix="/students",
@@ -39,6 +41,26 @@ async def register_student(db: Annotated[Session, Depends(get_db)], student: Stu
 
     return await crud_user.create(db=db, user_schema=student)
 
+
+@router.post('/', status_code=201)
+async def update_profile_picture(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, file: UploadFile):
+    """
+    Lets an authenticated student add or edit their profile picture.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentCreate): The information of the student to register.
+    - `file` (BinaryIO): BinaryIO object containing the image data.
+
+    **Returns**: Successful message, if the picture is uploaded.
+
+    **Raises**: 
+    - HTTPException 409, if a user with the same email has already been registered.
+    - HTTPException 400, if the file is corruped or the student uploaded an unsupported media type.
+    """
+    if await crud_user.add_picture(db=db, picture=file, student_id=student.account_id):
+        return 'Profile picture successfully uploaded!'
+    raise HTTPException(status_code=400, detail='File is corrupted or media type is not supported')
 
 @router.get('/', response_model=StudentResponseModel)
 async def view_account(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):

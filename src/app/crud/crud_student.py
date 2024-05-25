@@ -19,7 +19,7 @@ async def get_student(db: Session, email: str):
     student = await get_by_email(db, email)
 
     if student:
-        return StudentResponseModel.from_query(student.first_name, student.last_name, student.profile_picture, student.is_premium)
+        return StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium)
 
 
 async def edit_account(db: Session, email: str, updates: StudentEdit):
