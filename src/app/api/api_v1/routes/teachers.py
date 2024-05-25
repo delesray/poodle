@@ -3,7 +3,7 @@ from typing import Annotated
 from database.database import get_db
 from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
-from crud.crud_teacher import edit_account, get_teacher_by_id, get_info, get_my_courses, make_course, get_entire_course
+from crud import crud_teacher
 from crud.crud_course import course_exists, get_course_common_info
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherResponseModel
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
@@ -35,9 +35,8 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], user: Teache
             detail="Email already registered",
         )
     new_teacher = await create(db, user)   
-    return await get_info(new_teacher, user.email)
-    # return f"User with ID:{new_teacher.teacher_id} registered"
-
+    return await crud_teacher.get_info(new_teacher, user.email)
+   
 
 @router.get('/', response_model=TeacherResponseModel)
 async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep):
@@ -53,13 +52,17 @@ async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
     **Raises**: HTTPException 401, if the teacher is not authenticated.
 
     """
-    teacher = await get_teacher_by_id(db, user.account_id)
+    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
          
-    return await get_info(teacher, user.email)
+    return await crud_teacher.get_info(teacher, user.email)
 
 
 @router.put('/', status_code=200, response_model=TeacherResponseModel)
-async def update_account(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep, updates: TeacherEdit):
+async def update_account(
+    db: Annotated[Session, Depends(get_db)],
+    user: TeacherAuthDep,
+    updates: TeacherEdit = Body(...)
+    ):
     """
     Edits authenticated teacher's profile information.
 
@@ -73,17 +76,17 @@ async def update_account(db: Annotated[Session, Depends(get_db)], user: TeacherA
     **Raises**: HTTPException 401, if the teacher is not authenticated.
 
     """
-    if not updates:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Data not provided to make changes"
-            )
+    # if not updates:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail=f"Data not provided to make changes"
+    #         )
         
-    teacher = await get_teacher_by_id(db, user.account_id)
+    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
     
-    edited_teacher_account = await edit_account(db, teacher, updates)
+    edited_teacher_account = await crud_teacher.edit_account(db, teacher, updates)
     
-    return await get_info(edited_teacher_account, user.email)
+    return await crud_teacher.get_info(edited_teacher_account, user.email)
 
 
 @router.post("/courses", status_code=201, response_model=CourseSectionsTags)
@@ -109,9 +112,9 @@ async def create_course(db: Annotated[Session, Depends(get_db)], user: TeacherAu
             detail="Course with such title already exists",
         )
         
-    teacher = await get_teacher_by_id(db, user.account_id)
+    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
      
-    return await make_course(db, teacher, course)
+    return await crud_teacher.make_course(db, teacher, course)
 
 
 @router.get("/courses", response_model=list[CourseBase])
@@ -129,9 +132,9 @@ async def get_courses(db: Annotated[Session, Depends(get_db)], user: TeacherAuth
     **Returns**: A list of CourseBase response models containing information about courses owned by the teacher.
     """
     
-    teacher = await get_teacher_by_id(db, user.account_id)
+    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
     
-    return await get_my_courses(db, teacher)
+    return await crud_teacher.get_my_courses(db, teacher)
 
 
 @router.get("/courses/{course_id}", response_model=CourseSectionsTags)
@@ -140,7 +143,8 @@ async def view_course_by_id(
     course_id: int,
     user: TeacherAuthDep,
     sort: str | None = None,
-    sort_by: str | None = None):
+    sort_by: str | None = None
+    ):
     
     """
     Retrieves a course by its ID along with associated tags and sections.
@@ -171,32 +175,38 @@ async def view_course_by_id(
             detail=f"Invalid sort_by parameter"
         )
         
-    course = await get_course_common_info(db, course_id)
-    if not course:
+    course = await get_course_common_info(db, course_id)    
+    user_has_access, msg = crud_teacher.validate_course_access(course, user)
+    if not user_has_access:
         raise HTTPException(
-            status_code=404,
-            detail=f"Course #ID:{course_id} does not exist"
+            status_code=403,
+            detail=msg
         )
-    if course.owner_id != user.account_id:
-        raise HTTPException(
-                status_code=403,
-                detail=f'You do not have permission to access this course'
-            )
-    teacher = await get_teacher_by_id(db, user.account_id)
+        
+    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
     
-    return await get_entire_course(db=db, course=course, teacher=teacher, sort=sort, sort_by=sort_by)
-    
+    return await crud_teacher.get_entire_course(db=db, course=course, teacher=teacher, sort=sort, sort_by=sort_by)
     
 
-@router.put("/courses/{course_id}")
-async def update_course_info(db: Annotated[Session, Depends(get_db)], course_id: int, user: TeacherAuthDep, updates: CourseUpdate = Body(...)):
-    pass
-#     if not course_update:
-#         raise HTTPException(
-#             status_code=400,
-#             detail=f"Data not provided to make changes")
-# #add other validations        
-#     return await edit_course(course_id, course_update)
+@router.put("/courses/{course_id}", status_code=200, response_model=CourseBase)
+async def update_course_info(
+    db: Annotated[Session, Depends(get_db)],
+    course_id: int,
+    user: TeacherAuthDep,
+    updates: CourseUpdate = Body(...)
+    ):
+    
+    course = await get_course_common_info(db, course_id)    
+    user_has_access, msg = crud_teacher.validate_course_access(course, user)
+    if not user_has_access:
+        raise HTTPException(
+            status_code=403,
+            detail=msg
+        )
+        
+    teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)       
+    return await crud_teacher.edit_course_info(db, course, teacher, updates)
+
 
 @router.put("/courses/{course_id}/sections/{section_id}")
 async def update_section(db: Annotated[Session, Depends(get_db)], course_id: int, section_id: int, user: TeacherAuthDep, updates: SectionUpdate = Body(...)):

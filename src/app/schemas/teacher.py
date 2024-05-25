@@ -2,8 +2,8 @@ from pydantic import BaseModel, EmailStr, StringConstraints
 from typing import Annotated
        
 class TeacherEdit(BaseModel):
-    first_name: Annotated[str, StringConstraints(min_length=2)] = None
-    last_name: Annotated[str, StringConstraints(min_length=2)] = None
+    first_name: Annotated[str, StringConstraints(min_length=2)] 
+    last_name: Annotated[str, StringConstraints(min_length=2)] 
     phone_number: str | None = None
     linked_in: str | None = None
     profile_picture: bytes | None = None

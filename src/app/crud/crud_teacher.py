@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session
 from database.models import Course, Teacher, Tag, CourseTag, Section
-from schemas.course import CourseCreate, CourseBase, CourseSectionsTags
+from schemas.course import CourseCreate, CourseBase, CourseSectionsTags, CourseUpdate
 from crud.crud_section import create_sections
 from crud.crud_tag import create_tags
 from schemas.teacher import TeacherResponseModel, TeacherEdit
 from schemas.tag import TagBase
 from schemas.section import SectionBase
+from crud.crud_course import get_course_common_info
 
 
 async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):  
@@ -97,18 +98,7 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
 
 
 async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort: str | None, sort_by: str | None):
-    course_info = CourseBase(
-        course_id=course.id,
-        title=course.title,
-        description=course.description,
-        objectives=course.objectives,
-        owner_id=course.owner_id,
-        owner_names=f"{teacher.first_name} {teacher.last_name}",
-        is_premium=course.is_premium,
-        is_hidden=course.is_hidden,
-        home_page_picture=course.home_page_picture,
-        rating=course.rating
-    )
+    course_info = get_coursebase_model(teacher, course)
     
     course_tags = []
     tags = db.query(Tag).join(CourseTag).filter(CourseTag.course_id == course.id).all()
@@ -141,5 +131,37 @@ async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort:
         sections=course_sections
     )
     
-async def edit_course_info(course_id, course_update):
-    pass
+async def edit_course_info(db: Session, course: Course, teacher: Teacher, updates: CourseUpdate):
+    course.title = updates.title
+    course.description= updates.description
+    course.objectives = updates.objectives
+    course.home_page_picture = updates.home_page_picture
+    
+    db.commit()
+    db.refresh(course)
+
+    return get_coursebase_model(teacher, course)
+
+
+async def validate_course_access(course, user)-> tuple[bool, str]:
+    if not course:
+        return False, f"Course #ID:{course.id} does not exist"
+        
+    if course.owner_id != user.account_id:
+        return False, f'You do not have permission to access this course'
+    
+    return True, "OK" 
+
+async def get_coursebase_model(teacher, course):
+    return CourseBase(
+        course_id=course.id,
+        title=course.title,
+        description=course.description,
+        objectives=course.objectives,
+        owner_id=course.owner_id,
+        owner_names=f"{teacher.first_name} {teacher.last_name}",
+        is_premium=course.is_premium,
+        is_hidden=course.is_hidden,
+        home_page_picture=course.home_page_picture,
+        rating=course.rating
+    )
