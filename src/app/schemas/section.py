@@ -13,9 +13,9 @@ class ContentType(str, Enum):
 class SectionBase(BaseModel):
     section_id: int | None = None
     title: Annotated[str, StringConstraints(min_length=1)]
-    content: ContentType | None = None
-    description: Annotated[str, StringConstraints(min_length=1)] | None = None
-    external_link: Annotated[str, StringConstraints(min_length=1)] | None = None
+    content: ContentType
+    description: str | None = None
+    external_link: str | None = None
     course_id: int | None = None
 
     @classmethod
@@ -34,5 +34,4 @@ class SectionUpdate(BaseModel):
     pass
 
 
-class SectionCreate(BaseModel):
-    pass
+

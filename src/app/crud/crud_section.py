@@ -14,7 +14,7 @@ async def get_section_by_id(db, section_id) -> Section:
         return section
 
 
-async def create_sections(db: Session, sections: List[SectionBase], new_course_id: int):
+async def create_sections(db: Session, sections: List[SectionBase], course_id: int):
     created_sections = []
     for section in sections:
         section_db = Section(
@@ -22,7 +22,7 @@ async def create_sections(db: Session, sections: List[SectionBase], new_course_i
             content=section.content,
             description=section.description,
             external_link=section.external_link,
-            course_id=new_course_id
+            course_id=course_id
         )
         db.add(section_db)
         db.flush()  # get the section_id without committing
