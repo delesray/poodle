@@ -57,6 +57,5 @@ async def add_student(db: Session, section_id, student_id):
 async def update_section(section_id, section_update):
     pass
 
-
 async def delete_section(section_id):
     pass
