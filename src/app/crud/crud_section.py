@@ -2,7 +2,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from crud import crud_student
-from database.models import Section, StudentsSections
+from database.models import Section, StudentSection
 from schemas.section import SectionBase
 from typing import List
 
@@ -40,8 +40,8 @@ async def create_sections(db: Session, sections: List[SectionBase], new_course_i
 
 
 async def student_viewed_section(db: Session, section_id, student_id):
-    data = (db.query(StudentsSections)
-            .where(StudentsSections.section_id == section_id, StudentsSections.student_id == student_id)
+    data = (db.query(StudentSection)
+            .where(StudentSection.section_id == section_id, StudentSection.student_id == student_id)
             .first()
             )
     return data is not None
@@ -54,7 +54,7 @@ async def add_student(db: Session, section: Section, student_id) -> None:
     """
     if await student_viewed_section(db, section.section_id, student_id):
         return
-    new = StudentsSections(section_id=section.section_id, student_id=student_id)
+    new = StudentSection(section_id=section.section_id, student_id=student_id)
     db.add(new)
     db.commit()
 

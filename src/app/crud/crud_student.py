@@ -3,7 +3,7 @@ from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course, crud_section
-from database.models import Account, Course, Student, StudentProgress, StudentRating, StudentsSections, Section
+from database.models import Account, Course, Student, StudentCourse, StudentRating, StudentSection, Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourse
 
@@ -49,9 +49,9 @@ async def get_my_courses(student: Student):
 
 
 async def subscribe_for_course(db: Session, student: Student, course: Course):
-    new_enrollment = StudentProgress(
+    new_enrollment = StudentCourse(
         student_id=student.student_id,
-        course_id=course.id,
+        course_id=course.course_id,
     )
 
     try:
@@ -74,13 +74,13 @@ async def subscribe_for_course(db: Session, student: Student, course: Course):
 
 
 async def unsubscribe_from_course(db: Session, student_id: int, course_id: int):
-    db.query(StudentProgress).filter(StudentProgress.student_id ==
-                                     student_id, StudentProgress.course_id == course_id).delete()
+    db.query(StudentCourse).filter(StudentCourse.student_id ==
+                                   student_id, StudentCourse.course_id == course_id).delete()
     db.commit()
 
 
 async def is_student_enrolled(student: Student, course_id: int):
-    return course_id in set([course.id for course in student.courses_enrolled])
+    return course_id in set([course.course_id for course in student.courses_enrolled])
 
 
 async def get_premium_courses_count(student: Student):
@@ -100,9 +100,9 @@ async def get_student_progress(db: Session, student_id: int, course_id: int) -> 
     total_sections = db.query(Section).where(Section.course_id == course_id).count()
 
     viewed_sections = (
-        db.query(StudentsSections)
-        .join(Section, StudentsSections.section_id == Section.section_id)
-        .filter(StudentsSections.student_id == student_id, Section.course_id == course_id)
+        db.query(StudentSection)
+        .join(Section, StudentSection.section_id == Section.section_id)
+        .filter(StudentSection.student_id == student_id, Section.course_id == course_id)
         .count()
     )
 
@@ -121,7 +121,7 @@ async def add_student_rating(db: Session, student: Student, course_id: int, rati
     db.commit()
 
     course = next(
-        (course for course in student.courses_enrolled if course.id == course_id), None)
+        (course for course in student.courses_enrolled if course.course_id == course_id), None)
 
     return CourseRateResponse(course=course.title,
                               rating=rating)
@@ -134,7 +134,7 @@ async def get_course_information(db: Session, course_id: int, student: Student):
 
     if course:
         return StudentCourse(
-            course_id=course.id,
+            course_id=course.course_id,
             title=course.title,
             description=course.description,
             objectives=course.objectives,
@@ -154,9 +154,9 @@ async def get_course_information(db: Session, course_id: int, student: Student):
 #     sections_count = crud_section.get_sections_count_for_course(db, course_id)
 #
 #     stmt = (
-#         update(StudentProgress)
-#         .where(StudentProgress.student_id == student_id, StudentProgress.course_id == course_id)
-#         .values(progress=StudentProgress.progress + 6)
+#         update(StudentCourse)
+#         .where(StudentCourse.student_id == student_id, StudentCourse.course_id == course_id)
+#         .values(progress=StudentCourse.progress + 6)
 #     )
 #     db.execute(stmt)
 #     db.commit()
@@ -164,8 +164,8 @@ async def get_course_information(db: Session, course_id: int, student: Student):
 
 
 # def viewed_section(db: Session, student_id: int, section_id: int) -> bool:
-#     query = (db.query(StudentsSections)
-#              .filter(StudentsSections.student_id == student_id,
-#                      StudentsSections.section_id == section_id).first())
+#     query = (db.query(StudentSection)
+#              .filter(StudentSection.student_id == student_id,
+#                      StudentSection.section_id == section_id).first())
 #
 #     return query is not None

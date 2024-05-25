@@ -10,7 +10,7 @@ from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
 from database.database import get_db
 from sqlalchemy.orm import Session
-from database.models import Course, Student, StudentProgress
+from database.models import Course
 
 router = APIRouter(
     prefix="/students",
