@@ -13,7 +13,8 @@ class ContentType(str, Enum):
 class SectionBase(BaseModel):
     section_id: int | None = None
     title: Annotated[str, StringConstraints(min_length=1)]
-    content: ContentType | None = None
+    content_type: ContentType | None = None
+    content: str
     description: Annotated[str, StringConstraints(min_length=1)] | None = None
     external_link: Annotated[str, StringConstraints(min_length=1)] | None = None
     course_id: int | None = None
