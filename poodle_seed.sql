@@ -1,3 +1,4 @@
+-- passwords = pass
 -- insert admin
 INSERT INTO `poodle`.`accounts` (`account_id`, `email`, `password`, `role`)
 VALUES (1, 'a@a.com', '$2b$12$ctdJK7aLqFyhN50AE7aVgu/zRcMBLLgWKdkILjyTwPxx0.MuQIaTK', 'admin');
@@ -68,3 +69,7 @@ VALUES ('python'),
 -- relate some tags
 INSERT INTO `poodle`.`courses_tags` (`course_id`, `tag_id`)
 VALUES (1,1),(1,2),(2,5),(3,3),(3,4);
+
+-- enroll 2 students to course 1
+INSERT INTO `poodle`.`students_courses` (`student_id`, `course_id`) VALUES ('4', '1');
+INSERT INTO `poodle`.`students_courses` (`student_id`, `course_id`) VALUES ('5', '1');

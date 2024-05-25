@@ -14,7 +14,6 @@ from database.models import Course
 
 from fastapi import UploadFile
 
-
 router = APIRouter(
     prefix="/students",
     tags=["students"],
@@ -258,7 +257,7 @@ async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentA
     await crud_student.unsubscribe_from_course(db=db, student_id=student.account_id, course_id=course_id)
 
 
-@router.patch('/courses/{course_id}/rating', status_code=201, response_model=CourseRateResponse)
+@router.post('/courses/{course_id}/rating', status_code=201, response_model=CourseRateResponse)
 async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int,
                       rating: CourseRate):
     """
@@ -273,8 +272,6 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
     - HTTPException 409, if the student is not enrolled in the course.
-    - HTTPException 409, if the student is not enrolled in the course.
-    - HTTPException 400, if the student has already rated the course.
 
     **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
     """
@@ -283,9 +280,5 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
         raise HTTPException(
             status_code=409, detail='You have to enroll in this course to rate it')
 
-    if await crud_student.get_student_rating(db=db, student_id=student.account_id, course_id=course_id):
-        raise HTTPException(
-            status_code=400, detail='You have already rated this course')
-
-    return await crud_student.add_student_rating(db=db, student=student.student, course_id=course_id,
-                                                 rating=rating.rating)
+    return await crud_student.update_add_student_rating(
+        db=db, student=student.student, course_id=course_id, rating=rating.rating)
