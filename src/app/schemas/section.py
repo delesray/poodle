@@ -33,7 +33,11 @@ class SectionBase(BaseModel):
         
 
 class SectionUpdate(BaseModel):
-    pass
+    title: Annotated[str, StringConstraints(min_length=1)]
+    content_type: ContentType
+    content: str
+    description: str | None = None
+    external_link: str | None = None
 
 
 
