@@ -50,7 +50,6 @@ class Teacher(Base):
     linked_in: Mapped[Optional[str]] = mapped_column(String(200))
     profile_picture: Mapped[Optional[bytes]]
 
-    # todo back_populates is bidirectional, backref is maybe not
     courses: Mapped[List['Course']] = relationship(back_populates="owner")
 
 
@@ -93,7 +92,8 @@ class Course(Base):
     is_premium: Mapped[Optional[bool]] = mapped_column(default=False)
     is_hidden: Mapped[Optional[bool]] = mapped_column(default=False)
     home_page_picture: Mapped[Optional[bytes]] = mapped_column(default=False)
-    rating: Mapped[int] = mapped_column(default=0)
+    rating: Mapped[float] = mapped_column(default=0)
+    students_rated: Mapped[int] = mapped_column(default=0)
 
     owner: Mapped['Teacher'] = relationship(back_populates="courses")
     students_enrolled: Mapped[List['Student']] = relationship(
@@ -133,7 +133,8 @@ class Section(Base):
 
     section_id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[Optional[str]] = mapped_column(String(45))
-    content: Mapped[Optional[ContentType]]
+    content_type: Mapped[ContentType]
+    content: Mapped[str]
     description: Mapped[Optional[str]] = mapped_column(String(250))
     external_link: Mapped[Optional[str]] = mapped_column(String(500))
     course_id: Mapped[Optional[int]] = mapped_column(ForeignKey('courses.id'))

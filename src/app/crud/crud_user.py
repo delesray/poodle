@@ -142,7 +142,6 @@ async def resize_picture(image_data: UploadFile, target_size: tuple) -> bytes | 
 
         # Open the image from the bytes object
         image = Image.open(BytesIO(image_data))
-
         # Resize the image
         resized_image = image.resize(target_size)
 
