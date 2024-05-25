@@ -19,6 +19,7 @@ async def create_sections(db: Session, sections: List[SectionBase], course_id: i
     for section in sections:
         section_db = Section(
             title=section.title,
+            content_type=section.content_type,
             content=section.content,
             description=section.description,
             external_link=section.external_link,
@@ -28,7 +29,7 @@ async def create_sections(db: Session, sections: List[SectionBase], course_id: i
         db.flush()  # get the section_id without committing
 
         new_section = SectionBase.from_query(
-            section_db.section_id, section_db.title, section_db.content,
+            section_db.section_id, section_db.title, section_db.content_type, section_db.content,
             section_db.description, section_db.external_link, section_db.course_id
         )
 

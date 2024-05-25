@@ -114,6 +114,7 @@ async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort:
         section_base = SectionBase.from_query(
             section_id=section.section_id,
             title=section.title,
+            content_type=section.content_type,
             content=section.content,
             description=section.description,
             external_link=section.external_link,

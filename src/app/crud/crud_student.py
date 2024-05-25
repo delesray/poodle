@@ -20,8 +20,7 @@ async def get_student(db: Session, email: str):
     student = await get_by_email(db, email)
 
     if student:
-        return StudentResponseModel.from_query(student.first_name, student.last_name, student.profile_picture,
-                                               student.is_premium)
+        return StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium)
 
 
 async def edit_account(db: Session, email: str, updates: StudentEdit):
@@ -110,7 +109,7 @@ async def get_student_progress(db: Session, student_id: int, course_id: int) -> 
     if total_sections > 0:  # avoiding zero division
         progress = (viewed_sections / total_sections) * 100
 
-    return progress
+    return f'{progress:.2f}'
 
 
 async def add_student_rating(db: Session, student: Student, course_id: int, rating: int):

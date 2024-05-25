@@ -1,5 +1,4 @@
 from typing import Annotated
-
 from pydantic import BaseModel, EmailStr, StringConstraints
 
 class EnrollmentApproveRequest(BaseModel):
@@ -11,7 +10,6 @@ class StudentCreate(BaseModel):
     password: Annotated[str, StringConstraints(min_length=4)] = None
     first_name: Annotated[str, StringConstraints(min_length=2)] = None
     last_name: Annotated[str, StringConstraints(min_length=2)] = None
-    profile_picture: bytes | None = None
 
     def get_type(self):
         return 'student'
@@ -20,19 +18,16 @@ class StudentCreate(BaseModel):
 class StudentResponseModel(BaseModel):
     first_name: str
     last_name: str
-    profile_picture: bytes | None = None
     is_premium: bool = False
 
     @classmethod
-    def from_query(cls, first_name, last_name, profile_picture, is_premium=False):
+    def from_query(cls, first_name, last_name, is_premium=False):
         return cls(
             first_name=first_name,
             last_name=last_name,
-            profile_picture=profile_picture,
             is_premium=is_premium
         )
 
 class StudentEdit(BaseModel):
     first_name: Annotated[str, StringConstraints(min_length=2)] = None
     last_name: Annotated[str, StringConstraints(min_length=2)] = None
-    profile_picture: bytes | None = None

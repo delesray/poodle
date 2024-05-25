@@ -10,7 +10,9 @@ from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
 from database.database import get_db
 from sqlalchemy.orm import Session
-from database.models import Course, Student, StudentProgress
+from database.models import Course
+from fastapi import UploadFile
+
 
 router = APIRouter(
     prefix="/students",
@@ -39,6 +41,28 @@ async def register_student(db: Annotated[Session, Depends(get_db)], student: Stu
         )
 
     return await crud_user.create(db=db, user_schema=student)
+
+
+@router.post('/', status_code=201)
+async def update_profile_picture(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, file: UploadFile):
+    """
+    Lets an authenticated student add or edit their profile picture.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentCreate): The information of the student to register.
+    - `file` (BinaryIO): BinaryIO object containing the image data.
+
+    **Returns**: Successful message, if the picture is uploaded.
+
+    **Raises**: 
+    - HTTPException 409, if a user with the same email has already been registered.
+    - HTTPException 400, if the file is corruped or the student uploaded an unsupported media type.
+    """
+    if await crud_user.add_picture(db=db, picture=file, student_id=student.account_id):
+        return 'Profile picture successfully uploaded!'
+    raise HTTPException(
+        status_code=400, detail='File is corrupted or media type is not supported')
 
 
 @router.get('/', response_model=StudentResponseModel)
@@ -86,6 +110,7 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
     - `pass_update` (UserChangePassword):
 
     **Raises**:
+    - HTTPException 401, if the student is not authenticated.
     - HTTPException 401, if old password does not match.
     - HTTPException 400, if new password is the same as the old one.
     - HTTPException 400, if new password confirmation does not match.
@@ -105,7 +130,7 @@ async def view_my_courses(student: StudentAuthDep):
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
 
     **Raises**:
-    - HTTPException 401, if old password does not match.
+    - HTTPException 401, if the student is not authenticated.
 
     **Returns**: A list of CourseInfo response models with the information for each course the student is enrolled in.
     """
@@ -124,7 +149,7 @@ async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentA
     - `course_id` (integer): The ID of the course the student wants to view.
 
     **Raises**:
-    - HTTPException 401, if old password does not match.
+    - HTTPException 401, if the student is not authenticated.
     - HTTPException 409, if the student is not enrolled in the course.
 
     **Returns**: A StudentCourse response object with detailed information about the course and the student's progress and rating of the course.
@@ -143,13 +168,18 @@ async def view_course_section(
         course_id: int, section_id: int
 ):
     """
+    Returns authenticated student's chosen course section.
 
     **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    - `course_id` (integer): The ID of the course the student wants to view.
+    - `section_id` (integer): The ID of the section the student wants to view.
 
-    **Returns**:
-        SectionBase response object
+    **Returns**: SectionBase response object with information about the course section.
 
     **Raises**:
+        - HTTPException 401, if the student is not authenticated.
         - HTTPException 404, if no such course or section.
         - HTTPException 403, if student is not enrolled in the course.
 
@@ -247,13 +277,6 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
 
     **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
     """
-    # TODO
-    # add students_rated col in Course
-    # add 1 count when rating to this col
-    # update rating in Course
-    # rating = (rating * students_rated + current_student_rating) / (students_rated + 1)
-
-    # TODO discuss calculate progress in-memory
 
     if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
         raise HTTPException(
