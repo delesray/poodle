@@ -13,7 +13,7 @@ class CourseBase(BaseModel):
     is_premium: bool = False
     is_hidden: bool = False
     home_page_picture: bytes = None
-    rating: int = 0
+    rating: float = 0
 
 
 class CourseInfo(BaseModel):
@@ -72,5 +72,5 @@ class StudentCourse(BaseModel):
     is_premium: bool = False
     home_page_picture: bytes = None
     overall_rating: int = 0
-    your_rating: int = 0
-    your_progress: int = 0
+    your_rating: float = 0
+    your_progress: float = 0
