@@ -26,11 +26,13 @@ class Account(Base):
     password: Mapped[str] = mapped_column(String(200))
     role: Mapped[Role]
     is_deactivated: Mapped[Optional[bool]] = mapped_column(server_default='0')
-    # server_default='0' sets it to zero in db too
 
     admin = relationship("Admin", uselist=False, backref="account")
     student = relationship("Student", uselist=False, backref="account")
     teacher = relationship("Teacher", uselist=False, backref="account")
+
+    def __repr__(self):
+        return f"<Account(account_id={self.account_id}, email={self.email}, role={self.role.name})>"
 
 
 class Admin(Base):
@@ -38,6 +40,9 @@ class Admin(Base):
 
     admin_id: Mapped[int] = mapped_column(ForeignKey(
         'accounts.account_id'), primary_key=True)
+
+    def __repr__(self):
+        return f"<Admin(admin_id={self.admin_id})>"
 
 
 class Teacher(Base):
@@ -53,6 +58,9 @@ class Teacher(Base):
 
     courses: Mapped[List['Course']] = relationship(back_populates="owner")
 
+    def __repr__(self):
+        return f"<Teacher(teacher_id={self.teacher_id}, first_name={self.first_name}, last_name={self.last_name})>"
+
 
 class Student(Base):
     __tablename__ = "students"
@@ -64,12 +72,6 @@ class Student(Base):
     profile_picture: Mapped[Optional[bytes]]
     is_premium: Mapped[Optional[bool]] = mapped_column(server_default='0')
 
-    """Relationships in SQLAlchemy return query objects to provide flexibility, efficiency, and lazy loading. 
-    You need to use methods like all() on the query object to get the actual list of related model objects. 
-    This approach helps you manage complex relationships and data retrieval efficiently."""
-
-    # calling student.courses_enrolled should return a query object with all courses the student has enrolled in
-    # using all() on that object would retrieve the actual course records
     courses_enrolled: Mapped[List['Course']] = relationship(
         secondary="students_courses",
         back_populates="students_enrolled"
@@ -80,6 +82,9 @@ class Student(Base):
 
     sections_visited: Mapped[List['Section']] = relationship(
         secondary="students_sections", back_populates="students_visited")
+
+    def __repr__(self):
+        return f"<Student(student_id={self.student_id}, first_name={self.first_name}, last_name={self.last_name})>"
 
 
 class Course(Base):
@@ -108,6 +113,9 @@ class Course(Base):
     sections: Mapped[List['Section']] = relationship(back_populates="course")
     tags: Mapped[List['Tag']] = relationship(secondary="courses_tags", back_populates="courses")
 
+    def __repr__(self):
+        return f"<Course(course_id={self.course_id}, title={self.title}, owner_id={self.owner_id})>"
+
 
 class StudentCourse(Base):
     __tablename__ = 'students_courses'
@@ -116,6 +124,9 @@ class StudentCourse(Base):
         ForeignKey('students.student_id'), primary_key=True)
     course_id: Mapped[int] = mapped_column(
         ForeignKey('courses.course_id'), primary_key=True)
+
+    def __repr__(self):
+        return f"<StudentCourse(student_id={self.student_id}, course_id={self.course_id})>"
 
 
 class StudentRating(Base):
@@ -126,6 +137,9 @@ class StudentRating(Base):
     course_id: Mapped[int] = mapped_column(
         ForeignKey('courses.course_id'), primary_key=True)
     rating: Mapped[float]
+
+    def __repr__(self):
+        return f"<StudentRating(student_id={self.student_id}, course_id={self.course_id}, rating={self.rating})>"
 
 
 class Section(Base):
@@ -142,6 +156,9 @@ class Section(Base):
     students_visited: Mapped[List['Student']] = relationship(
         secondary="students_sections", back_populates="sections_visited")
 
+    def __repr__(self):
+        return f"<Section(section_id={self.section_id}, title={self.title}, course_id={self.course_id})>"
+
 
 class StudentSection(Base):
     __tablename__ = 'students_sections'
@@ -151,6 +168,9 @@ class StudentSection(Base):
     section_id: Mapped[int] = mapped_column(ForeignKey(
         'sections.section_id'), primary_key=True)
 
+    def __repr__(self):
+        return f"<StudentSection(student_id={self.student_id}, section_id={self.section_id})>"
+
 
 class Tag(Base):
     __tablename__ = 'tags'
@@ -159,6 +179,9 @@ class Tag(Base):
     name: Mapped[str] = mapped_column(String(45))
 
     courses: Mapped[List['Course']] = relationship(secondary="courses_tags", back_populates="tags")
+
+    def __repr__(self):
+        return f"<Tag(tag_id={self.tag_id}, name={self.name})>"
 
     def __str__(self):
         return f'#{self.name}'
@@ -171,3 +194,6 @@ class CourseTag(Base):
         ForeignKey('courses.course_id'), primary_key=True)
     tag_id: Mapped[int] = mapped_column(
         ForeignKey('tags.tag_id'), primary_key=True)
+
+    def __repr__(self):
+        return f"<CourseTag(course_id={self.course_id}, tag_id={self.tag_id})>"
