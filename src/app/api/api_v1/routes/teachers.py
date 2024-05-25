@@ -8,7 +8,7 @@ from crud.crud_course import course_exists, get_course_common_info
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
 from schemas.student import EnrollmentApproveRequest
-from schemas.section import SectionUpdate, SectionCreate
+from schemas.section import SectionUpdate
 from schemas.tag import TagBase
 from core.oauth import TeacherAuthDep
 
@@ -215,7 +215,7 @@ async def add_section(
     db: Annotated[Session, Depends(get_db)], 
     course_id: int, 
     user: TeacherAuthDep, 
-    section: SectionCreate
+    section
     ):
     pass 
 
