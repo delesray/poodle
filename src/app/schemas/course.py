@@ -35,10 +35,9 @@ class CourseInfo(BaseModel):
 
 
 class CourseUpdate(BaseModel):
-    title: Annotated[str, StringConstraints(min_length=1)]  # TODO discuss:  should title changes be limited?
-    description: Annotated[str, StringConstraints(min_length=1)]
-    objectives: Annotated[str, StringConstraints(min_length=1)]
-    home_page_picture: bytes | None = None
+    title: Annotated[str, StringConstraints(min_length=1)] #TODO discuss:  should title changes be limited?
+    description: Annotated[str, StringConstraints(min_length=1)] 
+    objectives: Annotated[str, StringConstraints(min_length=1)] 
 
 
 class CourseCreate(BaseModel):
@@ -77,5 +76,5 @@ class StudentCourse(BaseModel):
     is_premium: bool = False
     home_page_picture: bytes = None
     overall_rating: int = 0
-    your_rating: int = 0
-    your_progress: int = 0
+    your_rating: float = 0
+    your_progress: float = 0

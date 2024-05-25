@@ -3,10 +3,10 @@ from database.models import Course, Teacher, Tag, CourseTag, Section
 from schemas.course import CourseCreate, CourseBase, CourseSectionsTags, CourseUpdate
 from crud.crud_section import create_sections
 from crud.crud_tag import create_tags
-from schemas.teacher import TeacherResponseModel, TeacherEdit
+from schemas.teacher import TeacherSchema, TeacherEdit
 from schemas.tag import TagBase
 from schemas.section import SectionBase
-from crud.crud_course import get_course_common_info
+
 
 
 async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):
@@ -14,8 +14,7 @@ async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):
     teacher.last_name = updates.last_name
     teacher.phone_number = updates.phone_number
     teacher.linked_in = updates.linked_in
-    teacher.profile_picture = updates.profile_picture
-
+   
     db.commit()
     db.refresh(teacher)
 
@@ -28,15 +27,15 @@ async def get_teacher_by_id(db: Session, id: int):
 
 
 async def get_info(teacher, teacher_email):
-    return TeacherResponseModel(
-        teacher_id=teacher.teacher_id,
-        email=teacher_email,
-        first_name=teacher.first_name,
-        last_name=teacher.last_name,
-        phone_number=teacher.phone_number,
-        linked_in=teacher.linked_in,
-        profile_picture=teacher.profile_picture
-    )
+
+    return TeacherSchema(
+            teacher_id=teacher.teacher_id,
+            email=teacher_email,
+            first_name=teacher.first_name,
+            last_name=teacher.last_name,
+            phone_number=teacher.phone_number,
+            linked_in=teacher.linked_in, 
+        )
 
 
 async def get_my_courses(db: Session, teacher: Teacher) -> list[CourseBase]:
@@ -52,7 +51,6 @@ async def get_my_courses(db: Session, teacher: Teacher) -> list[CourseBase]:
             owner_names=f"{teacher.first_name} {teacher.last_name}",
             is_premium=course.is_premium,
             is_hidden=course.is_hidden,
-            home_page_picture=course.home_page_picture,
             rating=course.rating
         ) for course in courses
     ]
@@ -122,6 +120,7 @@ async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort:
         section_base = SectionBase.from_query(
             section_id=section.section_id,
             title=section.title,
+            content_type=section.content_type,
             content=section.content,
             description=section.description,
             external_link=section.external_link,
@@ -140,8 +139,6 @@ async def edit_course_info(db: Session, course: Course, teacher: Teacher, update
     course.title = updates.title
     course.description = updates.description
     course.objectives = updates.objectives
-    course.home_page_picture = updates.home_page_picture
-
     db.commit()
     db.refresh(course)
 
@@ -168,6 +165,5 @@ def get_coursebase_model(teacher, course):
         owner_names=f"{teacher.first_name} {teacher.last_name}",
         is_premium=course.is_premium,
         is_hidden=course.is_hidden,
-        home_page_picture=course.home_page_picture,
         rating=course.rating
     )

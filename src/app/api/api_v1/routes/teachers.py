@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
 from crud import crud_teacher
 from crud.crud_course import course_exists, get_course_common_info
-from schemas.teacher import TeacherEdit, TeacherCreate, TeacherResponseModel
+from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
 from schemas.student import EnrollmentApproveRequest
 from schemas.section import SectionUpdate, SectionCreate
@@ -15,7 +15,7 @@ from core.oauth import TeacherAuthDep
 router = APIRouter(prefix='/teachers', tags=['teachers'])
 
 
-@router.post("/register", status_code=201, response_model=TeacherResponseModel)
+@router.post("/register", status_code=201, response_model=TeacherSchema)
 async def register_teacher(db: Annotated[Session, Depends(get_db)], user: TeacherCreate):
     """
     Registers a teacher.
@@ -24,7 +24,7 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], user: Teache
     - `db` (Session): The SQLAlchemy database session.
     - `user` (TeacherCreate): The information of the teacher to register.
 
-    **Returns**: a TeacherResponseModel object with the created teacher's details.
+    **Returns**: a TeacherSchema object with the created teacher's details.
 
     **Raises**: HTTPException 409, if a user with the same email has already been registered.
 
@@ -38,7 +38,7 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], user: Teache
     return await crud_teacher.get_info(new_teacher, user.email)
 
 
-@router.get('/', response_model=TeacherResponseModel)
+@router.get('/', response_model=TeacherSchema)
 async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAuthDep):
     """
     Shows authenticated teacher's profile information.
@@ -47,7 +47,7 @@ async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
     - `db` (Session): The SQLAlchemy database session.
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
 
-    **Returns**: a TeacherResponseModel object with the teacher's account details.
+    **Returns**: a TeacherSchema object with the teacher's account details.
 
     **Raises**: HTTPException 401, if the teacher is not authenticated.
 
@@ -57,7 +57,7 @@ async def view_account(db: Annotated[Session, Depends(get_db)], user: TeacherAut
     return await crud_teacher.get_info(teacher, user.email)
 
 
-@router.put('/', status_code=200, response_model=TeacherResponseModel)
+@router.put('/', status_code=200, response_model=TeacherSchema)
 async def update_account(
         db: Annotated[Session, Depends(get_db)],
         user: TeacherAuthDep,
@@ -71,17 +71,10 @@ async def update_account(
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `updates` (TeacherEdit): TeacherEdit object that specifies the desired account updates.
 
-    **Returns**: a TeacherResponseModel object with the teacher's edited account details.
+    **Returns**: a TeacherSchema object with the teacher's edited account details.
 
     **Raises**: HTTPException 401, if the teacher is not authenticated.
-
-    """
-    # if not updates:
-    #     raise HTTPException(
-    #         status_code=400,
-    #         detail=f"Data not provided to make changes"
-    #         )
-
+    """      
     teacher = await crud_teacher.get_teacher_by_id(db, user.account_id)
 
     edited_teacher_account = await crud_teacher.edit_account(db, teacher, updates)
@@ -210,19 +203,21 @@ async def update_course_info(
 
 @router.put("/courses/{course_id}/sections/{section_id}")
 async def update_section(
-        db: Annotated[Session,
-        Depends(get_db)],
-        course_id: int, section_id: int,
-        user: TeacherAuthDep,
-        updates: SectionUpdate = Body(...)):
-    pass
-
+    db: Annotated[Session, Depends(get_db)], 
+    course_id: int, section_id: int,
+    user: TeacherAuthDep, 
+    updates: SectionUpdate = Body(...)
+    ):
+    pass  
 
 @router.post("/courses/{course_id}/sections")
-async def add_section(db: Annotated[Session, Depends(get_db)], course_id: int, user: TeacherAuthDep,
-                      section: SectionCreate):
-    pass
-
+async def add_section(
+    db: Annotated[Session, Depends(get_db)], 
+    course_id: int, 
+    user: TeacherAuthDep, 
+    section: SectionCreate
+    ):
+    pass 
 
 @router.delete("/courses/{course_id}/sections/{section_id}")
 async def remove_section(db: Annotated[Session, Depends(get_db)], course_id: int, section_id: int,

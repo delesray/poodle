@@ -1,13 +1,19 @@
+from io import BytesIO
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 from schemas.user import UserChangePassword
-from schemas.teacher import TeacherCreate, TeacherResponseModel
+from schemas.teacher import TeacherCreate, TeacherSchema
 from schemas.student import StudentCreate, StudentResponseModel
 from database.models import Account, Teacher, Student
 from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from typing import Union, Type
 from core import hashing
+from PIL import Image, UnidentifiedImageError
+
+DEFAULT_PICTURE_WIDTH = 400
+DEFAULT_PICTURE_HEIGHT = 400
 
 
 async def create_user(db: Session, user: Union[StudentCreate, TeacherCreate]):
@@ -46,14 +52,13 @@ class TeacherFactory():
         db.commit()
         db.refresh(new_teacher)
         #await send_verification_email([schema.email], new_user)
-        return TeacherResponseModel(
+        return TeacherSchema(
             teacher_id=new_user.account_id,
             email=new_user.email,
             first_name=new_teacher.first_name,
             last_name=new_teacher.last_name,
             phone_number=new_teacher.phone_number,
-            linked_in=new_teacher.linked_in,
-            profile_picture=new_teacher.profile_picture   
+            linked_in=new_teacher.linked_in           
         )
 
 
@@ -72,7 +77,7 @@ class StudentFactory():
         db.add(new_student)
         db.commit()
         db.refresh(new_student)
-        return StudentResponseModel.from_query(first_name = new_student.first_name, last_name = new_student.last_name, profile_picture = new_student.profile_picture)
+        return StudentResponseModel.from_query(first_name=new_student.first_name, last_name=new_student.last_name, profile_picture=new_student.profile_picture)
 
 
 def create_user_factory(user_type: str):
@@ -111,9 +116,40 @@ async def change_password(db: Session, pass_update: UserChangePassword, account:
     db.commit()
 
 
-async def check_deactivated(user: Union[Student, Teacher]):
-    if user.is_deactivated:
-        raise HTTPException(
-            status_code=404,
-            detail="User is deactivated",
-        )
+async def add_picture(db: Session, picture: UploadFile, student_id: int):
+    res = await resize_picture(image_data=picture, target_size=(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT))
+
+    if isinstance(res, bytes):
+        query = update(Student).where(Student.student_id == student_id)
+        query = query.values(profile_picture=res)
+
+        db.execute(query)
+        db.commit()
+
+        return True
+
+    return False
+
+
+async def resize_picture(image_data: UploadFile, target_size: tuple) -> bytes | str:
+    """
+    Resizes an image from a BinaryIO object to the specified target size (width, height)
+    """
+    try:
+        # Read the entire file content into a bytes object
+        image_data = image_data.file.read()
+
+        # Open the image from the bytes object
+        image = Image.open(BytesIO(image_data))
+        # Resize the image
+        resized_image = image.resize(target_size)
+
+        # Create a BytesIO object to store the resized image (in-memory)
+        resized_data = BytesIO()
+        # Save in the original format
+        resized_image.save(resized_data, format=image.format)
+
+        return resized_data.getvalue()
+
+    except (OSError, UnidentifiedImageError) as e:
+        return e

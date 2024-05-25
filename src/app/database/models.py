@@ -51,7 +51,6 @@ class Teacher(Base):
     linked_in: Mapped[Optional[str]] = mapped_column(String(200))
     profile_picture: Mapped[Optional[bytes]]
 
-    # back_populates is bidirectional, backref is maybe not
     courses: Mapped[List['Course']] = relationship(back_populates="owner")
 
 
