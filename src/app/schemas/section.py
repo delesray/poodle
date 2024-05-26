@@ -29,7 +29,7 @@ class SectionBase(BaseModel):
             external_link=external_link,
             course_id=course_id
         )
-        
+
 
 class SectionUpdate(BaseModel):
     title: Annotated[str, StringConstraints(min_length=1)]
@@ -37,6 +37,3 @@ class SectionUpdate(BaseModel):
     content: str
     description: str | None = None
     external_link: str | None = None
-
-
-
