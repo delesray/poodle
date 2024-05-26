@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, status
 from typing import Annotated
 from database.database import get_db
 from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
-from crud import crud_teacher
+from crud import crud_teacher, crud_student
 from crud.crud_course import course_exists, get_course_common_info
 from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema
@@ -177,6 +177,11 @@ async def view_course_by_id(
     return await crud_teacher.get_entire_course(db=db, course=course, teacher=teacher, sort=sort, sort_by=sort_by)
 
 
+@router.put("/courses/requests", status_code=status.HTTP_201_CREATED)
+async def approve_enrollment(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep, student: str, course_id: int):
+    student = await crud_student.get_by_email(db, student)
+    return await crud_student.subscribe_for_course(db, student, course_id)
+
 
 @router.put("/courses/{course_id}", response_model=CourseBase)
 async def update_course_info(
@@ -342,12 +347,6 @@ async def add_tag(db: Annotated[Session, Depends(get_db)], course_id: int, teach
 
 @router.delete("/courses/{course_id}/tags/{tag_id}")
 async def remove_tag(db: Annotated[Session, Depends(get_db)], course_id: int, tag_id: int, teacher: TeacherAuthDep):
-    pass
-
-
-@router.post("/approve-enrollment")
-def approve_enrollment(db: Annotated[Session, Depends(get_db)], request: EnrollmentApproveRequest,
-                       teacher: TeacherAuthDep):
     pass
 
 

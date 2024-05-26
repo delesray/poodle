@@ -46,10 +46,10 @@ async def get_my_courses(student: Student):
     return my_courses_pydantic
 
 
-async def subscribe_for_course(db: Session, student: Student, course: Course):
+async def subscribe_for_course(db: Session, student: Student, course_id: int):
     new_enrollment = DBStudentCourse(
         student_id=student.student_id,
-        course_id=course.course_id,
+        course_id=course_id,
     )
 
     try:
@@ -62,13 +62,7 @@ async def subscribe_for_course(db: Session, student: Student, course: Course):
 
     else:
         db.refresh(new_enrollment)
-
-        course_tags = await crud_course.get_course_tags(course)
-        return CourseInfo(
-            title=course.title,
-            description=course.description,
-            is_premium=course.is_premium,
-            tags=course_tags)
+        return 'Request approved'
 
 
 async def unsubscribe_from_course(db: Session, student_id: int, course_id: int):
@@ -158,7 +152,8 @@ async def get_course_information(db: Session, course_id: int, student: Student):
 async def send_notification(course: Course, student: Student):
     teacher_email = course.owner.account.email
     student_email = student.account.email
-    request = await build_student_enroll_request(receiver_mail=teacher_email, student_email=student_email)
+    course_title, course_id = course.title, course.course_id
+    request = await build_student_enroll_request(receiver_mail=teacher_email, student_email=student_email, course_title=course_title, course_id=course_id)
     await send_email(data=request)
 
     return 'Pending approval from course owner'

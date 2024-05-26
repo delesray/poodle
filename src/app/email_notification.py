@@ -11,7 +11,7 @@ sender_mail = os.environ['SENDER_EMAIL']
 mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
 
-async def build_student_enroll_request(receiver_mail, student_email, sender_mail=sender_mail):
+async def build_student_enroll_request(receiver_mail: str, student_email: str, course_title: str, course_id: int, sender_mail: str=sender_mail):
     return {
         'Messages': [
             {
@@ -25,8 +25,8 @@ async def build_student_enroll_request(receiver_mail, student_email, sender_mail
                     }
                 ],
                 "Subject": "Student enroll request",
-                "TextPart": f"Student {student_email} has requested access to your course. Please click here for approval",
-                "HTMLPart": f"<h3>Student {student_email} has requested access to your course. Please click <a href=\"https://www.mailjet.com/\">here</a> for approval</h3><br />"
+                "TextPart": f"Student {student_email} has requested access to your {course_title} course with ID {course_id}. Please click here to login and then here for approval",
+                "HTMLPart": f"<h3>Student {student_email} has requested access to your course. Please click <a href=\"http://127.0.0.1:8000/docs#/\">here</a>, then click on the Authorize button to login and navigate to Approve Enrollment to input the student's email and the course ID for approval</h3><br />"
             }
         ]
     }
