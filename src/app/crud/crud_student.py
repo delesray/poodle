@@ -94,7 +94,7 @@ async def get_student_rating(db: Session, student_id: int, course_id: int):
         return query.rating
 
 
-async def get_student_progress(db: Session, student_id: int, course_id: int) -> float:
+async def get_student_progress(db: Session, student_id: int, course_id: int) -> str:
     """Gets the count of sections and sections_viewed to calculate the progress in percentage"""
     total_sections = db.query(Section).where(Section.course_id == course_id).count()
 
@@ -112,18 +112,27 @@ async def get_student_progress(db: Session, student_id: int, course_id: int) -> 
     return f'{progress:.2f}'
 
 
-async def add_student_rating(db: Session, student: Student, course_id: int, rating: int):
-    new_rating = StudentRating(
-        student_id=student.student_id, course_id=course_id, rating=rating)
+async def update_add_student_rating(db: Session, student: Student, course_id: int, rating: int):
+    # maggi spaghetti
+    existing_rating = db.query(StudentRating).filter(
+        StudentRating.student_id == student.student_id,
+        StudentRating.course_id == course_id
+    ).first()
 
-    db.add(new_rating)
+    if existing_rating:
+        crud_course.update_rating(db, course_id, rating, existing_rating.rating)
+        existing_rating.rating = rating
+    else:  # create new one if student still not rated
+        new_rating = StudentRating(
+            student_id=student.student_id, course_id=course_id, rating=rating)
+        db.add(new_rating)
+        crud_course.update_rating(db, course_id, rating)
     db.commit()
 
     course = next(
         (course for course in student.courses_enrolled if course.course_id == course_id), None)
 
-    return CourseRateResponse(course=course.title,
-                              rating=rating)
+    return CourseRateResponse(course=course.title, rating=rating)
 
 
 async def get_course_information(db: Session, course_id: int, student: Student):
