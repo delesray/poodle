@@ -176,7 +176,7 @@ class Tag(Base):
     __tablename__ = 'tags'
 
     tag_id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(45))
+    name: Mapped[str] = mapped_column(String(45), unique=True) 
 
     courses: Mapped[List['Course']] = relationship(secondary="courses_tags", back_populates="tags")
 
