@@ -40,7 +40,7 @@ async def get_course_tags(course: Course):
 
 
 async def get_course_common_info(db, course_id) -> Course | None:
-    course = db.query(Course).filter(Course.is_hidden == False, Course.id == course_id).first()
+    course = db.query(Course).filter(Course.is_hidden == False, Course.course_id == course_id).first()
 
     if course:
         return course

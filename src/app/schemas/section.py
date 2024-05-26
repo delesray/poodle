@@ -14,7 +14,6 @@ class SectionBase(BaseModel):
     section_id: int | None = None
     title: Annotated[str, StringConstraints(min_length=1)]
     content_type: ContentType
-    content: str
     description: str | None = None
     external_link: str | None = None
     course_id: int | None = None

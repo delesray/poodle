@@ -26,13 +26,12 @@ async def get_student(db: Session, email: str):
 async def edit_account(db: Session, email: str, updates: StudentEdit):
     student = await get_by_email(db, email)
 
-    student.first_name, student.last_name, student.profile_picture = updates.first_name, \
-        updates.last_name, updates.profile_picture
+    student.first_name, student.last_name = updates.first_name, \
+        updates.last_name
 
     db.commit()
 
-    return StudentResponseModel.from_query(student.first_name, student.last_name, student.profile_picture,
-                                           student.is_premium)
+    return StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium)
 
 
 async def get_my_courses(student: Student):
@@ -150,7 +149,7 @@ async def get_course_information(db: Session, course_id: int, student: Student):
             owner_name=course.owner.first_name + ' ' + course.owner.last_name,
             is_premium=course.is_premium,
             home_page_picture=course.home_page_picture,
-            overall_rating=course.rating,
+            overall_rating=f'{course.rating:.2f}',
             your_rating=student_rating if student_rating else 0,
             your_progress=student_progress
         )
