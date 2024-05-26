@@ -11,8 +11,8 @@ from schemas.user import UserChangePassword
 from database.database import get_db
 from sqlalchemy.orm import Session
 from database.models import Course
-from fastapi import UploadFile
 
+from fastapi import UploadFile
 
 router = APIRouter(
     prefix="/students",
@@ -34,13 +34,13 @@ async def register_student(db: Annotated[Session, Depends(get_db)], student: Stu
 
     **Raises**: HTTPException 409, if a user with the same email has already been registered.
     """
-    if await crud_user.exists(db=db, email=student.email):
+    if await crud_user.exists(db=db, email=student.account.email):
         raise HTTPException(
             status_code=409,
             detail="Email already registered",
         )
 
-    return await crud_user.create(db=db, user_schema=student)
+    return await crud_user.create(db=db, user_schema=student.account)
 
 
 @router.post('/', status_code=201)
@@ -59,7 +59,7 @@ async def update_profile_picture(db: Annotated[Session, Depends(get_db)], studen
     - HTTPException 409, if a user with the same email has already been registered.
     - HTTPException 400, if the file is corruped or the student uploaded an unsupported media type.
     """
-    if await crud_user.add_picture(db=db, picture=file, student_id=student.account_id):
+    if await crud_user.add_picture(db=db, picture=file, student_id=student.student_id):
         return 'Profile picture successfully uploaded!'
     raise HTTPException(
         status_code=400, detail='File is corrupted or media type is not supported')
@@ -78,7 +78,7 @@ async def view_account(db: Annotated[Session, Depends(get_db)], student: Student
 
     **Raises**: HTTPException 401, if the student is not authenticated.
     """
-    return await crud_student.get_student(db=db, email=student.email)
+    return await crud_student.get_student(db=db, email=student.account.email)
 
 
 @router.put('/', status_code=201, response_model=StudentResponseModel)
@@ -95,7 +95,7 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], student: Student
 
     **Raises**: HTTPException 401, if the student is not authenticated.
     """
-    return await crud_student.edit_account(db=db, email=student.email, updates=updates)
+    return await crud_student.edit_account(db=db, email=student.account.email, updates=updates)
 
 
 @router.patch('/', status_code=204)
@@ -116,9 +116,9 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
     - HTTPException 400, if new password confirmation does not match.
     """
 
-    await utils.change_pass_raise(account=student, pass_update=pass_update)
+    await utils.change_pass_raise(account=student.account, pass_update=pass_update)
 
-    await crud_user.change_password(db=db, pass_update=pass_update, account=student)
+    await crud_user.change_password(db=db, pass_update=pass_update, account=student.account)
 
 
 @router.get('/courses', response_model=list[CourseInfo])
@@ -134,7 +134,7 @@ async def view_my_courses(student: StudentAuthDep):
 
     **Returns**: A list of CourseInfo response models with the information for each course the student is enrolled in.
     """
-    my_courses = await crud_student.get_my_courses(student=student.student)
+    my_courses = await crud_student.get_my_courses(student=student)
     return my_courses
 
 
@@ -155,11 +155,11 @@ async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentA
     **Returns**: A StudentCourse response object with detailed information about the course and the student's progress and rating of the course.
     """
 
-    if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
+    if not await crud_student.is_student_enrolled(student=student, course_id=course_id):
         raise HTTPException(
             status_code=409, detail='You have to enroll in this course to view details about it')
 
-    return await crud_student.get_course_information(db=db, course_id=course_id, student=student.student)
+    return await crud_student.get_course_information(db=db, course_id=course_id, student=student)
 
 
 @router.get('/courses/{course_id}/sections/{section_id}', response_model=SectionBase)
@@ -197,13 +197,13 @@ async def view_course_section(
             detail='No such Section'
         )
 
-    if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
+    if not await crud_student.is_student_enrolled(student=student, course_id=course_id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='You have to enroll in this course to view details about it'
         )
 
-    await crud_section.add_student(db, section, student.account_id)
+    await crud_section.add_student(db, section, student.student_id)
     section_dto = crud_section.transfer_object(section)
     return section_dto
 
@@ -230,15 +230,15 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
 
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
-    if course.is_premium and not student.student.is_premium:
+    if course.is_premium and not student.is_premium:
         raise HTTPException(
             status_code=403, detail='Upgrade to premium to enroll in this course')
 
-    if course.is_premium and await crud_student.get_premium_courses_count(student=student.student) >= 5:
+    if course.is_premium and await crud_student.get_premium_courses_count(student=student) >= 5:
         raise HTTPException(
             status_code=400, detail='Premium courses limit reached')
 
-    return await crud_student.subscribe_for_course(db=db, student=student.student, course=course)
+    return await crud_student.subscribe_for_course(db=db, student=student, course=course)
 
 
 @router.delete('/courses/{course_id}/subscription', status_code=204)
@@ -254,10 +254,10 @@ async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentA
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
     """
-    await crud_student.unsubscribe_from_course(db=db, student_id=student.account_id, course_id=course_id)
+    await crud_student.unsubscribe_from_course(db=db, student_id=student.student_id, course_id=course_id)
 
 
-@router.patch('/courses/{course_id}/rating', status_code=201, response_model=CourseRateResponse)
+@router.post('/courses/{course_id}/rating', status_code=201, response_model=CourseRateResponse)
 async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int,
                       rating: CourseRate):
     """
@@ -272,19 +272,13 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
     - HTTPException 409, if the student is not enrolled in the course.
-    - HTTPException 409, if the student is not enrolled in the course.
-    - HTTPException 400, if the student has already rated the course.
 
     **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
     """
 
-    if not await crud_student.is_student_enrolled(student=student.student, course_id=course_id):
+    if not await crud_student.is_student_enrolled(student=student, course_id=course_id):
         raise HTTPException(
             status_code=409, detail='You have to enroll in this course to rate it')
 
-    if await crud_student.get_student_rating(db=db, student_id=student.account_id, course_id=course_id):
-        raise HTTPException(
-            status_code=400, detail='You have already rated this course')
-
-    return await crud_student.add_student_rating(db=db, student=student.student, course_id=course_id,
-                                                 rating=rating.rating)
+    return await crud_student.update_add_student_rating(
+        db=db, student=student, course_id=course_id, rating=rating.rating)

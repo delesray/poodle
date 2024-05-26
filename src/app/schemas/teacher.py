@@ -6,7 +6,7 @@ class TeacherEdit(BaseModel):
     last_name: Annotated[str, StringConstraints(min_length=2)] 
     phone_number: str | None = None
     linked_in: str | None = None
-    profile_picture: bytes | None = None
+   
 
 
 class TeacherCreate(BaseModel):
@@ -21,14 +21,14 @@ class TeacherCreate(BaseModel):
     def get_type(self):
         return 'teacher'
     
-class TeacherResponseModel(BaseModel):
+class TeacherSchema(BaseModel):
     teacher_id: int
     email: EmailStr
     first_name: str
     last_name: str
     phone_number: str = None
     linked_in: str = None
-    profile_picture: bytes = None
+    
     
     
     

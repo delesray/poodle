@@ -2,7 +2,7 @@ from io import BytesIO
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 from schemas.user import UserChangePassword
-from schemas.teacher import TeacherCreate, TeacherResponseModel
+from schemas.teacher import TeacherCreate, TeacherSchema
 from schemas.student import StudentCreate, StudentResponseModel
 from database.models import Account, Teacher, Student
 from core.hashing import hash_pass
@@ -52,14 +52,13 @@ class TeacherFactory():
         db.commit()
         db.refresh(new_teacher)
         # await send_verification_email([schema.email], new_user)
-        return TeacherResponseModel(
+        return TeacherSchema(
             teacher_id=new_user.account_id,
             email=new_user.email,
             first_name=new_teacher.first_name,
             last_name=new_teacher.last_name,
             phone_number=new_teacher.phone_number,
-            linked_in=new_teacher.linked_in,
-            profile_picture=new_teacher.profile_picture
+            linked_in=new_teacher.linked_in
         )
 
 
@@ -78,7 +77,8 @@ class StudentFactory():
         db.add(new_student)
         db.commit()
         db.refresh(new_student)
-        return StudentResponseModel.from_query(first_name=new_student.first_name, last_name=new_student.last_name, profile_picture=new_student.profile_picture)
+        return StudentResponseModel.from_query(first_name=new_student.first_name, last_name=new_student.last_name,
+                                               profile_picture=new_student.profile_picture)
 
 
 def create_user_factory(user_type: str):
@@ -95,9 +95,9 @@ async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]) 
     return await factory.create_db_user(db, user_schema)
 
 
-async def exists(db: Session, email: str):
-    query = db.query(Account).filter(Account.email == email,
-                                     Account.is_deactivated == False).first()
+async def exists(db: Session, email: str) -> Account:
+    query = db.query(Account).filter(
+        Account.email == email, Account.is_deactivated == False).first()
 
     if query:
         return query
