@@ -113,13 +113,13 @@ async def update_add_student_rating(db: Session, student: Student, course_id: in
     ).first()
 
     if existing_rating:
-        crud_course.update_rating(db, course_id, rating, existing_rating.rating)
+        await crud_course.update_rating(db, course_id, rating, existing_rating.rating)
         existing_rating.rating = rating
     else:  # create new one if student still not rated
         new_rating = StudentRating(
             student_id=student.student_id, course_id=course_id, rating=rating)
         db.add(new_rating)
-        crud_course.update_rating(db, course_id, rating)
+        await crud_course.update_rating(db, course_id, rating)
     db.commit()
 
     course = next(

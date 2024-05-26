@@ -59,7 +59,7 @@ async def get_course_by_id(db: Session, course_id: int) -> Course:
 
 
 
-def update_rating(db: Session, course_id, new_st_rating, old_st_rating=None):
+async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=None):
     # commit must happen in outer func
     course = db.query(Course).where(Course.course_id == course_id).first()
 
