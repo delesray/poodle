@@ -14,7 +14,7 @@ async def get_section_by_id(db, section_id) -> Section:
         return section
 
 
-async def create_sections(db: Session, sections: List[SectionBase], course_id: int):
+async def create_sections(db: Session, sections: List[SectionBase], course_id: int) -> List[SectionBase]:
     created_sections = []
     for section in sections:
         section_db = Section(
