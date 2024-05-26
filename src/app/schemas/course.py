@@ -74,7 +74,6 @@ class StudentCourse(BaseModel):
     owner_id: int
     owner_name: str
     is_premium: bool = False
-    home_page_picture: bytes | None = None
     overall_rating: float | None = 0
     your_rating: float | None = 0
     your_progress: float | None  = 0
