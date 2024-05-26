@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS poodle.`teachers` (
   `last_name` VARCHAR(50) NOT NULL,
   `phone_number` VARCHAR(30) NULL DEFAULT NULL,
   `linked_in` VARCHAR(200) NULL DEFAULT NULL,
-  `profile_picture` BLOB NULL DEFAULT NULL,
+  `profile_picture` LONGBLOB NULL DEFAULT NULL,
   PRIMARY KEY (`teacher_id`),
   CONSTRAINT `teachers_ibfk_1`
     FOREIGN KEY (`teacher_id`)
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS poodle.`courses` (
   `owner_id` INT(11) NOT NULL,
   `is_premium` TINYINT(1) NULL DEFAULT 0,
   `is_hidden` TINYINT(1) NULL DEFAULT 0,
-  `home_page_picture` BLOB NULL DEFAULT NULL,
+  `home_page_picture` LONGBLOB NULL DEFAULT NULL,
   `rating` FLOAT NULL DEFAULT NULL,
   `people_rated` INT(11) NULL DEFAULT 0,
   PRIMARY KEY (`course_id`),
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS poodle.`students` (
   `student_id` INT(11) NOT NULL,
   `first_name` VARCHAR(50) NOT NULL,
   `last_name` VARCHAR(50) NOT NULL,
-  `profile_picture` BLOB NULL DEFAULT NULL,
+  `profile_picture` LONGBLOB NULL DEFAULT NULL,
   `is_premium` TINYINT(1) NULL DEFAULT 0,
   PRIMARY KEY (`student_id`),
   CONSTRAINT `students_ibfk_1`
