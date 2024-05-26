@@ -89,7 +89,7 @@ def transfer_object(section: Section) -> SectionBase:
     dto = SectionBase(
         section_id=section.section_id,
         title=section.title,
-        content=section.content,
+        content_type=section.content_type,
         description=section.description,
         external_link=section.external_link,
         course_id=section.course_id
