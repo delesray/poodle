@@ -164,3 +164,4 @@ cython_debug/
 
 src/app/hidden.py
 src/app/secret_key.py
+src/app/.env

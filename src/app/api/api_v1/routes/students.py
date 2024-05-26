@@ -34,13 +34,13 @@ async def register_student(db: Annotated[Session, Depends(get_db)], student: Stu
 
     **Raises**: HTTPException 409, if a user with the same email has already been registered.
     """
-    if await crud_user.exists(db=db, email=student.account.email):
+    if await crud_user.exists(db=db, email=student.email):
         raise HTTPException(
             status_code=409,
             detail="Email already registered",
         )
 
-    return await crud_user.create(db=db, user_schema=student.account)
+    return await crud_user.create(db=db, user_schema=student)
 
 
 @router.post('/', status_code=201)

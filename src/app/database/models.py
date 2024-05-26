@@ -147,9 +147,9 @@ class Section(Base):
 
     section_id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(45))
-    content: Mapped[ContentType]
-    description: Mapped[Optional[str]] = mapped_column(String(250))
+    content_type: Mapped[ContentType]
     external_link: Mapped[Optional[str]] = mapped_column(String(500))
+    description: Mapped[Optional[str]] = mapped_column(String(250))
     course_id: Mapped[int] = mapped_column(ForeignKey('courses.course_id'))
 
     course: Mapped['Course'] = relationship(back_populates="sections")

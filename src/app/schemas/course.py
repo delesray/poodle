@@ -63,7 +63,7 @@ class CourseRate(BaseModel):
 
 class CourseRateResponse(BaseModel):
     course: str
-    rating: int = Field(ge=1, le=10)
+    rating: float = Field(ge=1, le=10)
 
 
 class StudentCourse(BaseModel):
@@ -74,7 +74,7 @@ class StudentCourse(BaseModel):
     owner_id: int
     owner_name: str
     is_premium: bool = False
-    home_page_picture: bytes = None
-    overall_rating: int = 0
-    your_rating: float = 0
-    your_progress: float = 0
+    home_page_picture: bytes | None = None
+    overall_rating: float | None = 0
+    your_rating: float | None = 0
+    your_progress: float | None  = 0
