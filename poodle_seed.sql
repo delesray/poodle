@@ -37,12 +37,12 @@ VALUES ('Python Basics', 'Learn the fundamentals of Python programming.',
         'Master basic web page structure, styling, and interactivity.', 2, 1);
 
 -- Insert Sections for Course 1 (course_id: 1)
-INSERT INTO `poodle`.`sections` (`title`, `content`, `description`, `course_id`)
+INSERT INTO `poodle`.`sections` (`title`, `content_type`, `description`, `course_id`)
 VALUES ('Introduction', 'text', 'Welcome and course overview.', 1),
        ('Basic Syntax', 'text', 'Variables and keywords', 1);
 
 -- Insert Sections for Course 2 (course_id: 2)
-INSERT INTO `poodle`.`sections` (`title`, `content`, `description`, `course_id`)
+INSERT INTO `poodle`.`sections` (`title`, `content_type`, `description`, `course_id`)
 VALUES ('HTML Fundamentals', 'text', 'Learn the building blocks of web pages.', 2),
        ('CSS Styling', 'text', 'Add style and interactivity with CSS.', 2);
 
@@ -52,7 +52,7 @@ VALUES ('JavaScript for Beginners', 'Get started with interactive web developmen
         'Learn variables, functions, and DOM manipulation basics.', 3, 1);
 
 -- Insert Sections for Course 3 (course_id: 3)
-INSERT INTO `poodle`.`sections` (`title`, `content`, `description`, `course_id`)
+INSERT INTO `poodle`.`sections` (`title`, `content_type`, `description`, `course_id`)
 VALUES ('Introduction to Javascript', 'text', 'Welcome and course overview.', 3),
        ('Variables & Data Types', 'text', 'Mastering variables and data storage.', 3),
        ('Control Flow Statements', 'text', 'Learn how to control program flow.', 3);
