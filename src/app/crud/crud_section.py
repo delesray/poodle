@@ -60,8 +60,20 @@ async def add_student(db: Session, section: Section, student_id) -> None:
     db.commit()
 
 
-async def update_section(section_id, section_update):
-    pass
+async def update_section_info(db, section, updates):
+    section.title = updates.title
+    section.content_type = updates.content_type
+    section.content = updates.content
+    section.description = updates.description
+    section.external_link = updates.external_link
+    
+    db.commit()
+    db.refresh(section)
+
+    return SectionBase.from_query(
+            section.section_id, section.title, section.content_type, section.content,
+            section.description, section.external_link, section.course_id
+        )
 
 async def delete_section(section_id):
     pass
@@ -82,3 +94,13 @@ def transfer_object(section: Section) -> SectionBase:
         course_id=section.course_id
     )
     return dto
+
+async def validate_section(section: Section, course_id: int) -> tuple[bool, str]:
+    if not section:
+        return False, f"Section not found"
+    
+    if section.course_id != course_id:
+        return False, f"Section ID:{section.section_id} is not a part of course ID{course_id}"
+    
+    return True, "OK"
+        
