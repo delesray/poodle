@@ -75,8 +75,9 @@ async def update_section_info(db, section, updates):
             section.description, section.external_link, section.course_id
         )
 
-async def delete_section(section_id):
-    pass
+async def delete_section(db, section: Section):
+    db.delete(section)
+    db.commit()
 
 
 async def get_sections_count_for_course(db: Session, course_id: int) -> int:

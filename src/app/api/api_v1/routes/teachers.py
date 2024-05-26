@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
 from crud import crud_teacher
 from crud.crud_course import course_exists, get_course_common_info
-from crud.crud_section import create_sections, get_section_by_id, update_section_info
+from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
 from schemas.student import EnrollmentApproveRequest
@@ -265,6 +265,21 @@ async def add_sections(
     sections: List[SectionBase]
     ):
     
+    """
+    Create sections for a course.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `course_id` (int): The ID of the course for which sections are being created.
+    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `sections` (List[SectionBase]): A list of SectionBase objects containing section details.
+
+    **Returns:** A list of newly created sections.
+
+    **Raises:**
+    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 403`: If the teacher does not have permission to add sections to the course.
+    """
     course = await get_course_common_info(db, course_id)
     user_has_access, msg = await crud_teacher.validate_course_access(course, teacher.account)
     if not user_has_access:
@@ -281,25 +296,43 @@ async def remove_section(
     db: Annotated[Session, Depends(get_db)],
     course_id: int,
     section_id: int,
-    user: TeacherAuthDep):
+    user: TeacherAuthDep
+    ):
     
-    # course = await get_course_common_info(db, course_id)
-    # user_has_access, msg = await crud_teacher.validate_course_access(course, user)
-    # if not user_has_access:
-    #     raise HTTPException(
-    #         status_code=403,
-    #         detail=msg
-    #     )
+    """
+    Removes a section from a course.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `course_id` (int): The ID of the course.
+    - `section_id` (int): The ID of the section to remove.
+    - `user` (TeacherAuthDep): The authenticated teacher.
+
+    **Returns**: HTTP status 204 (No Content) if successful.
+
+    **Raises**:
+    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 403`: If the user does not have access to the course.
+    - `HTTPException 404`: If the section is not found or does not belong to the specified course.
+    """
+    course = await get_course_common_info(db, course_id)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, user)
+    if not user_has_access:
+        raise HTTPException(
+            status_code=403,
+            detail=msg
+        )
     
-    # section = await get_section_by_id(db, section_id)
-    # valid_section, msg = await crud_teacher.validate_section(section, course_id)
-    # if not valid_section:
-    #     raise HTTPException(
-    #         status_code=403,
-    #         detail=msg
-    #     )
+    section = await get_section_by_id(db, section_id)
+    valid_section, msg = await crud_teacher.validate_section(section, course_id)
+    if not valid_section:
+        raise HTTPException(
+            status_code=404,
+            detail=msg
+        )
     
-    pass
+    await delete_section(db, section)
+    return
 
 
 @router.post("/courses/{course_id}/tags")
