@@ -208,7 +208,7 @@ async def view_course_section(
     return section_dto
 
 
-@router.post('/courses/{course_id}/subscription', response_model=CourseInfo, status_code=status.HTTP_201_CREATED)
+@router.post('/courses/{course_id}/subscription')
 async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
     """
     Enrolls authenticated student in a course.
@@ -225,13 +225,16 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
     - HTTPException 409, if the student is attempting to duplicate a course enrollment.
 
 
-    **Returns**: CourseInfo object with home page information about the subscribed course.
+    **Returns**: 'Pending approval' message.
     """
 
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
+    
+    if await crud_student.is_student_enrolled(student=student, course_id=course.course_id):
+        return f'You are already subscribed for course {course.title}. Click on <View Course> or <View Course Section> to access its content'
 
     if course.is_premium and not student.is_premium:
         raise HTTPException(
@@ -241,7 +244,7 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail='Premium courses limit reached')
 
-    return await crud_student.subscribe_for_course(db=db, student=student, course=course)
+    return await crud_student.send_notification(course=course, student=student)
 
 
 @router.delete('/courses/{course_id}/subscription', status_code=status.HTTP_204_NO_CONTENT)

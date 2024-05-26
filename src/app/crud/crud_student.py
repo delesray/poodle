@@ -1,11 +1,11 @@
 from fastapi import HTTPException, status
-from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
 from database.models import Account, Course, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourse
+from email_notification import send_email, build_student_enroll_request
 
 
 async def get_by_email(db: Session, email: str):
@@ -153,6 +153,16 @@ async def get_course_information(db: Session, course_id: int, student: Student):
             your_rating=student_rating if student_rating else 0,
             your_progress=student_progress
         )
+    
+
+async def send_notification(course: Course, student: Student):
+    teacher_email = course.owner.account.email
+    student_email = student.account.email
+    request = await build_student_enroll_request(receiver_mail=teacher_email, student_email=student_email)
+    await send_email(data=request)
+
+    return 'Pending approval from course owner'
+
 
 # def update_progress_for_course(db: Session, student_id, course_id) -> None:
 #     """Goes to students_progress table, calculates the new progress and updates it"""
