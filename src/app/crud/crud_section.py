@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 
 from crud import crud_student
 from database.models import Section, StudentSection
-from schemas.section import SectionBase
+from schemas.section import SectionBase, SectionUpdate
 from typing import List
 
 
 async def get_section_by_id(db, section_id) -> Section:
-    section = db.query(Section).where(Section.section_id == section_id).first()
-
+    section = db.query(Section).filter(Section.section_id == section_id).first()
+   
     if section:
         return section
 
@@ -20,17 +20,16 @@ async def create_sections(db: Session, sections: List[SectionBase], course_id: i
         section_db = Section(
             title=section.title,
             content_type=section.content_type,
-            content=section.content,
-            description=section.description,
             external_link=section.external_link,
+            description=section.description,
             course_id=course_id
         )
         db.add(section_db)
         db.flush()  # get the section_id without committing
 
         new_section = SectionBase.from_query(
-            section_db.section_id, section_db.title, section_db.content_type, section_db.content,
-            section_db.description, section_db.external_link, section_db.course_id
+            section_db.section_id, section_db.title, section_db.content_type, section_db.external_link,
+            section_db.description, section_db.course_id
         )
 
         created_sections.append(new_section)
@@ -60,19 +59,18 @@ async def add_student(db: Session, section: Section, student_id) -> None:
     db.commit()
 
 
-async def update_section_info(db, section, updates):
+async def update_section_info(db: Session, section: Section, updates: SectionUpdate):
     section.title = updates.title
     section.content_type = updates.content_type
-    section.content = updates.content
-    section.description = updates.description
     section.external_link = updates.external_link
-    
+    section.description = updates.description
+      
     db.commit()
     db.refresh(section)
 
     return SectionBase.from_query(
-            section.section_id, section.title, section.content_type, section.content,
-            section.description, section.external_link, section.course_id
+            section.section_id, section.title, section.content_type, section.external_link, 
+            section.description, section.course_id
         )
 
 async def delete_section(db, section: Section):

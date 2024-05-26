@@ -18,27 +18,26 @@ router = APIRouter(prefix='/teachers', tags=['teachers'])
 
 
 @router.post("/register", status_code=201, response_model=TeacherSchema)
-async def register_teacher(db: Annotated[Session, Depends(get_db)], user: TeacherCreate):
+async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: TeacherCreate):
     """
     Registers a teacher.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
-    - `userr` (TeacherCreate): The information of the teacher to register.
+    - `teacher` (TeacherCreate): The information of the teacher to register.
 
     **Returns**: a TeacherSchema object with the created teacher's details.
 
     **Raises**: HTTPException 409, if a user with the same email has already been registered.
 
     """
-    if await exists(db, user.email):
+    if await exists(db, teacher.email):
         raise HTTPException(
             status_code=409,
             detail="Email already registered",
         )
-    new_teacher = await create(db, user)
-    return await crud_teacher.get_info(new_teacher, user.email)
-
+    #new_teacher = await create(db, user)
+    return await create(db, teacher)
 
 @router.get('/', response_model=TeacherSchema)
 async def view_account(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
@@ -47,7 +46,7 @@ async def view_account(db: Annotated[Session, Depends(get_db)], teacher: Teacher
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
-    - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
 
     **Returns**: a TeacherSchema object with the teacher's account details.
 
@@ -69,7 +68,7 @@ async def update_account(
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
-    - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `updates` (TeacherEdit): TeacherEdit object that specifies the desired account updates.
 
     **Returns**: a TeacherSchema object with the teacher's edited account details.
@@ -84,14 +83,16 @@ async def update_account(
 
 @router.post("/courses", status_code=201, response_model=CourseSectionsTags)
 async def create_course(
-        db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep, course: CourseCreate
+        db: Annotated[Session, Depends(get_db)],
+        teacher: TeacherAuthDep,
+        course: CourseCreate
 ) -> CourseSectionsTags:
     """
     Creates a new course for an authenticated teacher.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
-    - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `course` (CourseCreate): CourseCreate object that specifies the details of the new course.
 
     **Returns**: a CourseSectionsTags object with the details, tags, and sections of the created course.
@@ -167,15 +168,14 @@ async def view_course_by_id(
         )
 
     course = await get_course_common_info(db, course_id)
-    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher.account)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
             status_code=403,
             detail=msg
         )
 
-    return await crud_teacher.get_entire_course(db=db, course=course, teacher=teacher, sort=sort, sort_by=sort_by)
-
+    return await crud_teacher.get_entire_course(db, course, teacher, sort, sort_by)
 
 
 @router.put("/courses/{course_id}", response_model=CourseBase)
@@ -201,7 +201,7 @@ async def update_course_info(
     - `HTTPException 403`: If the authenticated teacher does not have permission to update the course.
     """
     course = await get_course_common_info(db, course_id)
-    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher.account)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
             status_code=403,
@@ -216,10 +216,9 @@ async def update_section(
     db: Annotated[Session, Depends(get_db)], 
     course_id: int,
     section_id: int,
-    user: TeacherAuthDep, 
+    teacher: TeacherAuthDep, 
     updates: SectionUpdate = Body(...)
-    ):
-    
+):
     """
     Updates the information of a specific section within a course.
 
@@ -238,7 +237,7 @@ async def update_section(
     - `HTTPException 404`: If the section with the given ID does not exist or is not part of the specified course.
     """
     course = await get_course_common_info(db, course_id)
-    user_has_access, msg = await crud_teacher.validate_course_access(course, user)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
             status_code=403,
@@ -263,8 +262,7 @@ async def add_sections(
     course_id: int, 
     teacher: TeacherAuthDep, 
     sections: List[SectionBase]
-    ):
-    
+): 
     """
     Create sections for a course.
 
@@ -281,12 +279,13 @@ async def add_sections(
     - `HTTPException 403`: If the teacher does not have permission to add sections to the course.
     """
     course = await get_course_common_info(db, course_id)
-    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher.account)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
             status_code=403,
             detail=msg
         )
+        
     created_sections = await create_sections(db, sections, course_id)
     return created_sections
          
@@ -296,9 +295,8 @@ async def remove_section(
     db: Annotated[Session, Depends(get_db)],
     course_id: int,
     section_id: int,
-    user: TeacherAuthDep
-    ):
-    
+    teacher: TeacherAuthDep
+): 
     """
     Removes a section from a course.
 
@@ -316,7 +314,7 @@ async def remove_section(
     - `HTTPException 404`: If the section is not found or does not belong to the specified course.
     """
     course = await get_course_common_info(db, course_id)
-    user_has_access, msg = await crud_teacher.validate_course_access(course, user)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
             status_code=403,
@@ -336,7 +334,7 @@ async def remove_section(
 
 
 @router.post("/courses/{course_id}/tags")
-async def add_tag(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep, tag: TagBase):
+async def add_tags(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep, tag: TagBase):
     pass
 
 

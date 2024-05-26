@@ -50,8 +50,8 @@ async def get_my_courses(db: Session, teacher: Teacher) -> list[CourseBase]:
             owner_id=course.owner_id,
             owner_names=f"{teacher.first_name} {teacher.last_name}",
             is_premium=course.is_premium,
-            is_hidden=course.is_hidden,
-            rating=course.rating
+            rating=course.rating,
+            people_rated=course.people_rated
         ) for course in courses
     ]
 
@@ -64,9 +64,7 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
         description=new_course.description,
         objectives=new_course.objectives,
         owner_id=teacher.teacher_id,
-        is_premium=new_course.is_premium,
-        is_hidden=False,
-        home_page_picture=new_course.home_page_picture,
+        is_premium=new_course.is_premium
     )
 
     db.add(course_info)
@@ -80,10 +78,8 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
         owner_id=course_info.owner_id,
         owner_names=teacher.first_name + ' ' + teacher.last_name,
         is_premium=course_info.is_premium,
-        is_hidden=course_info.is_hidden,
-        home_page_picture=course_info.home_page_picture,
         rating=course_info.rating,
-        people_rated=course_info.people_rated,
+        people_rated=course_info.people_rated
     )
 
     course_tags, course_sections = [], []
@@ -121,9 +117,8 @@ async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort:
             section_id=section.section_id,
             title=section.title,
             content_type=section.content_type,
-            content=section.content,
-            description=section.description,
             external_link=section.external_link,
+            description=section.description,
             course_id=section.course_id
         )
         course_sections.append(section_base)
@@ -145,17 +140,17 @@ async def edit_course_info(db: Session, course: Course, teacher: Teacher, update
     return get_coursebase_model(teacher, course)
 
 
-async def validate_course_access(course, user) -> tuple[bool, str]:
+async def validate_course_access(course: Course, teacher: Teacher) -> tuple[bool, str]:
     if not course:
         return False, f"Course does not exist"
 
-    if course.owner_id != user.account_id:
+    if course.owner_id != teacher.teacher_id:
         return False, f"You do not have permission to access this course"
 
     return True, "OK"
 
 
-def get_coursebase_model(teacher, course):
+def get_coursebase_model(teacher: Teacher, course: Course):
     return CourseBase(
         course_id=course.course_id,
         title=course.title,
@@ -164,6 +159,6 @@ def get_coursebase_model(teacher, course):
         owner_id=course.owner_id,
         owner_names=f"{teacher.first_name} {teacher.last_name}",
         is_premium=course.is_premium,
-        is_hidden=course.is_hidden,
-        rating=course.rating
+        rating=course.rating,
+        people_rated=course.people_rated
     )

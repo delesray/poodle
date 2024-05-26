@@ -14,19 +14,18 @@ class SectionBase(BaseModel):
     section_id: int | None = None
     title: Annotated[str, StringConstraints(min_length=1)]
     content_type: ContentType
-    description: str | None = None
     external_link: str | None = None
+    description: str | None = None
     course_id: int | None = None
 
     @classmethod
-    def from_query(cls, section_id, title, content_type, content, description, external_link, course_id):
+    def from_query(cls, section_id, title, content_type, external_link, description, course_id):
         return cls(
             section_id=section_id,
             title=title,
             content_type=content_type,
-            content=content,
-            description=description,
             external_link=external_link,
+            description=description,
             course_id=course_id
         )
 
@@ -34,6 +33,6 @@ class SectionBase(BaseModel):
 class SectionUpdate(BaseModel):
     title: Annotated[str, StringConstraints(min_length=1)]
     content_type: ContentType
-    content: str
-    description: str | None = None
     external_link: str | None = None
+    description: str | None = None
+    

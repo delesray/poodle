@@ -12,8 +12,6 @@ class CourseBase(BaseModel):
     owner_id: int
     owner_names: str
     is_premium: bool = False
-    is_hidden: bool = False
-    home_page_picture: bytes | None = None
     rating: float | None = None
     people_rated: int = 0
 
@@ -35,7 +33,7 @@ class CourseInfo(BaseModel):
 
 
 class CourseUpdate(BaseModel):
-    title: Annotated[str, StringConstraints(min_length=1)] #TODO discuss:  should title changes be limited?
+    title: Annotated[str, StringConstraints(min_length=1)] 
     description: Annotated[str, StringConstraints(min_length=1)] 
     objectives: Annotated[str, StringConstraints(min_length=1)] 
 
@@ -46,7 +44,6 @@ class CourseCreate(BaseModel):
     objectives: Annotated[  # what students are expected to learn and accomplish by the end of the course
         str, StringConstraints(min_length=1)]
     is_premium: bool = False
-    home_page_picture: bytes | None = None
     tags: list[TagBase] | None = None
     sections: list[SectionBase] | None = None
 
