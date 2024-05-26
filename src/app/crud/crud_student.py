@@ -2,8 +2,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from crud import crud_course, crud_section
-from database.models import Account, Course, Student, StudentCourse, StudentRating, StudentSection, Section
+from crud import crud_course
+from database.models import Account, Course, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourse
 
@@ -47,7 +47,7 @@ async def get_my_courses(student: Student):
 
 
 async def subscribe_for_course(db: Session, student: Student, course: Course):
-    new_enrollment = StudentCourse(
+    new_enrollment = DBStudentCourse(
         student_id=student.student_id,
         course_id=course.course_id,
     )
@@ -72,8 +72,8 @@ async def subscribe_for_course(db: Session, student: Student, course: Course):
 
 
 async def unsubscribe_from_course(db: Session, student_id: int, course_id: int):
-    db.query(StudentCourse).filter(StudentCourse.student_id ==
-                                   student_id, StudentCourse.course_id == course_id).delete()
+    db.query(DBStudentCourse).filter(DBStudentCourse.student_id ==
+                                   student_id, DBStudentCourse.course_id == course_id).delete()
     db.commit()
 
 
@@ -131,7 +131,7 @@ async def update_add_student_rating(db: Session, student: Student, course_id: in
     course = next(
         (course for course in student.courses_enrolled if course.course_id == course_id), None)
 
-    return CourseRateResponse(course=course.title, rating=rating)
+    return CourseRateResponse(course=course.title, rating=f'{rating:.2f}')
 
 
 async def get_course_information(db: Session, course_id: int, student: Student):
@@ -149,7 +149,7 @@ async def get_course_information(db: Session, course_id: int, student: Student):
             owner_name=course.owner.first_name + ' ' + course.owner.last_name,
             is_premium=course.is_premium,
             home_page_picture=course.home_page_picture,
-            overall_rating=f'{course.rating:.2f}',
+            overall_rating=course.rating,
             your_rating=student_rating if student_rating else 0,
             your_progress=student_progress
         )
