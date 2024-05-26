@@ -2,16 +2,15 @@ from pydantic import BaseModel
 from typing import Union
 from datetime import timedelta, datetime
 from jose import jwt, JWTError, ExpiredSignatureError
-from secret_key import SECRET_KEY
 from fastapi.security import OAuth2PasswordBearer
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 oauth2_scheme_optional = OAuth2PasswordBearer(
     tokenUrl="/login", auto_error=False)
-
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 
 class Token(BaseModel):
@@ -26,10 +25,12 @@ class TokenData(BaseModel):
 
 async def create_access_token(data: TokenData) -> Token:
     to_encode = dict(data)
-    expire = datetime.now() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now() + \
+        timedelta(days=int(os.environ['ACCESS_TOKEN_EXPIRE_DAYS']))
     to_encode.update({"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
 
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, os.environ['AUTH_SECRET_KEY'],
+                             os.environ['ALGORITHM'])
     return Token(access_token=encoded_jwt, token_type='bearer')
 
 
@@ -40,7 +41,8 @@ async def is_token_exp_valid(exp: str) -> bool:
 
 async def verify_token_access(token: str) -> Union[TokenData, str]:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
+        payload = jwt.decode(
+            token, os.environ['AUTH_SECRET_KEY'], algorithms=os.environ['ALGORITHM'])
         email: str = payload.get("email")
         role: str = payload.get("role")
         exp_at: str = payload.get("expire")
