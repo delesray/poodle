@@ -6,7 +6,7 @@ from crud.crud_user import create, exists
 from crud import crud_teacher
 from crud.crud_course import course_exists, get_course_common_info
 from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section
-from crud.crud_tag import create_tags, delete_tag, course_has_tag
+from crud.crud_tag import create_tags, delete_tag_from_course, course_has_tag, check_tag_associations, delete_tag
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
 from schemas.student import EnrollmentApproveRequest
@@ -405,7 +405,12 @@ async def remove_tag(
             detail=f"Tag with ID:{tag_id} not associated with course ID:{course_id}"
         )
      
-    await delete_tag(db, course_tag)
+    await delete_tag_from_course(db, course_tag)
+    
+    tag_associations = await check_tag_associations(db, tag_id)
+    if tag_associations == 0:
+        await delete_tag(db, tag_id)
+        
     return
 
 
@@ -416,10 +421,10 @@ def approve_enrollment(db: Annotated[Session, Depends(get_db)], request: Enrollm
 
 
 @router.patch("/courses/{course_id}/deactivate")
-def deactivate_course(course_id, teacher: TeacherAuthDep, db: Annotated[Session, Depends(get_db)]):
+def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id, teacher: TeacherAuthDep):
     pass
 
 
 @router.get("/courses/reports")
-def generate_course_reports(teacher: TeacherAuthDep, db: Annotated[Session, Depends(get_db)]):
+def generate_course_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
     pass
