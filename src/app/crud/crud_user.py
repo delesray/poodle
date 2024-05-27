@@ -45,7 +45,6 @@ class TeacherFactory():
             last_name=user_schema.last_name,
             phone_number=user_schema.phone_number,
             linked_in=user_schema.linked_in,
-            profile_picture=user_schema.profile_picture
         )
 
         db.add(new_teacher)
@@ -87,7 +86,7 @@ def create_user_factory(user_type: str):
     return factories.get(user_type)
 
 
-async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]) -> Union[Teacher, Student]:
+async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]) -> Union[TeacherSchema, StudentResponseModel]:
     user_type = user_schema.get_type()
     factory = create_user_factory(user_type)
     return await factory.create_db_user(db, user_schema)

@@ -73,3 +73,7 @@ async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=Non
         course.rating = (course.rating * course.people_rated + new_st_rating) / (course.people_rated + 1)
 
     course.people_rated += 1
+
+async def hide_course(db: Session, course: Course):
+    course.is_hidden = True
+    db.commit()

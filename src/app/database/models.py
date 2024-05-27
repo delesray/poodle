@@ -22,7 +22,7 @@ class Account(Base):
     __tablename__ = "accounts"
 
     account_id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String(30))
+    email: Mapped[str] = mapped_column(String(30), unique=True) 
     password: Mapped[str] = mapped_column(String(200))
     role: Mapped[Role]
     is_deactivated: Mapped[Optional[bool]] = mapped_column(server_default='0')
@@ -176,7 +176,7 @@ class Tag(Base):
     __tablename__ = 'tags'
 
     tag_id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(45))
+    name: Mapped[str] = mapped_column(String(45), unique=True) 
 
     courses: Mapped[List['Course']] = relationship(secondary="courses_tags", back_populates="tags")
 

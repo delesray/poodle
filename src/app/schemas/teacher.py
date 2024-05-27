@@ -16,8 +16,7 @@ class TeacherCreate(BaseModel):
     last_name: Annotated[str, StringConstraints(min_length=2)]
     phone_number: str | None = None
     linked_in: str | None = None
-    profile_picture: bytes | None = None
-
+   
     def get_type(self):
         return 'teacher'
 
