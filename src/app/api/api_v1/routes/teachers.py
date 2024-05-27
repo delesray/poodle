@@ -4,7 +4,7 @@ from database.database import get_db
 from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
 from crud import crud_teacher
-from crud.crud_course import course_exists, get_course_common_info
+from crud.crud_course import course_exists, get_course_common_info, hide_course
 from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section
 from crud.crud_tag import create_tags, delete_tag_from_course, course_has_tag, check_tag_associations, delete_tag
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema
@@ -420,10 +420,38 @@ def approve_enrollment(db: Annotated[Session, Depends(get_db)], request: Enrollm
     pass
 
 
-@router.patch("/courses/{course_id}/deactivate")
-def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id, teacher: TeacherAuthDep):
-    pass
+@router.patch("/courses/{course_id}/deactivate", status_code=204)
+def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep):
+    """
+    Deactivates a course if the teacher owns it and no students are enrolled.
 
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `course_id` (int): The ID of the course to deactivate.
+    - `teacher` (TeacherAuthDep): The authenticated teacher.
+
+    **Returns**: HTTP status 204 (No Content) if successful.
+
+    **Raises**:
+    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 403`: If the teacher does not have access to the course.
+    - `HTTPException 400`: If there are students enrolled in the course.
+    """
+    course = await get_course_common_info(db, course_id)
+    user_has_access, msg = await crud_teacher.validate_course_access(course, teacher)
+    if not user_has_access:
+        raise HTTPException(
+            status_code=403,
+            detail=msg
+        )
+        
+    if course.students_enrolled:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot deactivate a course with enrolled students"
+        )
+    await hide_course(db, course)
+    return
 
 @router.get("/courses/reports")
 def generate_course_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
