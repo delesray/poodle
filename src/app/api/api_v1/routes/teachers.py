@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, status
-from typing import Annotated
+from typing import Annotated, Literal
+
+from pydantic import StringConstraints
 from database.database import get_db
 from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
 from crud import crud_teacher, crud_student
-from crud.crud_course import course_exists, get_course_common_info
+from crud.crud_course import course_exists, get_course_common_info, get_course_by_id
 from crud import crud_teacher
 from crud.crud_course import course_exists, get_course_common_info, hide_course
 from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section
@@ -181,9 +183,37 @@ async def view_course_by_id(
     return await crud_teacher.get_entire_course(db, course, teacher, sort, sort_by)
 
 @router.put("/courses/requests", status_code=status.HTTP_201_CREATED)
-async def approve_enrollment(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep, student: str, course_id: int):
+async def approve_enrollment(db: Annotated[Session, Depends(get_db)], 
+                             teacher: TeacherAuthDep, 
+                             student: str, 
+                             course_id: int, 
+                             response: Annotated[str, StringConstraints(pattern=r'^(approve|deny)$')]):
+    
+    """
+    Enables a course owner to approve/deny requests for enrollment by students.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `student` (string): The student's email.
+    - `course_id` (integer): The ID of the course.
+    - `response` (string): The response of the request. Could be either 'Approve' or 'Deny'.
+    
+    **Returns**: A message, if the response is successfully submitted.
+
+    **Raises**:
+    - 'HTTPException 401', if the teacher is not authenticated.
+    - 'HTTPException 404', if student or course is not found.
+    """
+    
     student = await crud_student.get_by_email(db, student)
-    return await crud_student.subscribe_for_course(db, student, course_id)
+
+    if not student:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No student with such email')
+    if not await get_course_by_id(db, course_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
+    
+    return await crud_teacher.student_enroll_response(db, student, course_id, response)
 
 
 @router.put("/courses/{course_id}", response_model=CourseBase)
@@ -261,7 +291,6 @@ async def update_section(
         )
         
     return await update_section_info(db, section, updates)
-
         
 
 @router.post("/courses/{course_id}/sections", status_code=201, response_model=List[SectionBase])
