@@ -10,7 +10,7 @@ from crud import crud_teacher
 from crud.crud_course import course_exists, get_course_common_info, hide_course
 from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section, validate_section
 from crud.crud_tag import create_tags, delete_tag_from_course, course_has_tag, check_tag_associations, delete_tag
-from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema
+from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema, TeacherApproveRequest
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
 from schemas.section import SectionBase, SectionUpdate
 from schemas.tag import TagBase
@@ -185,7 +185,7 @@ async def approve_enrollment(db: Annotated[Session, Depends(get_db)],
                              teacher: TeacherAuthDep, 
                              student: str, 
                              course_id: int, 
-                             response: Annotated[str, StringConstraints(pattern=r'^(approve|deny)$')]):
+                             response: TeacherApproveRequest):
     
     """
     Enables a course owner to approve/deny requests for enrollment by students.
@@ -211,7 +211,7 @@ async def approve_enrollment(db: Annotated[Session, Depends(get_db)],
     if not await get_course_by_id(db, course_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
     
-    return await crud_teacher.student_enroll_response(db, student, course_id, response)
+    return await crud_teacher.student_enroll_response(db, student, course_id, response.value)
 
 
 @router.put("/courses/{course_id}", response_model=CourseBase)

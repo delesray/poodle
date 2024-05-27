@@ -1,3 +1,4 @@
+from enum import Enum
 from pydantic import BaseModel, EmailStr, StringConstraints
 from typing import Annotated
 
@@ -28,3 +29,8 @@ class TeacherSchema(BaseModel):
     last_name: str
     phone_number: str = None
     linked_in: str = None
+
+
+class TeacherApproveRequest(Enum):
+    approve = 'approve'
+    deny = 'deny'
