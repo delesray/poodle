@@ -7,29 +7,30 @@ load_dotenv()
 api_key = os.environ['MAIL_API_KEY']
 api_secret = os.environ['MAIL_API_SECRET_KEY']
 sender_mail = os.environ['SENDER_EMAIL']
-receiver_mail = os.environ['RECIPIENT_EMAIL']
 
 mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
-data = {
-  'Messages': [
-				{
-						"From": {
-								"Email": sender_mail,
-								"Name": "Mailjet Pilot"
-						},
-						"To": [
-								{
-										"Email": receiver_mail,
-										"Name": "passenger 1"
-								}
-						],
-						"Subject": "Hello",
-						"TextPart": "Dear passenger 1, welcome to Mailjet! May the delivery force be with you!",
-						"HTMLPart": "<h3>Dear passenger 1, welcome to <a href=\"https://www.mailjet.com/\">Mailjet</a>!</h3><br />May the delivery force be with you!"
-				}
-		]
-}
-result = mailjet.send.create(data=data)
-print(result.status_code)
-print(result.json())
+
+async def build_student_enroll_request(receiver_mail: str, student_email: str, course_title: str, course_id: int, sender_mail: str=sender_mail):
+    return {
+        'Messages': [
+            {
+                "From": {
+                    "Email": sender_mail,
+                    "Name": "Poodle e-learning platform"
+                },
+                "To": [
+                    {
+                        "Email": receiver_mail
+                    }
+                ],
+                "Subject": "Student enroll request",
+                "TextPart": f"Student {student_email} has requested access to your {course_title} course with ID {course_id}. Click here to be redirected to Poodle, then click on the Authorize button to login, navigate to Approve Enrollment and follow the steps for approval.",
+                "HTMLPart": f"<h3>Student {student_email} has requested access to your {course_title} course with ID {course_id}. Click <a href=\"http://127.0.0.1:8000/docs#/\">here</a> to be redirected to Poodle, then click on the Authorize button to login, navigate to Approve Enrollment and follow the steps for approval.</h3><br />"
+            }
+        ]
+    }
+
+
+async def send_email(data):
+    mailjet.send.create(data)

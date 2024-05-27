@@ -1,10 +1,11 @@
-from typing import Annotated
-from fastapi import Depends
 import sqlalchemy
 from sqlalchemy import create_engine
+from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.orm import sessionmaker
-from hidden import USER, PASS
-from sqlalchemy.orm import Session
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # from src.app.core.config import settings
 
@@ -12,7 +13,7 @@ from sqlalchemy.orm import Session
 # SQLALCHEMY_DATABASE_URL = settings.DB_URL
 
 # SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
-SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{USER}:{PASS}@localhost/poodle?charset=utf8mb4"
+SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{os.environ['DB_USER']}:{os.environ['DB_PASS']}@localhost/poodle?charset=utf8mb4"
 
 # factory that can create new database connections
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
@@ -28,3 +29,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def create_db():
+    if not database_exists(engine.url):
+        create_database(engine.url)

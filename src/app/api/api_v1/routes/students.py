@@ -134,8 +134,7 @@ async def view_my_courses(student: StudentAuthDep):
 
     **Returns**: A list of CourseInfo response models with the information for each course the student is enrolled in.
     """
-    my_courses = await crud_student.get_my_courses(student=student)
-    return my_courses
+    return await crud_student.get_my_courses(student=student)
 
 
 @router.get('/courses/{course_id}', response_model=StudentCourse)
@@ -150,10 +149,16 @@ async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentA
 
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
+    - HTTPException 404, if the course is not found.
     - HTTPException 409, if the student is not enrolled in the course.
 
     **Returns**: A StudentCourse response object with detailed information about the course and the student's progress and rating of the course.
     """
+
+    course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
+
+    if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
 
     if not await crud_student.is_student_enrolled(student=student, course_id=course_id):
         raise HTTPException(
@@ -208,10 +213,10 @@ async def view_course_section(
     return section_dto
 
 
-@router.post('/courses/{course_id}/subscription', response_model=CourseInfo, status_code=status.HTTP_201_CREATED)
+@router.post('/courses/{course_id}/subscription')
 async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
     """
-    Enrolls authenticated student in a course.
+    Sends a subscription request by email to the owner of the course.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
@@ -220,18 +225,22 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
 
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
+    - HTTPException 404, if the course is not found.
     - HTTPException 403, if the student does not have a premium account but is attempting to enroll in a premium course.
     - HTTPException 400, if the student has reached their premium courses limit (5).
     - HTTPException 409, if the student is attempting to duplicate a course enrollment.
 
 
-    **Returns**: CourseInfo object with home page information about the subscribed course.
+    **Returns**: 'Pending approval' message.
     """
 
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
+    
+    if await crud_student.is_student_enrolled(student=student, course_id=course.course_id):
+        return f'You are already subscribed for course {course.title}. Click on <View Course> or <View Course Section> to access its content'
 
     if course.is_premium and not student.is_premium:
         raise HTTPException(
@@ -241,7 +250,8 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail='Premium courses limit reached')
 
-    return await crud_student.subscribe_for_course(db=db, student=student, course=course)
+    await crud_student.add_pending_student_request(db, student, course_id)
+    return await crud_student.send_notification(course=course, student=student)
 
 
 @router.delete('/courses/{course_id}/subscription', status_code=status.HTTP_204_NO_CONTENT)

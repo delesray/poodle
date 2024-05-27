@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from database.models import Course, Teacher, Tag, CourseTag, Section
+from database.models import Course, Student, StudentCourse, Teacher, Tag, CourseTag, Section
 from schemas.course import CourseCreate, CourseBase, CourseSectionsTags, CourseUpdate
 from crud.crud_section import create_sections
 from crud.crud_tag import create_tags
@@ -162,3 +162,13 @@ def get_coursebase_model(teacher: Teacher, course: Course):
         rating=course.rating,
         people_rated=course.people_rated
     )
+
+
+async def student_enroll_response(db: Session, student: Student, course_id: int, response: str):
+    sc_record = db.query(StudentCourse).filter(StudentCourse.student_id == student.student_id, 
+                                   StudentCourse.course_id == course_id).first()
+    
+    sc_record.status = 2 if response == 'approve' else 3
+    db.commit()
+
+    return 'Request response submitted'

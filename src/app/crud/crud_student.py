@@ -1,11 +1,11 @@
 from fastapi import HTTPException, status
-from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
 from database.models import Account, Course, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourse
+from email_notification import send_email, build_student_enroll_request
 
 
 async def get_by_email(db: Session, email: str):
@@ -46,14 +46,14 @@ async def get_my_courses(student: Student):
     return my_courses_pydantic
 
 
-async def subscribe_for_course(db: Session, student: Student, course: Course):
-    new_enrollment = DBStudentCourse(
+async def add_pending_student_request(db: Session, student: Student, course_id: int):
+    pending_enrollment = DBStudentCourse(
         student_id=student.student_id,
-        course_id=course.course_id,
+        course_id=course_id
     )
 
     try:
-        db.add(new_enrollment)
+        db.add(pending_enrollment)
         db.commit()
 
     except IntegrityError as err:
@@ -61,14 +61,7 @@ async def subscribe_for_course(db: Session, student: Student, course: Course):
             status_code=status.HTTP_409_CONFLICT, detail=err.args)
 
     else:
-        db.refresh(new_enrollment)
-
-        course_tags = await crud_course.get_course_tags(course)
-        return CourseInfo(
-            title=course.title,
-            description=course.description,
-            is_premium=course.is_premium,
-            tags=course_tags)
+        db.refresh(pending_enrollment)
 
 
 async def unsubscribe_from_course(db: Session, student_id: int, course_id: int):
@@ -119,13 +112,13 @@ async def update_add_student_rating(db: Session, student: Student, course_id: in
     ).first()
 
     if existing_rating:
-        crud_course.update_rating(db, course_id, rating, existing_rating.rating)
+        await crud_course.update_rating(db, course_id, rating, existing_rating.rating)
         existing_rating.rating = rating
     else:  # create new one if student still not rated
         new_rating = StudentRating(
             student_id=student.student_id, course_id=course_id, rating=rating)
         db.add(new_rating)
-        crud_course.update_rating(db, course_id, rating)
+        await crud_course.update_rating(db, course_id, rating)
     db.commit()
 
     course = next(
@@ -153,6 +146,17 @@ async def get_course_information(db: Session, course_id: int, student: Student):
             your_rating=student_rating if student_rating else 0,
             your_progress=student_progress
         )
+    
+
+async def send_notification(course: Course, student: Student):
+    teacher_email = course.owner.account.email
+    student_email = student.account.email
+    course_title, course_id = course.title, course.course_id
+    request = await build_student_enroll_request(receiver_mail=teacher_email, student_email=student_email, course_title=course_title, course_id=course_id)
+    await send_email(data=request)
+
+    return 'Pending approval from course owner'
+
 
 # def update_progress_for_course(db: Session, student_id, course_id) -> None:
 #     """Goes to students_progress table, calculates the new progress and updates it"""

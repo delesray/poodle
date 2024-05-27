@@ -1,14 +1,14 @@
 from typing import List, Optional
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, Integer, String, text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from database.database import Base
 from enum import Enum
 
 
 class Role(Enum):
-    admin = "admin"
-    student = "student"
-    teacher = "teacher"
+    admin = 'admin'
+    student = 'student'
+    teacher = 'teacher'
 
 
 class ContentType(Enum):
@@ -16,6 +16,12 @@ class ContentType(Enum):
     image = 'image'
     text = 'text'
     quiz = 'quiz'
+
+
+class Status(Enum):
+    pending = 1
+    active = 2
+    declined = 3
 
 
 class Account(Base):
@@ -73,7 +79,10 @@ class Student(Base):
     is_premium: Mapped[Optional[bool]] = mapped_column(server_default='0')
 
     courses_enrolled: Mapped[List['Course']] = relationship(
-        secondary="students_courses",
+        'Course',
+        secondary='students_courses',
+        primaryjoin="and_(Student.student_id == foreign(StudentCourse.student_id), StudentCourse.status == 2)",
+        secondaryjoin="Course.course_id == foreign(StudentCourse.course_id)",
         back_populates="students_enrolled"
     )
     courses_rated: Mapped[List['Course']] = relationship(
@@ -124,6 +133,7 @@ class StudentCourse(Base):
         ForeignKey('students.student_id'), primary_key=True)
     course_id: Mapped[int] = mapped_column(
         ForeignKey('courses.course_id'), primary_key=True)
+    status: Mapped[Status] = mapped_column(Integer, server_default=text(str(Status.pending.value)))
 
     def __repr__(self):
         return f"<StudentCourse(student_id={self.student_id}, course_id={self.course_id})>"
