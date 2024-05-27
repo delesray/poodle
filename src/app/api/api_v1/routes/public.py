@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 router = APIRouter(tags=['public'])
 
 
-@router.post('/login')
+@router.post('/login', include_in_schema=False)
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]):
     """
     Logs a user.
