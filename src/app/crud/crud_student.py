@@ -2,7 +2,8 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
-from database.models import Account, Course, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, Section
+from database.models import Account, Course, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, \
+    Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourse
 from email_notification import send_email, build_student_enroll_request
@@ -66,7 +67,7 @@ async def add_pending_student_request(db: Session, student: Student, course_id: 
 
 async def unsubscribe_from_course(db: Session, student_id: int, course_id: int):
     db.query(DBStudentCourse).filter(DBStudentCourse.student_id ==
-                                   student_id, DBStudentCourse.course_id == course_id).delete()
+                                     student_id, DBStudentCourse.course_id == course_id).delete()
     db.commit()
 
 
@@ -111,18 +112,24 @@ async def update_add_student_rating(db: Session, student: Student, course_id: in
         StudentRating.course_id == course_id
     ).first()
 
-    if existing_rating:
-        await crud_course.update_rating(db, course_id, rating, existing_rating.rating)
-        existing_rating.rating = rating
-    else:  # create new one if student still not rated
-        new_rating = StudentRating(
-            student_id=student.student_id, course_id=course_id, rating=rating)
-        db.add(new_rating)
-        await crud_course.update_rating(db, course_id, rating)
-    db.commit()
+    try:
+        if existing_rating:
+            await crud_course.update_rating(db, course_id, rating, existing_rating.rating)
+            existing_rating.rating = rating
+        else:  # create new one if student still not rated
+            new_rating = StudentRating(
+                student_id=student.student_id, course_id=course_id, rating=rating)
+            db.add(new_rating)
 
-    course = next(
-        (course for course in student.courses_enrolled if course.course_id == course_id), None)
+            await crud_course.update_rating(db, course_id, rating)
+        db.commit()
+
+        course = next(
+            (course for course in student.courses_enrolled if course.course_id == course_id), None)
+    except Exception as e:
+        db.rollback()
+
+        return e
 
     return CourseRateResponse(course=course.title, rating=f'{rating:.2f}')
 
@@ -146,17 +153,17 @@ async def get_course_information(db: Session, course_id: int, student: Student):
             your_rating=student_rating if student_rating else 0,
             your_progress=student_progress
         )
-    
+
 
 async def send_notification(course: Course, student: Student):
     teacher_email = course.owner.account.email
     student_email = student.account.email
     course_title, course_id = course.title, course.course_id
-    request = await build_student_enroll_request(receiver_mail=teacher_email, student_email=student_email, course_title=course_title, course_id=course_id)
+    request = await build_student_enroll_request(receiver_mail=teacher_email, student_email=student_email,
+                                                 course_title=course_title, course_id=course_id)
     await send_email(data=request)
 
     return 'Pending approval from course owner'
-
 
 # def update_progress_for_course(db: Session, student_id, course_id) -> None:
 #     """Goes to students_progress table, calculates the new progress and updates it"""

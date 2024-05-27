@@ -255,7 +255,10 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
 
 
 @router.delete('/courses/{course_id}/subscription', status_code=status.HTTP_204_NO_CONTENT)
-async def unsubscribe(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
+async def unsubscribe(
+        db: Annotated[Session, Depends(get_db)],
+        student: StudentAuthDep,
+        course_id: int):
     """
     Unsubscribes authenticated student from a course.
 
@@ -294,6 +297,11 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
 
     **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
     """
+    #todo course check dependency
+    course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
+
+    if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
 
     if not await crud_student.is_student_enrolled(student=student, course_id=course_id):
         raise HTTPException(

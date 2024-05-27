@@ -62,6 +62,8 @@ async def get_course_by_id(db: Session, course_id: int) -> Course:
 
 async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=None):
     # commit must happen in outer func
+
+    # todo course_id > course (taken from dependency)
     course = db.query(Course).where(Course.course_id == course_id).first()
 
     if old_st_rating:  # means we do not increment people_rated
