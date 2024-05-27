@@ -1,9 +1,11 @@
 import uvicorn
 from fastapi import FastAPI
 from database import models
-from database.database import engine
+from database.database import engine, create_db
 from api.api_v1.api import api_router
 
+
+create_db()
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()

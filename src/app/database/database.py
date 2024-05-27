@@ -1,5 +1,6 @@
 import sqlalchemy
 from sqlalchemy import create_engine
+from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
@@ -28,3 +29,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def create_db():
+    if not database_exists(engine.url):
+        create_database(engine.url)
