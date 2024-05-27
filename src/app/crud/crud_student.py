@@ -46,14 +46,14 @@ async def get_my_courses(student: Student):
     return my_courses_pydantic
 
 
-async def subscribe_for_course(db: Session, student: Student, course_id: int):
-    new_enrollment = DBStudentCourse(
+async def add_pending_student_request(db: Session, student: Student, course_id: int):
+    pending_enrollment = DBStudentCourse(
         student_id=student.student_id,
-        course_id=course_id,
+        course_id=course_id
     )
 
     try:
-        db.add(new_enrollment)
+        db.add(pending_enrollment)
         db.commit()
 
     except IntegrityError as err:
@@ -61,8 +61,7 @@ async def subscribe_for_course(db: Session, student: Student, course_id: int):
             status_code=status.HTTP_409_CONFLICT, detail=err.args)
 
     else:
-        db.refresh(new_enrollment)
-        return 'Request approved'
+        db.refresh(pending_enrollment)
 
 
 async def unsubscribe_from_course(db: Session, student_id: int, course_id: int):

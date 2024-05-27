@@ -25,7 +25,7 @@ async def build_student_enroll_request(receiver_mail: str, student_email: str, c
                     }
                 ],
                 "Subject": "Student enroll request",
-                "TextPart": f"Student {student_email} has requested access to your {course_title} course with ID {course_id}. Please click here to login and then here for approval",
+                "TextPart": f"Student {student_email} has requested access to your {course_title} course with ID {course_id}. Click here to be redirected to Poodle, then click on the Authorize button to login, navigate to Approve Enrollment and follow the steps for approval.",
                 "HTMLPart": f"<h3>Student {student_email} has requested access to your {course_title} course with ID {course_id}. Click <a href=\"http://127.0.0.1:8000/docs#/\">here</a> to be redirected to Poodle, then click on the Authorize button to login, navigate to Approve Enrollment and follow the steps for approval.</h3><br />"
             }
         ]
