@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
 from crud import crud_teacher
 from crud.crud_course import course_exists, get_course_common_info, hide_course
-from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section
+from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section, validate_section
 from crud.crud_tag import create_tags, delete_tag_from_course, course_has_tag, check_tag_associations, delete_tag
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
@@ -246,7 +246,7 @@ async def update_section(
         ) 
         
     section = await get_section_by_id(db, section_id)
-    valid_section, msg = crud_teacher.validate_section(section, course_id)
+    valid_section, msg = validate_section(section, course_id)
     if not valid_section:
         raise HTTPException(
             status_code=404,
@@ -323,7 +323,7 @@ async def remove_section(
         )
     
     section = await get_section_by_id(db, section_id)
-    valid_section, msg = crud_teacher.validate_section(section, course_id)
+    valid_section, msg = validate_section(section, course_id)
     if not valid_section:
         raise HTTPException(
             status_code=404,
