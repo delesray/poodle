@@ -140,7 +140,7 @@ async def edit_course_info(db: Session, course: Course, teacher: Teacher, update
     return get_coursebase_model(teacher, course)
 
 
-async def validate_course_access(course: Course, teacher: Teacher) -> tuple[bool, str]:
+def validate_course_access(course: Course, teacher: Teacher) -> tuple[bool, str]:
     if not course:
         return False, f"Course does not exist"
 
