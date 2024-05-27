@@ -422,12 +422,12 @@ async def remove_tag(
 
 
 @router.patch("/courses/{course_id}/deactivate")
-def deactivate_course(course_id, teacher: TeacherAuthDep, db: Annotated[Session, Depends(get_db)]):
+async def deactivate_course(course_id, teacher: TeacherAuthDep, db: Annotated[Session, Depends(get_db)]):
     pass
 
 
 @router.patch("/courses/{course_id}/deactivate", status_code=204)
-def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep):
+async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep):
     """
     Deactivates a course if the teacher owns it and no students are enrolled.
 
@@ -460,5 +460,5 @@ def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: int, t
     return
 
 @router.get("/courses/reports")
-def generate_course_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
+async def generate_course_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
     pass
