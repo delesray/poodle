@@ -448,11 +448,6 @@ async def remove_tag(
     return
 
 
-@router.patch("/courses/{course_id}/deactivate")
-async def deactivate_course(course_id, teacher: TeacherAuthDep, db: Annotated[Session, Depends(get_db)]):
-    pass
-
-
 @router.patch("/courses/{course_id}/deactivate", status_code=204)
 async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep):
     """
