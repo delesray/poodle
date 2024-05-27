@@ -94,7 +94,7 @@ def transfer_object(section: Section) -> SectionBase:
     )
     return dto
 
-async def validate_section(section: Section, course_id: int) -> tuple[bool, str]:
+def validate_section(section: Section, course_id: int) -> tuple[bool, str]:
     if not section:
         return False, f"Section not found"
     
