@@ -55,7 +55,8 @@ async def course_exists(db: Session, title: str) -> bool:
 async def get_course_by_id(db: Session, course_id: int) -> Course:
     query = db.query(Course).filter(Course.course_id == course_id).first()
 
-    return query
+    if query:
+        return query
 
 
 
