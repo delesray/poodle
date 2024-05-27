@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, status
-from typing import Annotated, Literal
-
+from typing import Annotated
 from pydantic import StringConstraints
 from database.database import get_db
 from sqlalchemy.orm import Session
@@ -13,7 +12,6 @@ from crud.crud_section import create_sections, get_section_by_id, update_section
 from crud.crud_tag import create_tags, delete_tag_from_course, course_has_tag, check_tag_associations, delete_tag
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
-from schemas.student import EnrollmentApproveRequest
 from schemas.section import SectionBase, SectionUpdate
 from schemas.tag import TagBase
 from core.oauth import TeacherAuthDep
@@ -205,7 +203,7 @@ async def approve_enrollment(db: Annotated[Session, Depends(get_db)],
     - 'HTTPException 401', if the teacher is not authenticated.
     - 'HTTPException 404', if student or course is not found.
     """
-    
+    # TODO add check is teacher owner?
     student = await crud_student.get_by_email(db, student)
 
     if not student:
@@ -490,10 +488,4 @@ async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: 
 
 @router.get("/courses/reports")
 async def generate_course_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
-    pass
-
-
-@router.post("/approve-enrollment")
-def approve_enrollment(db: Annotated[Session, Depends(get_db)], request: EnrollmentApproveRequest,
-                       teacher: TeacherAuthDep):
     pass
