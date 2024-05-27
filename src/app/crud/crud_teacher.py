@@ -168,7 +168,7 @@ async def student_enroll_response(db: Session, student: Student, course_id: int,
     sc_record = db.query(StudentCourse).filter(StudentCourse.student_id == student.student_id, 
                                    StudentCourse.course_id == course_id).first()
     
-    sc_record.status = Status.active if response == 'approve' else Status.declined
+    sc_record.status = Status.active.value if response == 'approve' else Status.declined.value
     db.commit()
 
     return 'Request response submitted'
