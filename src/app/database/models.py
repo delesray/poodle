@@ -79,7 +79,10 @@ class Student(Base):
     is_premium: Mapped[Optional[bool]] = mapped_column(server_default='0')
 
     courses_enrolled: Mapped[List['Course']] = relationship(
-        secondary="students_courses",
+        'Course',
+        secondary='students_courses',
+        primaryjoin="and_(Student.student_id == foreign(StudentCourse.student_id), StudentCourse.status == 2)",
+        secondaryjoin="Course.course_id == foreign(StudentCourse.course_id)",
         back_populates="students_enrolled"
     )
     courses_rated: Mapped[List['Course']] = relationship(
