@@ -1,14 +1,14 @@
 from typing import List, Optional
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, Integer, String, text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from database.database import Base
 from enum import Enum
 
 
 class Role(Enum):
-    admin = "admin"
-    student = "student"
-    teacher = "teacher"
+    admin = 'admin'
+    student = 'student'
+    teacher = 'teacher'
 
 
 class ContentType(Enum):
@@ -16,6 +16,12 @@ class ContentType(Enum):
     image = 'image'
     text = 'text'
     quiz = 'quiz'
+
+
+class Status(Enum):
+    pending = 1
+    active = 2
+    declined = 3
 
 
 class Account(Base):
@@ -124,6 +130,7 @@ class StudentCourse(Base):
         ForeignKey('students.student_id'), primary_key=True)
     course_id: Mapped[int] = mapped_column(
         ForeignKey('courses.course_id'), primary_key=True)
+    status: Mapped[Status] = mapped_column(Integer, server_default=text(str(Status.pending.value)))
 
     def __repr__(self):
         return f"<StudentCourse(student_id={self.student_id}, course_id={self.course_id})>"
