@@ -414,6 +414,12 @@ async def remove_tag(
     return
 
 
+@router.post("/approve-enrollment")
+async def approve_enrollment(db: Annotated[Session, Depends(get_db)], request: EnrollmentApproveRequest,
+                       teacher: TeacherAuthDep):
+    pass
+
+
 @router.patch("/courses/{course_id}/deactivate", status_code=204)
 async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep):
     """
@@ -448,7 +454,7 @@ async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: 
     return
 
 @router.get("/courses/reports")
-def generate_course_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
+async def generate_course_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
     pass
 
 
