@@ -1,12 +1,16 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database.models import Course, Student, StudentCourse, Teacher, Tag, CourseTag, Section, Status
 from schemas.course import CourseCreate, CourseBase, CoursePendingRequests, CourseSectionsTags, CourseUpdate
 from crud.crud_section import create_sections, transfer_object
 from crud.crud_tag import create_tags
+from crud.crud_student import get_student_progress
 from schemas.teacher import TeacherSchema, TeacherEdit
 from schemas.tag import TagBase
 from email_notification import build_teacher_enroll_request, send_email
-
+from schemas.student import StudentResponseModel
+from sqlalchemy.future import select
+from typing import List, Dict
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):
@@ -170,3 +174,51 @@ async def view_pending_requests(db: Session, teacher: Teacher):
         )
         
     return [CoursePendingRequests.from_query(course.title, student.account.email) for course, student in res]
+
+
+
+async def calculate_student_progresses(db: Session, courses_with_students: List[Course]) -> Dict[int, str]:
+    student_progress_dict = {}
+    
+    for course in courses_with_students:
+        for student in course.students_enrolled:
+            if student.student_id not in student_progress_dict:
+                student_progress = await get_student_progress(db, student.student_id, course.course_id)
+                student_progress_dict[student.student_id] = student_progress
+    
+    return student_progress_dict
+
+
+async def get_courses_reports(db: Session, teacher: Teacher):
+    courses_query = (
+        select(Course)
+        .options(joinedload(Course.students_enrolled))
+        .where(Course.owner_id == teacher.teacher_id)
+    )
+    result = db.execute(courses_query)
+    courses_with_students = result.scalars().unique().all()
+    
+    student_progress_dict = await calculate_student_progresses(db, courses_with_students)
+    courses_reports = generate_reports(courses_with_students, student_progress_dict)
+    
+    return courses_reports
+
+
+def generate_reports(courses_with_students: List[Course], student_progress_dict: Dict[int, str]):
+    reports = []
+    for course in courses_with_students:
+        course_report = {
+            "course_id": course.course_id,
+            "title": course.title,
+            "students": [
+                {
+                    "student_info": StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium),
+                    "progress": student_progress_dict[student.student_id]
+                } for student in course.students_enrolled
+            ]
+        }
+        reports.append(course_report)
+
+    return reports
+
+

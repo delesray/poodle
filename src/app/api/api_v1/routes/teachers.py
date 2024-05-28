@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
 from crud import crud_teacher, crud_student
 from crud.crud_course import course_exists, get_course_common_info, get_course_by_id
-from crud import crud_teacher
 from crud.crud_course import course_exists, get_course_common_info, hide_course
 from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section, validate_section
 from crud.crud_tag import create_tags, delete_tag_from_course, course_has_tag, check_tag_associations, delete_tag
@@ -504,6 +503,7 @@ async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: 
     await hide_course(db, course)
     return
 
-@router.get("/courses/reports")
-async def generate_course_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
-    pass
+@router.get("/reports")
+async def generate_courses_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
+    return await crud_teacher.get_courses_reports(db, teacher)
+    
