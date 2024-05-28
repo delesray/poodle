@@ -19,6 +19,7 @@ async def create_tags(db: Session, tags: List[TagBase], course_id: int) -> List[
         created_tags.append(new_tag)
     
     db.commit()
+    db.refresh(course_tag)
     return created_tags
 
 
