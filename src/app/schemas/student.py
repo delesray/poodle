@@ -1,9 +1,6 @@
 from typing import Annotated
 from pydantic import BaseModel, EmailStr, StringConstraints
 
-class EnrollmentApproveRequest(BaseModel):
-    student_id: int
-    course_id: int
 
 class StudentCreate(BaseModel):
     email: EmailStr
@@ -27,6 +24,7 @@ class StudentResponseModel(BaseModel):
             last_name=last_name,
             is_premium=is_premium
         )
+
 
 class StudentEdit(BaseModel):
     first_name: Annotated[str, StringConstraints(min_length=2)] = None

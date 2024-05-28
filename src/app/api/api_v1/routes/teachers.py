@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, status
 from typing import Annotated
-from pydantic import StringConstraints
+from database.models import Course, Student
 from database.database import get_db
 from sqlalchemy.orm import Session
 from crud.crud_user import create, exists
@@ -206,14 +206,18 @@ async def approve_enrollment(db: Annotated[Session, Depends(get_db)],
     - HTTPException 403, if the teacher is not the owner of the course.
     """
 
-    if not await get_course_by_id(db, course_id):
+    course: Course = await get_course_by_id(db, course_id)
+    if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
+    
     if not await crud_teacher.is_teacher_owner(course_id, teacher):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Course owner required')
-    if not await crud_student.get_by_email(db, student):
+    
+    student: Student = await crud_student.get_by_email(db, student)
+    if not student:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No student with such email')
 
-    return await crud_teacher.student_enroll_response(db, student, course_id, response.value)
+    return await crud_teacher.student_enroll_response(db, student, teacher, course, response.value)
 
 
 @router.put("/courses/{course_id}", response_model=CourseBase)

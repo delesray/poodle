@@ -5,7 +5,7 @@ from crud.crud_section import create_sections, transfer_object
 from crud.crud_tag import create_tags
 from schemas.teacher import TeacherSchema, TeacherEdit
 from schemas.tag import TagBase
-from schemas.section import SectionBase
+from email_notification import build_teacher_enroll_request, send_email
 
 
 
@@ -135,15 +135,26 @@ def get_coursebase_model(teacher: Teacher, course: Course):
     )
 
 
-async def student_enroll_response(db: Session, student: Student, course_id: int, response: str):
+async def student_enroll_response(db: Session, student: Student, teacher: Teacher, course: Course, response: str):
     sc_record = db.query(StudentCourse).filter(StudentCourse.student_id == student.student_id, 
-                                   StudentCourse.course_id == course_id).first()
+                                   StudentCourse.course_id == course.course_id).first()
     
     sc_record.status = Status.active.value if response == 'approve' else Status.declined.value
     db.commit()
 
-    return 'Request response submitted'
+    response = True if sc_record.status == Status.active.value else False
+    return await send_notification(receiver_mail=student.account.email,
+                            course_title=course.title,
+                            response=response)
 
 
 async def is_teacher_owner(course_id: int, teacher: Teacher):
     return course_id in set([course.course_id for course in teacher.courses])
+
+
+async def send_notification(receiver_mail: str, course_title: str, response: bool):
+
+    request = await build_teacher_enroll_request(receiver_mail, course_title, response)
+    await send_email(data=request)
+
+    return 'Request response submitted'
