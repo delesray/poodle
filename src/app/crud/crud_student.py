@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
-from database.models import Account, Course, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, \
+from database.models import Account, Course, Status, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, \
     Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourse
@@ -166,6 +166,20 @@ async def send_notification(course: Course, student: Student):
     await send_email(data=request)
 
     return 'Pending approval from course owner'
+
+
+async def view_pending_requests(db: Session, student: Student):
+    res = db.query(Course).join(DBStudentCourse).filter(DBStudentCourse.student_id == student.student_id,
+                                                          DBStudentCourse.course_id == Course.course_id,
+                                                          DBStudentCourse.status == Status.pending.value).all()
+    
+    if res:
+        return [CourseInfo.from_query(course.title, 
+                                      course.description, 
+                                      course.is_premium,
+                                      [tag.name for tag in course.tags]) 
+                                      for course in res]
+
 
 # def update_progress_for_course(db: Session, student_id, course_id) -> None:
 #     """Goes to students_progress table, calculates the new progress and updates it"""

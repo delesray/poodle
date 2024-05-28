@@ -115,7 +115,6 @@ async def change_password(db: Annotated[Session, Depends(get_db)], student: Stud
     - HTTPException 400, if new password is the same as the old one.
     - HTTPException 400, if new password confirmation does not match.
     """
-
     await utils.change_pass_raise(account=student.account, pass_update=pass_update)
 
     await crud_user.change_password(db=db, pass_update=pass_update, account=student.account)
@@ -137,6 +136,23 @@ async def view_my_courses(student: StudentAuthDep):
     return await crud_student.get_my_courses(student=student)
 
 
+@router.get('/courses/pending', response_model=list[CourseInfo])
+async def view_pending_courses(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+    """
+    Returns authenticated student's pending requests for courses.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+
+    **Raises**:
+    - HTTPException 401, if the student is not authenticated.
+
+    **Returns**: A list of CourseInfo response models with the information for each course the student has requested to enroll in.
+    """
+    return await crud_student.view_pending_requests(db, student)
+
+
 @router.get('/courses/{course_id}', response_model=StudentCourse)
 async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
     """
@@ -154,7 +170,6 @@ async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentA
 
     **Returns**: A StudentCourse response object with detailed information about the course and the student's progress and rating of the course.
     """
-
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
     if not course:
@@ -233,7 +248,6 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
 
     **Returns**: 'Pending approval' message.
     """
-
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
     if not course:
@@ -270,7 +284,6 @@ async def unsubscribe(
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
     """
-
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
     if not course:
