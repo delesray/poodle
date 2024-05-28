@@ -136,7 +136,7 @@ async def view_my_courses(student: StudentAuthDep):
     return await crud_student.get_my_courses(student=student)
 
 
-@router.get('/courses/pending', response_model=list[CourseInfo])
+@router.get('/courses/pending', response_model=list[CourseInfo] | None)
 async def view_pending_courses(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
     """
     Returns authenticated student's pending requests for courses.

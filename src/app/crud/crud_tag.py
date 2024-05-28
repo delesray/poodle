@@ -5,6 +5,8 @@ from typing import List
 
 
 async def create_tags(db: Session, tags: List[TagBase], course_id: int) -> List[TagBase]:
+    # TODO handle duplicate tag entry
+    
     created_tags = []
     for tag in tags:
         tag_db = db.query(Tag).filter_by(name=tag.name).first()

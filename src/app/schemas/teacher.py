@@ -27,8 +27,8 @@ class TeacherSchema(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
-    phone_number: str = None
-    linked_in: str = None
+    phone_number: str | None = None
+    linked_in: str | None = None
 
 
 class TeacherApproveRequest(Enum):
