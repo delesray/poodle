@@ -41,20 +41,7 @@ async def get_info(teacher, teacher_email):
 async def get_my_courses(db: Session, teacher: Teacher) -> list[CourseBase]:
     courses = db.query(Course).filter(Course.owner_id == teacher.teacher_id).all()
 
-    teacher_courses = [
-        CourseBase(
-            course_id=course.course_id,
-            title=course.title,
-            description=course.description,
-            objectives=course.objectives,
-            owner_id=course.owner_id,
-            owner_names=f"{teacher.first_name} {teacher.last_name}",
-            is_premium=course.is_premium,
-            rating=course.rating,
-            people_rated=course.people_rated
-        ) for course in courses
-    ]
-
+    teacher_courses = [get_coursebase_model(teacher, course) for course in courses]
     return teacher_courses
 
 
@@ -70,18 +57,8 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
     db.add(course_info)
     db.commit()
     db.refresh(course_info)
-    course_info_response = CourseBase(
-        course_id=course_info.course_id,
-        title=course_info.title,
-        description=course_info.description,
-        objectives=course_info.objectives,
-        owner_id=course_info.owner_id,
-        owner_names=teacher.first_name + ' ' + teacher.last_name,
-        is_premium=course_info.is_premium,
-        rating=course_info.rating,
-        people_rated=course_info.people_rated
-    )
-
+   
+    course_info_response = get_coursebase_model(teacher, course_info)
     course_tags, course_sections = [], []
     if new_course.tags:
         course_tags = await create_tags(db, new_course.tags, course_info.course_id)
