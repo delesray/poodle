@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from database.models import Course, Student, StudentCourse, Teacher, Tag, CourseTag, Section, Status
-from schemas.course import CourseCreate, CourseBase, CourseSectionsTags, CourseUpdate
+from schemas.course import CourseCreate, CourseBase, CoursePendingRequests, CourseSectionsTags, CourseUpdate
 from crud.crud_section import create_sections, transfer_object
 from crud.crud_tag import create_tags
 from schemas.teacher import TeacherSchema, TeacherEdit
@@ -158,3 +158,15 @@ async def send_notification(receiver_mail: str, course_title: str, response: boo
     await send_email(data=request)
 
     return 'Request response submitted'
+
+
+async def view_pending_requests(db: Session, teacher: Teacher):
+    res = (db.query(Course, Student)
+            .join(StudentCourse, StudentCourse.course_id == Course.course_id)
+            .join(Student, Student.student_id == StudentCourse.student_id)
+            .join(Teacher, Course.owner_id == Teacher.teacher_id)
+            .filter(StudentCourse.status == Status.pending.value)
+            .all()
+        )
+        
+    return [CoursePendingRequests.from_query(course.title, student.account.email) for course, student in res]

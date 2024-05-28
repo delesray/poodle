@@ -74,3 +74,15 @@ class StudentCourse(BaseModel):
     overall_rating: float | None = 0
     your_rating: float | None = 0
     your_progress: float | None  = 0
+
+
+class CoursePendingRequests(BaseModel):
+    course: str
+    requested_by: str
+
+    @classmethod
+    def from_query(cls, course, requested_by):
+        return cls(
+            course=course,
+            requested_by=requested_by
+        )

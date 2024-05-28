@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, status
 from typing import Annotated
+from crud import crud_user
 from database.models import Course, Student
 from database.database import get_db
 from sqlalchemy.orm import Session
@@ -11,7 +12,7 @@ from crud.crud_course import course_exists, get_course_common_info, hide_course
 from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section, validate_section
 from crud.crud_tag import create_tags, delete_tag_from_course, course_has_tag, check_tag_associations, delete_tag
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema, TeacherApproveRequest
-from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase
+from schemas.course import CourseCreate, CourseInfo, CourseUpdate, CourseSectionsTags, CourseBase, CoursePendingRequests
 from schemas.section import SectionBase, SectionUpdate
 from schemas.tag import TagBase
 from core.oauth import TeacherAuthDep
@@ -113,6 +114,21 @@ async def create_course(
 
     return await crud_teacher.make_course(db, teacher, course)
 
+@router.get('/courses/pending', response_model=list[CoursePendingRequests])
+async def view_pending_requests(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
+    """
+    Returns authenticated teacher's pending requests for courses.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+
+    **Raises**:
+    - HTTPException 401, if the teacher is not authenticated.
+
+    **Returns**: A list of CoursePendingRequests response models with the course title and student email for each enrollment request.
+    """
+    return await crud_teacher.view_pending_requests(db, teacher)
 
 @router.get("/courses", response_model=list[CourseBase])
 async def get_courses(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
@@ -179,6 +195,7 @@ async def view_course_by_id(
         )
 
     return await crud_teacher.get_entire_course(db, course, teacher, sort, sort_by)
+
 
 @router.put("/courses/requests", status_code=status.HTTP_201_CREATED)
 async def approve_enrollment(db: Annotated[Session, Depends(get_db)], 
