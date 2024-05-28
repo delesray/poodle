@@ -189,6 +189,7 @@ async def approve_enrollment(db: Annotated[Session, Depends(get_db)],
     
     """
     Enables a course owner to approve/deny requests for enrollment by students.
+    An email notification is sent to the student after the request is approved or denied.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy database session.
@@ -200,17 +201,18 @@ async def approve_enrollment(db: Annotated[Session, Depends(get_db)],
     **Returns**: A message, if the response is successfully submitted.
 
     **Raises**:
-    - 'HTTPException 401', if the teacher is not authenticated.
-    - 'HTTPException 404', if student or course is not found.
+    - HTTPException 401, if the teacher is not authenticated.
+    - HTTPException 404, if the student or the course is not found.
+    - HTTPException 403, if the teacher is not the owner of the course.
     """
-    # TODO add check is teacher owner?
-    student = await crud_student.get_by_email(db, student)
 
-    if not student:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No student with such email')
     if not await get_course_by_id(db, course_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
-    
+    if not await crud_teacher.is_teacher_owner(course_id, teacher):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Course owner required')
+    if not await crud_student.get_by_email(db, student):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No student with such email')
+
     return await crud_teacher.student_enroll_response(db, student, course_id, response.value)
 
 

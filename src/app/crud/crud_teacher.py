@@ -143,3 +143,7 @@ async def student_enroll_response(db: Session, student: Student, course_id: int,
     db.commit()
 
     return 'Request response submitted'
+
+
+async def is_teacher_owner(course_id: int, teacher: Teacher):
+    return course_id in set([course.course_id for course in teacher.courses])
