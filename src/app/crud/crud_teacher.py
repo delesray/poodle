@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from database.models import Course, Student, StudentCourse, Teacher, Tag, CourseTag, Section, Status
 from schemas.course import CourseCreate, CourseBase, CourseSectionsTags, CourseUpdate
-from crud.crud_section import create_sections
+from crud.crud_section import create_sections, transfer_object
 from crud.crud_tag import create_tags
 from schemas.teacher import TeacherSchema, TeacherEdit
 from schemas.tag import TagBase
@@ -73,6 +73,7 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
 
 
 async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort: str | None, sort_by: str | None):
+    
     course_info = get_coursebase_model(teacher, course)
 
     course_tags = []
@@ -90,14 +91,7 @@ async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort:
 
     sections = sections_query.all()
     for section in sections:
-        section_base = SectionBase.from_query(
-            section_id=section.section_id,
-            title=section.title,
-            content_type=section.content_type,
-            external_link=section.external_link,
-            description=section.description,
-            course_id=section.course_id
-        )
+        section_base = transfer_object(section)
         course_sections.append(section_base)
 
     return CourseSectionsTags(
