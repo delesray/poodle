@@ -81,7 +81,7 @@ class Student(Base):
     courses_enrolled: Mapped[List['Course']] = relationship(
         'Course',
         secondary='students_courses',
-        primaryjoin="and_(Student.student_id == foreign(StudentCourse.student_id), StudentCourse.status == 2)",
+        primaryjoin=f"and_(Student.student_id == foreign(StudentCourse.student_id), StudentCourse.status == {Status.active.value})",
         secondaryjoin="Course.course_id == foreign(StudentCourse.course_id)",
         back_populates="students_enrolled"
     )
@@ -133,7 +133,7 @@ class StudentCourse(Base):
         ForeignKey('students.student_id'), primary_key=True)
     course_id: Mapped[int] = mapped_column(
         ForeignKey('courses.course_id'), primary_key=True)
-    status: Mapped[Status] = mapped_column(Integer, server_default=text(str(Status.pending.value)))
+    status: Mapped[int] = mapped_column(Integer, server_default=text(str(Status.pending.value)))
 
     def __repr__(self):
         return f"<StudentCourse(student_id={self.student_id}, course_id={self.course_id})>"
