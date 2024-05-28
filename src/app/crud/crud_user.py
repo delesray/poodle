@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from schemas.user import UserChangePassword
 from schemas.teacher import TeacherCreate, TeacherSchema
 from schemas.student import StudentCreate, StudentResponseModel
-from database.models import Account, Teacher, Student
+from database.models import Account, Teacher, Student, Course
 from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status, UploadFile
@@ -114,15 +114,21 @@ async def change_password(db: Session, pass_update: UserChangePassword, account:
     db.commit()
 
 
-async def add_picture(db: Session, picture: UploadFile, student_id: int):
+async def add_picture(db: Session, picture: UploadFile, entity_type: str, entity_id: int) -> bool:
     res = await resize_picture(image_data=picture, target_size=(DEFAULT_PICTURE_WIDTH, DEFAULT_PICTURE_HEIGHT))
 
     if isinstance(res, bytes):
-        query = update(Student).where(Student.student_id == student_id)
-        query = query.values(profile_picture=res)
+        if entity_type == 'student':
+            query = update(Student).where(Student.student_id == entity_id).values(profile_picture=res)
+        elif entity_type == 'teacher':
+            query = update(Teacher).where(Teacher.teacher_id == entity_id).values(profile_picture=res)
+        elif entity_type == 'course':
+            query = update(Course).where(Course.course_id == entity_id).values(home_page_picture=res)
+        else:
+            return False
 
-        db.execute(query)
-        db.commit()
+        await db.execute(query)
+        await db.commit()
 
         return True
 
