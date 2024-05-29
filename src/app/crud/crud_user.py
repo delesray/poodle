@@ -127,8 +127,8 @@ async def add_picture(db: Session, picture: UploadFile, entity_type: str, entity
         else:
             return False
 
-        await db.execute(query)
-        await db.commit()
+        db.execute(query)
+        db.commit()
 
         return True
 
