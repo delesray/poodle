@@ -70,9 +70,11 @@ async def approve_teacher_registration():
 @router.delete('/courses/{course_id}')
 async def hide_course(
         db: Annotated[Session, Depends(get_db)],
-        course_id: int, student_id: int,
+        course_id: int,
         admin: AdminAuthDep
 ):
+    course = await crud_course.get_course_by_id(db, course_id, auto_error=True)
+    crud_admin.hide_course(db, course)
 
 
 @router.delete('/courses/{course_id}/students/{student_id}')
@@ -84,4 +86,5 @@ async def remove_student_from_course(
     course = await crud_course.get_course_by_id(db, course_id, auto_error=True)
     student = await crud_student.get_student_by_id(db, student_id, auto_error=True)
 
+    # todo test if it is already deleted what happens
     crud_admin.remove_student_from_course(db, student.student_id, course.course_id)
