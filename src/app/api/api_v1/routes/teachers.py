@@ -15,7 +15,8 @@ from schemas.course import CourseCreate, CourseInfo, CourseUpdate, CourseSection
 from schemas.section import SectionBase, SectionUpdate
 from schemas.tag import TagBase
 from core.oauth import TeacherAuthDep
-from typing import List
+from typing import List, Dict
+from typing import Union
 
 router = APIRouter(prefix='/teachers', tags=['teachers'])
 
@@ -390,7 +391,7 @@ async def remove_section(
     return
 
 
-@router.post("/courses/{course_id}/tags", status_code=201, response_model=List[TagBase])
+@router.post("/courses/{course_id}/tags", status_code=201, response_model=Dict[str, List[Union[TagBase, int]]])
 async def add_tags(
     db: Annotated[Session, Depends(get_db)],
     course_id: int, 
@@ -398,18 +399,20 @@ async def add_tags(
     tags: List[TagBase]
 ):
     """
-    Create tags for a course.
+    Add tags to a course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
-    - `course_id` (int): The ID of the course for which tags are being created.
-    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
-    - `tags` (List[TagBase]): A list of TagBase objects containing tag details.
+    - `db` (Session)`: The SQLAlchemy database session.
+    - `course_id` (int)`: The ID of the course for which tags are being created.
+    - `teacher` (TeacherAuthDep)`: The authentication dependency for users with the Teacher role.
+    - `tags` (List[TagBase])`: A list of TagBase objects containing tag details.
 
-    **Returns:** A list of newly created tags.
+    **Returns:** A dictionary with:
+    - `created` (List[TagBase])`: A list of newly created TagBase objects.
+    - `duplicated_tags_ids` (List[int])`: A list of tag IDs that already existed for the course.
 
     **Raises:**
-    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 401`: If the teacher is not authenticated.
     - `HTTPException 403`: If the teacher does not have permission to add tags to the course.
     """
     course = await get_course_common_info(db, course_id)
