@@ -4,7 +4,7 @@ from crud import crud_course, crud_section
 from core.oauth import StudentAuthDep
 from api.api_v1.routes import utils
 from crud import crud_user, crud_student
-from schemas.course import CourseInfo, CourseRate, CourseRateResponse, StudentCourse
+from schemas.course import CourseInfo, CourseRate, CourseRateResponse, StudentCourseSchema
 from schemas.section import SectionBase
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
@@ -153,7 +153,7 @@ async def view_pending_courses(db: Annotated[Session, Depends(get_db)], student:
     return await crud_student.view_pending_requests(db, student)
 
 
-@router.get('/courses/{course_id}', response_model=StudentCourse)
+@router.get('/courses/{course_id}', response_model=StudentCourseSchema)
 async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
     """
     Returns authenticated student's chosen course with details.
@@ -252,7 +252,7 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
 
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
-    
+
     if await crud_student.is_student_enrolled(student=student, course_id=course.course_id):
         return f'You are already subscribed for course {course.title}. Click on <View Course> or <View Course Section> to access its content'
 
@@ -288,7 +288,7 @@ async def unsubscribe(
 
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
-    
+
     await crud_student.unsubscribe_from_course(db=db, student_id=student.student_id, course_id=course_id)
 
 
@@ -310,8 +310,8 @@ async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentA
 
     **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
     """
-    #todo course check dependency
-    course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
+    # todo course check dependency probably impossible
+    course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id, auto_error=True)
 
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')

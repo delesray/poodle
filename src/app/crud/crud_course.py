@@ -1,3 +1,4 @@
+from fastapi import status, HTTPException
 from sqlalchemy.orm import Session
 from database.models import Course, Tag
 from schemas.course import CourseInfo
@@ -52,12 +53,13 @@ async def course_exists(db: Session, title: str) -> bool:
     return query is not None
 
 
-async def get_course_by_id(db: Session, course_id: int) -> Course:
+async def get_course_by_id(db: Session, course_id: int, auto_error=False) -> Course:
     query = db.query(Course).filter(Course.course_id == course_id).first()
 
     if query:
         return query
-
+    if auto_error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
 
 
 async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=None):

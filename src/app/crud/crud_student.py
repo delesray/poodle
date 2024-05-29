@@ -2,14 +2,16 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
-from database.models import Account, Course, Status, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, \
+from database.models import Account, Student, Status, Student, StudentCourse as DBStudentCourse, StudentRating, \
+    StudentSection, \
     Section
 from schemas.student import StudentEdit, StudentResponseModel
-from schemas.course import CourseInfo, CourseRateResponse, StudentCourse
+from schemas.course import CourseInfo, CourseRateResponse, StudentCourseSchema
 from email_notification import send_email, build_student_enroll_request
 
 
 async def get_by_email(db: Session, email: str):
+    # todo maybe add filter ?  not Account.is_deactivated
     student = (db.query(Student).join(Student.account).filter(
         Account.email == email).first())
 
@@ -22,6 +24,17 @@ async def get_student(db: Session, email: str):
 
     if student:
         return StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium)
+
+
+async def get_student_by_id(db: Session, student_id: int, auto_error=False) -> Student:
+    query = (db.query(Student)
+             .filter(Student.student_id == student_id, not Student.account.is_deactivated)
+             .first())
+
+    if query:
+        return query
+    if auto_error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such student')
 
 
 async def edit_account(db: Session, email: str, updates: StudentEdit):
@@ -137,12 +150,12 @@ async def update_add_student_rating(db: Session, student: Student, course_id: in
 
 
 async def get_course_information(db: Session, course_id: int, student: Student):
-    course: Course = await crud_course.get_course_common_info(db=db, course_id=course_id)
+    course: Student = await crud_course.get_course_common_info(db=db, course_id=course_id)
     student_rating = await get_student_rating(db=db, student_id=student.student_id, course_id=course_id)
     student_progress = await get_student_progress(db=db, student_id=student.student_id, course_id=course_id)
 
     if course:
-        return StudentCourse(
+        return StudentCourseSchema(
             course_id=course.course_id,
             title=course.title,
             description=course.description,
@@ -157,7 +170,7 @@ async def get_course_information(db: Session, course_id: int, student: Student):
         )
 
 
-async def send_notification(course: Course, student: Student):
+async def send_notification(course: Student, student: Student):
     teacher_email = course.owner.account.email
     student_email = student.account.email
     course_title, course_id = course.title, course.course_id
@@ -169,17 +182,16 @@ async def send_notification(course: Course, student: Student):
 
 
 async def view_pending_requests(db: Session, student: Student):
-    res = db.query(Course).join(DBStudentCourse).filter(DBStudentCourse.student_id == student.student_id,
-                                                          DBStudentCourse.course_id == Course.course_id,
-                                                          DBStudentCourse.status == Status.pending.value).all()
-    
-    if res:
-        return [CourseInfo.from_query(course.title, 
-                                      course.description, 
-                                      course.is_premium,
-                                      [tag.name for tag in course.tags]) 
-                                      for course in res]
+    res = db.query(Student).join(DBStudentCourse).filter(DBStudentCourse.student_id == student.student_id,
+                                                         DBStudentCourse.course_id == Student.course_id,
+                                                         DBStudentCourse.status == Status.pending.value).all()
 
+    if res:
+        return [CourseInfo.from_query(course.title,
+                                      course.description,
+                                      course.is_premium,
+                                      [tag.name for tag in course.tags])
+                for course in res]
 
 # def update_progress_for_course(db: Session, student_id, course_id) -> None:
 #     """Goes to students_progress table, calculates the new progress and updates it"""

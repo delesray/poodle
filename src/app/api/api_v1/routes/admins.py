@@ -1,9 +1,10 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+
+from crud import crud_course, crud_student, crud_admin
 from database.database import get_db
 from sqlalchemy.orm import Session
-
+from core.oauth import AdminAuthDep
 
 router = APIRouter(
     prefix="/admins",
@@ -67,10 +68,20 @@ async def approve_teacher_registration():
 
 
 @router.delete('/courses/{course_id}')
-async def hide_course():
-    pass
+async def hide_course(
+        db: Annotated[Session, Depends(get_db)],
+        course_id: int, student_id: int,
+        admin: AdminAuthDep
+):
 
 
 @router.delete('/courses/{course_id}/students/{student_id}')
-async def remove_student_from_course():
-    pass
+async def remove_student_from_course(
+        db: Annotated[Session, Depends(get_db)],
+        course_id: int, student_id: int,
+        admin: AdminAuthDep
+):
+    course = await crud_course.get_course_by_id(db, course_id, auto_error=True)
+    student = await crud_student.get_student_by_id(db, student_id, auto_error=True)
+
+    crud_admin.remove_student_from_course(db, student.student_id, course.course_id)
