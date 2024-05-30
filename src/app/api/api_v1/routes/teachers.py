@@ -4,7 +4,7 @@ from crud import crud_user
 from database.models import Course, Student
 from database.database import get_db
 from sqlalchemy.orm import Session
-from crud.crud_user import create, exists
+from crud.crud_user import create, exists, add_picture
 from crud import crud_teacher, crud_student
 from crud.crud_course import course_exists, get_course_common_info, get_course_by_id
 from crud.crud_course import course_exists, get_course_common_info, hide_course
@@ -17,11 +17,12 @@ from schemas.tag import TagBase
 from core.oauth import TeacherAuthDep
 from typing import List, Dict
 from typing import Union
+from fastapi import UploadFile
 
 router = APIRouter(prefix='/teachers', tags=['teachers'])
 
 
-@router.post("/register", status_code=201, response_model=TeacherSchema)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=TeacherSchema)
 async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: TeacherCreate):
     """
     Registers a teacher.
@@ -32,7 +33,8 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: Tea
 
     **Returns**: a TeacherSchema object with the created teacher's details.
 
-    **Raises**: HTTPException 409, if a user with the same email has already been registered.
+    **Raises**:
+    - `HTTPException 409`, if a user with the same email has already been registered.
 
     """
     if await exists(db, teacher.email):
@@ -42,6 +44,31 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: Tea
         )
     #new_teacher = await create(db, user)
     return await create(db, teacher)
+
+
+@router.post('/', status_code=status.HTTP_201_CREATED)
+async def update_profile_picture(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep, file: UploadFile):
+    """
+    Lets an authenticated teacher add or edit their profile picture.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authenticated teacher.
+    - `file` (UploadFile): The uploaded file containing the image data.
+
+    **Returns**: Successful message, if the picture is uploaded.
+
+    **Raises**: 
+    - `HTTPException 401`: if the teacher is not authenticated.
+    - `HTTPException 400`, if the file is corruped or the teacher uploaded an unsupported media type.
+    """
+    if await add_picture(db, file, 'teacher', teacher.teacher_id):
+        return 'Profile picture successfully uploaded!'
+    raise HTTPException(
+            status_code=400,
+            detail="File is corrupted or media type is not supported"
+        )
+    
 
 @router.get('/', response_model=TeacherSchema)
 async def view_account(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
@@ -54,7 +81,8 @@ async def view_account(db: Annotated[Session, Depends(get_db)], teacher: Teacher
 
     **Returns**: a TeacherSchema object with the teacher's account details.
 
-    **Raises**: HTTPException 401, if the teacher is not authenticated.
+    **Raises**:
+    - `HTTPException 401`, if the teacher is not authenticated.
 
     """
 
@@ -77,7 +105,8 @@ async def update_account(
 
     **Returns**: a TeacherSchema object with the teacher's edited account details.
 
-    **Raises**: HTTPException 401, if the teacher is not authenticated.
+    **Raises**: 
+    - `HTTPException 401`, if the teacher is not authenticated.
     """
 
     edited_teacher_account = await crud_teacher.edit_account(db, teacher, updates)
@@ -85,7 +114,7 @@ async def update_account(
     return await crud_teacher.get_info(edited_teacher_account, teacher.account.email)
 
 
-@router.post("/courses", status_code=201, response_model=CourseSectionsTags)
+@router.post("/courses", status_code=status.HTTP_201_CREATED, response_model=CourseSectionsTags)
 async def create_course(
         db: Annotated[Session, Depends(get_db)],
         teacher: TeacherAuthDep,
@@ -114,6 +143,46 @@ async def create_course(
 
     return await crud_teacher.make_course(db, teacher, course)
 
+
+@router.post('/', status_code=status.HTTP_201_CREATED)
+async def update_course_home_page_picture(
+    db: Annotated[Session, Depends(get_db)],
+    teacher: TeacherAuthDep,
+    course_id: int,
+    file: UploadFile
+):
+    """
+    Lets an authenticated teacher add or edit the home page picture for a course.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authenticated teacher.
+    - `course_id` (int): The ID of the course for which the home page picture is being updated.
+    - `file` (UploadFile): The uploaded file containing the image data.
+
+    **Returns**: A successful message if the picture is uploaded.
+
+    **Raises**: 
+    - `HTTPException 401`: if the teacher is not authenticated.
+    - `HTTPException 403`: If the teacher does not have access to the course.
+    - `HTTPException 400`: If the file is corrupted or the media type is not supported.
+    """
+    course = await get_course_common_info(db, course_id)
+    user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
+    if not user_has_access:
+        raise HTTPException(
+            status_code=403,
+            detail=msg
+        )
+        
+    if await add_picture(db, file, 'course', course.course_id):
+        return 'Home page picture successfully uploaded!'
+    raise HTTPException(
+            status_code=400,
+            detail="File is corrupted or media type is not supported"
+        )
+
+
 @router.get('/courses/pending', response_model=list[CoursePendingRequests])
 async def view_pending_requests(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
     """
@@ -124,7 +193,7 @@ async def view_pending_requests(db: Annotated[Session, Depends(get_db)], teacher
     - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
 
     **Raises**:
-    - HTTPException 401, if the teacher is not authenticated.
+    - `HTTPException 401`, if the teacher is not authenticated.
 
     **Returns**: A list of CoursePendingRequests response models with the course title and student email for each enrollment request.
     """
@@ -140,7 +209,7 @@ async def get_courses(db: Annotated[Session, Depends(get_db)], teacher: TeacherA
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
 
     **Raises**:
-    - HTTPException 401, If the teacher is not authenticated.
+    - `HTTPException 401`, If the teacher is not authenticated.
 
     **Returns**: A list of CourseBase response models containing information about courses owned by the teacher.
     """
@@ -170,7 +239,7 @@ async def view_course_by_id(
     **Returns**: A `CourseSectionsTags` object containing the course details, tags, and sections.
 
     **Raises**:
-    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 400`: If the sort or sort_by parameters are invalid.
     - `HTTPException 403`: If the authenticated teacher does not have permission to access the course.
     """
@@ -218,9 +287,9 @@ async def approve_enrollment(db: Annotated[Session, Depends(get_db)],
     **Returns**: A message, if the response is successfully submitted.
 
     **Raises**:
-    - HTTPException 401, if the teacher is not authenticated.
-    - HTTPException 404, if the student or the course is not found.
-    - HTTPException 403, if the teacher is not the owner of the course.
+    - `HTTPException 401`, if the teacher is not authenticated.
+    - `HTTPException 404`, if the student or the course is not found.
+    - `HTTPException 403`, if the teacher is not the owner of the course.
     """
 
     course: Course = await get_course_by_id(db, course_id)
@@ -256,7 +325,7 @@ async def update_course_info(
     **Returns**: A `CourseBase` object containing the updated course details.
 
     **Raises**:
-    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 403`: If the authenticated teacher does not have permission to update the course.
     """
     course = await get_course_common_info(db, course_id)
@@ -291,7 +360,7 @@ async def update_section(
     **Returns**: A `SectionBase` object containing the updated section details.
 
     **Raises**:
-    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 403`: If the authenticated teacher does not have permission to update the section.
     - `HTTPException 404`: If the section with the given ID does not exist or is not part of the specified course.
     """
@@ -314,7 +383,7 @@ async def update_section(
     return await update_section_info(db, section, updates)
         
 
-@router.post("/courses/{course_id}/sections", status_code=201, response_model=List[SectionBase])
+@router.post("/courses/{course_id}/sections", status_code=status.HTTP_201_CREATED, response_model=List[SectionBase])
 async def add_sections(
     db: Annotated[Session, Depends(get_db)], 
     course_id: int, 
@@ -333,7 +402,7 @@ async def add_sections(
     **Returns:** A list of newly created sections.
 
     **Raises:**
-    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 403`: If the teacher does not have permission to add sections to the course.
     """
     course = await get_course_common_info(db, course_id)
@@ -348,7 +417,7 @@ async def add_sections(
     return created_sections
          
          
-@router.delete("/courses/{course_id}/sections/{section_id}", status_code=204)
+@router.delete("/courses/{course_id}/sections/{section_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_section(
     db: Annotated[Session, Depends(get_db)],
     course_id: int,
@@ -367,7 +436,7 @@ async def remove_section(
     **Returns**: HTTP status 204 (No Content) if successful.
 
     **Raises**:
-    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 403`: If the teacher does not have access to the course.
     - `HTTPException 404`: If the section is not found or does not belong to the specified course.
     """
@@ -391,7 +460,7 @@ async def remove_section(
     return
 
 
-@router.post("/courses/{course_id}/tags", status_code=201, response_model=Dict[str, List[Union[TagBase, int]]])
+@router.post("/courses/{course_id}/tags", status_code=status.HTTP_201_CREATED, response_model=Dict[str, List[Union[TagBase, int]]])
 async def add_tags(
     db: Annotated[Session, Depends(get_db)],
     course_id: int, 
@@ -426,7 +495,7 @@ async def add_tags(
     created_tags = await create_tags(db, tags, course_id)
     return created_tags
 
-@router.delete("/courses/{course_id}/tags/{tag_id}", status_code=204)
+@router.delete("/courses/{course_id}/tags/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_tag(
     db: Annotated[Session, Depends(get_db)], 
     course_id: int, 
@@ -445,7 +514,7 @@ async def remove_tag(
     **Returns**: HTTP status 204 (No Content) if successful.
 
     **Raises**:
-    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 403`: If the teacher does not have access to the course.
     - `HTTPException 404`: If the tag is not associated with the course.
     """
@@ -473,7 +542,7 @@ async def remove_tag(
     return
 
 
-@router.patch("/courses/{course_id}/deactivate", status_code=204)
+@router.patch("/courses/{course_id}/deactivate", status_code=status.HTTP_204_NO_CONTENT)
 async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep):
     """
     Deactivates a course if the teacher owns it and no students are enrolled.
@@ -486,7 +555,7 @@ async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: 
     **Returns**: HTTP status 204 (No Content) if successful.
 
     **Raises**:
-    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 403`: If the teacher does not have access to the course.
     - `HTTPException 400`: If there are students enrolled in the course.
     """
@@ -506,7 +575,44 @@ async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: 
     await hide_course(db, course)
     return
 
+
 @router.get("/reports")
-async def generate_courses_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
-    return await crud_teacher.get_courses_reports(db, teacher)
+async def generate_courses_reports(
+    db: Annotated[Session, Depends(get_db)],
+    teacher: TeacherAuthDep,
+    min_progress: str = "0.0",
+    sort: str | None = None
+):
+    """
+    Generate reports for courses owned by the authenticated teacher, with options for sorting and filtering by student progress.
+
+    **Parameters:**
+    - `db` (AsyncSession): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authenticated teacher.
+    - `min_progress` (str): The minimum progress percentage to filter students. Defaults to "0.0".
+    - `sort` (str | None): Optional sorting order for courses, either 'asc' or 'desc'. Defaults to None.
+
+    **Returns**: A list of courses with student progress reports.
+
+    **Raises**: 
+    - `HTTPException 401`: if the teacher is not authenticated.
+    - `HTTPException 400`: If the `min_progress` parameter is invalid.
+    - `HTTPException 400`: If the `sort` parameter is invalid.
+    """ 
+    try:
+        min_progress = round(float(min_progress), 2)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid min_progress parameter"
+        )
+        
+    if sort and sort.lower() not in ['asc', 'desc']:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid sort parameter"
+        )
+        
+    return await crud_teacher.get_courses_reports(db, teacher, min_progress, sort)
+    
     
