@@ -189,36 +189,45 @@ async def calculate_student_progresses(db: Session, courses_with_students: List[
     return student_progress_dict
 
 
-async def get_courses_reports(db: Session, teacher: Teacher):
+async def get_courses_reports(db: Session, teacher: Teacher, min_progress: float, sort: str = None):
     courses_query = (
         select(Course)
         .options(joinedload(Course.students_enrolled))
         .where(Course.owner_id == teacher.teacher_id)
     )
+    
+    if sort == 'asc':
+        courses_query = courses_query.order_by(Course.course_id.asc())
+    elif sort == 'desc':
+        courses_query = courses_query.order_by(Course.course_id.desc())
+    
     result = db.execute(courses_query)
     courses_with_students = result.scalars().unique().all()
     
     student_progress_dict = await calculate_student_progresses(db, courses_with_students)
-    courses_reports = generate_reports(courses_with_students, student_progress_dict)
+    courses_reports = generate_reports(courses_with_students, student_progress_dict, min_progress)
     
     return courses_reports
 
 
-def generate_reports(courses_with_students: List[Course], student_progress_dict: Dict[int, str]):
+def generate_reports(courses_with_students: List[Course], student_progress_dict: Dict[int, str], min_progress: float):
     reports = []
     for course in courses_with_students:
+        students = [
+            {
+                "student_info": StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium),
+                "progress": student_progress_dict[student.student_id]
+            }
+            for student in course.students_enrolled
+            if float(student_progress_dict[student.student_id]) >= min_progress  
+        ]
         course_report = {
             "course_id": course.course_id,
             "title": course.title,
-            "students": [
-                {
-                    "student_info": StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium),
-                    "progress": student_progress_dict[student.student_id]
-                } for student in course.students_enrolled
-            ]
+            "students": students
         }
         reports.append(course_report)
-
+    
     return reports
 
 
