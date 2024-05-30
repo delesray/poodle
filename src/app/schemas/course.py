@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, StringConstraints
 from typing import Annotated
 from schemas.section import SectionBase
+from schemas.student import StudentRatingSchema
 from schemas.tag import TagBase
 
 
@@ -86,3 +87,8 @@ class CoursePendingRequests(BaseModel):
             course=course,
             requested_by=requested_by
         )
+
+
+class CourseStudentRatingsSchema(BaseModel):
+    course: CourseBase
+    ratings: list[StudentRatingSchema]

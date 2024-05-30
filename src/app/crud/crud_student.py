@@ -10,6 +10,17 @@ from schemas.course import CourseInfo, CourseRateResponse, StudentCourseSchema
 from email_notification import send_email, build_student_enroll_request
 
 
+async def get_student_by_id(db: Session, user_id: int, auto_error=False) -> Student | None:
+    query = (db.query(Account)
+             .filter(Account.student_id == user_id, not Account.is_deactivated)
+             .first())
+
+    if query:
+        return query
+    if auto_error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No such user')
+
+
 async def get_by_email(db: Session, email: str):
     # todo maybe add filter ?  not Account.is_deactivated
     student = (db.query(Student).join(Student.account).filter(
@@ -24,17 +35,6 @@ async def get_student(db: Session, email: str):
 
     if student:
         return StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium)
-
-
-async def get_student_by_id(db: Session, student_id: int, auto_error=False) -> Student:
-    query = (db.query(Student)
-             .filter(Student.student_id == student_id, not Student.account.is_deactivated)
-             .first())
-
-    if query:
-        return query
-    if auto_error:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such student')
 
 
 async def edit_account(db: Session, email: str, updates: StudentEdit):
@@ -137,7 +137,6 @@ async def update_add_student_rating(db: Session, student: Student, course_id: in
 
             await crud_course.update_rating(db, course_id, rating)
         db.commit()
-        db.refresh(new_rating)
 
         course = next(
             (course for course in student.courses_enrolled if course.course_id == course_id), None)

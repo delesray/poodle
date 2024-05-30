@@ -16,6 +16,37 @@ DEFAULT_PICTURE_WIDTH = 400
 DEFAULT_PICTURE_HEIGHT = 400
 
 
+class Role:
+    STUDENT = 'student'
+    TEACHER = 'teacher'
+    ADMIN = 'admin'
+    UNION = Union[Student, Teacher, Account]
+
+
+async def get_user_by_id_deactivated_also(db: Session, user_id: int) -> Account | None:
+    query = (db.query(Account)
+             .filter(Account.account_id == user_id)
+             .first())
+    return query
+
+
+async def get_specific_user_or_raise_404(db: Session, user_id: int, role=None) -> Role.UNION | None:
+    query = (db.query(Account)
+             .filter(Account.account_id == user_id, Account.is_deactivated == False)
+             .first())
+
+    if query:  # Just means there is such account
+        # Following checks specifically
+        if role == Role.STUDENT and query.student:
+            return query.student
+        if role == Role.TEACHER and query.teacher:
+            return query.teacher
+        if role == Role.ADMIN and query.admin:
+            return query.admin
+
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No such {role} user')
+
+
 async def create_user(db: Session, user: Union[StudentCreate, TeacherCreate]):
     new_user = Account(
         email=user.email,
@@ -86,7 +117,8 @@ def create_user_factory(user_type: str):
     return factories.get(user_type)
 
 
-async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]) -> Union[TeacherSchema, StudentResponseModel]:
+async def create(db: Session, user_schema: Union[StudentCreate, TeacherCreate]) -> Union[
+    TeacherSchema, StudentResponseModel]:
     user_type = user_schema.get_type()
     factory = create_user_factory(user_type)
     return await factory.create_db_user(db, user_schema)
