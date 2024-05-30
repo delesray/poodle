@@ -22,7 +22,7 @@ from fastapi import UploadFile
 router = APIRouter(prefix='/teachers', tags=['teachers'])
 
 
-@router.post("/register", status_code=201, response_model=TeacherSchema)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=TeacherSchema)
 async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: TeacherCreate):
     """
     Registers a teacher.
@@ -44,6 +44,31 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: Tea
         )
     #new_teacher = await create(db, user)
     return await create(db, teacher)
+
+
+@router.post('/', status_code=status.HTTP_201_CREATED)
+async def update_profile_picture(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep, file: UploadFile):
+    """
+    Lets an authenticated teacher add or edit their profile picture.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authenticated teacher.
+    - `file` (UploadFile): The uploaded file containing the image data.
+
+    **Returns**: Successful message, if the picture is uploaded.
+
+    **Raises**: 
+    - `HTTPException 401`: if the teacher is not authenticated.
+    - `HTTPException 400`, if the file is corruped or the teacher uploaded an unsupported media type.
+    """
+    if await add_picture(db, file, 'teacher', teacher.teacher_id):
+        return 'Profile picture successfully uploaded!'
+    raise HTTPException(
+            status_code=400,
+            detail="File is corrupted or media type is not supported"
+        )
+    
 
 @router.get('/', response_model=TeacherSchema)
 async def view_account(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
@@ -89,7 +114,7 @@ async def update_account(
     return await crud_teacher.get_info(edited_teacher_account, teacher.account.email)
 
 
-@router.post("/courses", status_code=201, response_model=CourseSectionsTags)
+@router.post("/courses", status_code=status.HTTP_201_CREATED, response_model=CourseSectionsTags)
 async def create_course(
         db: Annotated[Session, Depends(get_db)],
         teacher: TeacherAuthDep,
@@ -117,6 +142,46 @@ async def create_course(
         )
 
     return await crud_teacher.make_course(db, teacher, course)
+
+
+@router.post('/', status_code=status.HTTP_201_CREATED)
+async def update_course_home_page_picture(
+    db: Annotated[Session, Depends(get_db)],
+    teacher: TeacherAuthDep,
+    course_id: int,
+    file: UploadFile
+):
+    """
+    Lets an authenticated teacher add or edit the home page picture for a course.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authenticated teacher.
+    - `course_id` (int): The ID of the course for which the home page picture is being updated.
+    - `file` (UploadFile): The uploaded file containing the image data.
+
+    **Returns**: A successful message if the picture is uploaded.
+
+    **Raises**: 
+    - `HTTPException 401`: if the teacher is not authenticated.
+    - `HTTPException 403`: If the teacher does not have access to the course.
+    - `HTTPException 400`: If the file is corrupted or the media type is not supported.
+    """
+    course = await get_course_common_info(db, course_id)
+    user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
+    if not user_has_access:
+        raise HTTPException(
+            status_code=403,
+            detail=msg
+        )
+        
+    if await add_picture(db, file, 'course', course.course_id):
+        return 'Home page picture successfully uploaded!'
+    raise HTTPException(
+            status_code=400,
+            detail="File is corrupted or media type is not supported"
+        )
+
 
 @router.get('/courses/pending', response_model=list[CoursePendingRequests])
 async def view_pending_requests(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
@@ -318,7 +383,7 @@ async def update_section(
     return await update_section_info(db, section, updates)
         
 
-@router.post("/courses/{course_id}/sections", status_code=201, response_model=List[SectionBase])
+@router.post("/courses/{course_id}/sections", status_code=status.HTTP_201_CREATED, response_model=List[SectionBase])
 async def add_sections(
     db: Annotated[Session, Depends(get_db)], 
     course_id: int, 
@@ -352,7 +417,7 @@ async def add_sections(
     return created_sections
          
          
-@router.delete("/courses/{course_id}/sections/{section_id}", status_code=204)
+@router.delete("/courses/{course_id}/sections/{section_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_section(
     db: Annotated[Session, Depends(get_db)],
     course_id: int,
@@ -395,7 +460,7 @@ async def remove_section(
     return
 
 
-@router.post("/courses/{course_id}/tags", status_code=201, response_model=Dict[str, List[Union[TagBase, int]]])
+@router.post("/courses/{course_id}/tags", status_code=status.HTTP_201_CREATED, response_model=Dict[str, List[Union[TagBase, int]]])
 async def add_tags(
     db: Annotated[Session, Depends(get_db)],
     course_id: int, 
@@ -430,7 +495,7 @@ async def add_tags(
     created_tags = await create_tags(db, tags, course_id)
     return created_tags
 
-@router.delete("/courses/{course_id}/tags/{tag_id}", status_code=204)
+@router.delete("/courses/{course_id}/tags/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_tag(
     db: Annotated[Session, Depends(get_db)], 
     course_id: int, 
@@ -477,7 +542,7 @@ async def remove_tag(
     return
 
 
-@router.patch("/courses/{course_id}/deactivate", status_code=204)
+@router.patch("/courses/{course_id}/deactivate", status_code=status.HTTP_204_NO_CONTENT)
 async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: int, teacher: TeacherAuthDep):
     """
     Deactivates a course if the teacher owns it and no students are enrolled.
@@ -550,65 +615,4 @@ async def generate_courses_reports(
         
     return await crud_teacher.get_courses_reports(db, teacher, min_progress, sort)
     
-
-@router.post('/', status_code=201)
-async def update_profile_picture(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep, file: UploadFile):
-    """
-    Lets an authenticated teacher add or edit their profile picture.
-
-    **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
-    - `teacher` (TeacherAuthDep): The authenticated teacher.
-    - `file` (UploadFile): The uploaded file containing the image data.
-
-    **Returns**: Successful message, if the picture is uploaded.
-
-    **Raises**: 
-    - `HTTPException 401`: if the teacher is not authenticated.
-    - `HTTPException 400`, if the file is corruped or the teacher uploaded an unsupported media type.
-    """
-    if await add_picture(db, file, 'teacher', teacher.teacher_id):
-        return 'Profile picture successfully uploaded!'
-    raise HTTPException(
-            status_code=400,
-            detail="File is corrupted or media type is not supported"
-        )
     
-    
-@router.post('/', status_code=201)
-async def update_course_home_page_picture(
-    db: Annotated[Session, Depends(get_db)],
-    teacher: TeacherAuthDep,
-    course_id: int,
-    file: UploadFile
-):
-    """
-    Lets an authenticated teacher add or edit the home page picture for a course.
-
-    **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
-    - `teacher` (TeacherAuthDep): The authenticated teacher.
-    - `course_id` (int): The ID of the course for which the home page picture is being updated.
-    - `file` (UploadFile): The uploaded file containing the image data.
-
-    **Returns**: A successful message if the picture is uploaded.
-
-    **Raises**: 
-    - `HTTPException 401`: if the teacher is not authenticated.
-    - `HTTPException 403`: If the teacher does not have access to the course.
-    - `HTTPException 400`: If the file is corrupted or the media type is not supported.
-    """
-    course = await get_course_common_info(db, course_id)
-    user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
-    if not user_has_access:
-        raise HTTPException(
-            status_code=403,
-            detail=msg
-        )
-        
-    if await add_picture(db, file, 'course', course.course_id):
-        return 'Home page picture successfully uploaded!'
-    raise HTTPException(
-            status_code=400,
-            detail="File is corrupted or media type is not supported"
-        )
