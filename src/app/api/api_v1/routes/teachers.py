@@ -534,3 +534,42 @@ async def update_profile_picture(db: Annotated[Session, Depends(get_db)], teache
             status_code=400,
             detail="File is corrupted or media type is not supported"
         )
+    
+    
+@router.post('/', status_code=201)
+async def update_course_home_page_picture(
+    db: Annotated[Session, Depends(get_db)],
+    teacher: TeacherAuthDep,
+    course_id: int,
+    file: UploadFile
+):
+    """
+    Lets an authenticated teacher add or edit the home page picture for a course.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authenticated teacher.
+    - `course_id` (int): The ID of the course for which the home page picture is being updated.
+    - `file` (UploadFile): The uploaded file containing the image data.
+
+    **Returns**: A successful message if the picture is uploaded.
+
+    **Raises**: 
+    - 'HTTPException 401', if the teacher is not authenticated.
+    - `HTTPException 403`: If the teacher does not have access to the course.
+    - `HTTPException 400`: If the file is corrupted or the media type is not supported.
+    """
+    course = await get_course_common_info(db, course_id)
+    user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
+    if not user_has_access:
+        raise HTTPException(
+            status_code=403,
+            detail=msg
+        )
+        
+    if await add_picture(db, file, 'course', course.course_id):
+        return 'Home page picture successfully uploaded!'
+    raise HTTPException(
+            status_code=400,
+            detail="File is corrupted or media type is not supported"
+        )
