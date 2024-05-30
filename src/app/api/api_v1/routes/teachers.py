@@ -4,7 +4,7 @@ from crud import crud_user
 from database.models import Course, Student
 from database.database import get_db
 from sqlalchemy.orm import Session
-from crud.crud_user import create, exists
+from crud.crud_user import create, exists, add_picture
 from crud import crud_teacher, crud_student
 from crud.crud_course import course_exists, get_course_common_info, get_course_by_id
 from crud.crud_course import course_exists, get_course_common_info, hide_course
@@ -17,6 +17,7 @@ from schemas.tag import TagBase
 from core.oauth import TeacherAuthDep
 from typing import List, Dict
 from typing import Union
+from fastapi import UploadFile
 
 router = APIRouter(prefix='/teachers', tags=['teachers'])
 
@@ -510,3 +511,26 @@ async def deactivate_course(db: Annotated[Session, Depends(get_db)], course_id: 
 async def generate_courses_reports(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep):
     return await crud_teacher.get_courses_reports(db, teacher)
     
+
+@router.post('/', status_code=201)
+async def update_profile_picture(db: Annotated[Session, Depends(get_db)], teacher: TeacherAuthDep, file: UploadFile):
+    """
+    Lets an authenticated teacher add or edit their profile picture.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy database session.
+    - `teacher` (TeacherAuthDep): The authenticated teacher.
+    - `file` (UploadFile): The uploaded file containing the image data.
+
+    **Returns**: Successful message, if the picture is uploaded.
+
+    **Raises**: 
+    - 'HTTPException 401', if the teacher is not authenticated.
+    - HTTPException 400, if the file is corruped or the teacher uploaded an unsupported media type.
+    """
+    if await add_picture(db, file, 'teacher', teacher.teacher_id):
+        return 'Profile picture successfully uploaded!'
+    raise HTTPException(
+            status_code=400,
+            detail="File is corrupted or media type is not supported"
+        )
