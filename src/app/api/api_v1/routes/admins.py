@@ -38,7 +38,10 @@ async def get_courses(
     **Returns**: a list of AdminCourseInfo models.
     """
 
-    pass
+    # todo ?
+    return await crud_course.get_all_courses(
+        db=db, tag=tag, rating=rating, name=name, pages=pages, items_per_page=items_per_page
+    )
 
 
 @router.patch('/accounts/{account_id}')
@@ -46,7 +49,7 @@ async def switch_user_activation(
         db: Annotated[Session, Depends(get_db)],
         account_id: int,
 ):
-    user = crud_user.get_user_by_id_deactivated_also(db, account_id)
+    user = await crud_user.get_user_by_id_deactivated_also(db, account_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No such user')
 

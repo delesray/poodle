@@ -15,7 +15,7 @@ async def get_course_by_id(db: Session, course_id: int, auto_error=False) -> Cou
 
 
 async def get_course_by_id_or_raise_404(db, course_id):
-    return await get_course_by_id(db, course_id, auto_error=True)
+    return get_course_by_id(db, course_id, auto_error=True)
 
 
 async def get_all_courses(
