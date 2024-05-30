@@ -18,28 +18,27 @@ async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):
     teacher.last_name = updates.last_name
     teacher.phone_number = updates.phone_number
     teacher.linked_in = updates.linked_in
-   
+
     db.commit()
     db.refresh(teacher)
 
     return teacher
 
 
-async def get_teacher_by_id(db: Session, id: int):
+async def get_teacher_by_id(db: Session, id: int):  # what if Teacher.account.is_deactivated ?
     teacher = (db.query(Teacher).filter(Teacher.teacher_id == id).first())
     return teacher
 
 
 async def get_info(teacher, teacher_email):
-
     return TeacherSchema(
-            teacher_id=teacher.teacher_id,
-            email=teacher_email,
-            first_name=teacher.first_name,
-            last_name=teacher.last_name,
-            phone_number=teacher.phone_number,
-            linked_in=teacher.linked_in, 
-        )
+        teacher_id=teacher.teacher_id,
+        email=teacher_email,
+        first_name=teacher.first_name,
+        last_name=teacher.last_name,
+        phone_number=teacher.phone_number,
+        linked_in=teacher.linked_in,
+    )
 
 
 async def get_my_courses(db: Session, teacher: Teacher) -> list[CourseBase]:
@@ -61,7 +60,7 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
     db.add(course_info)
     db.commit()
     db.refresh(course_info)
-   
+
     course_info_response = get_coursebase_model(teacher, course_info)
     course_tags, course_sections = [], []
     if new_course.tags:
@@ -77,7 +76,6 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
 
 
 async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort: str | None, sort_by: str | None):
-    
     course_info = get_coursebase_model(teacher, course)
 
     course_tags = []
@@ -140,16 +138,16 @@ def get_coursebase_model(teacher: Teacher, course: Course):
 
 
 async def student_enroll_response(db: Session, student: Student, teacher: Teacher, course: Course, response: str):
-    sc_record = db.query(StudentCourse).filter(StudentCourse.student_id == student.student_id, 
-                                   StudentCourse.course_id == course.course_id).first()
-    
+    sc_record = db.query(StudentCourse).filter(StudentCourse.student_id == student.student_id,
+                                               StudentCourse.course_id == course.course_id).first()
+
     sc_record.status = Status.active.value if response == 'approve' else Status.declined.value
     db.commit()
 
     response = True if sc_record.status == Status.active.value else False
     return await send_notification(receiver_mail=student.account.email,
-                            course_title=course.title,
-                            response=response)
+                                   course_title=course.title,
+                                   response=response)
 
 
 async def is_teacher_owner(course_id: int, teacher: Teacher):
@@ -157,7 +155,6 @@ async def is_teacher_owner(course_id: int, teacher: Teacher):
 
 
 async def send_notification(receiver_mail: str, course_title: str, response: bool):
-
     request = await build_teacher_enroll_request(receiver_mail, course_title, response)
     await send_email(data=request)
 
@@ -166,26 +163,25 @@ async def send_notification(receiver_mail: str, course_title: str, response: boo
 
 async def view_pending_requests(db: Session, teacher: Teacher):
     res = (db.query(Course, Student)
-            .join(StudentCourse, StudentCourse.course_id == Course.course_id)
-            .join(Student, Student.student_id == StudentCourse.student_id)
-            .join(Teacher, Course.owner_id == Teacher.teacher_id)
-            .filter(StudentCourse.status == Status.pending.value)
-            .all()
-        )
-        
-    return [CoursePendingRequests.from_query(course.title, student.account.email) for course, student in res]
+           .join(StudentCourse, StudentCourse.course_id == Course.course_id)
+           .join(Student, Student.student_id == StudentCourse.student_id)
+           .join(Teacher, Course.owner_id == Teacher.teacher_id)
+           .filter(StudentCourse.status == Status.pending.value)
+           .all()
+           )
 
+    return [CoursePendingRequests.from_query(course.title, student.account.email) for course, student in res]
 
 
 async def calculate_student_progresses(db: Session, courses_with_students: List[Course]) -> Dict[int, str]:
     student_progress_dict = {}
-    
+
     for course in courses_with_students:
         for student in course.students_enrolled:
             if student.student_id not in student_progress_dict:
                 student_progress = await get_student_progress(db, student.student_id, course.course_id)
                 student_progress_dict[student.student_id] = student_progress
-    
+
     return student_progress_dict
 
 
@@ -203,10 +199,10 @@ async def get_courses_reports(db: Session, teacher: Teacher, min_progress: float
     
     result = db.execute(courses_query)
     courses_with_students = result.scalars().unique().all()
-    
+
     student_progress_dict = await calculate_student_progresses(db, courses_with_students)
     courses_reports = generate_reports(courses_with_students, student_progress_dict, min_progress)
-    
+
     return courses_reports
 
 
@@ -229,5 +225,3 @@ def generate_reports(courses_with_students: List[Course], student_progress_dict:
         reports.append(course_report)
     
     return reports
-
-

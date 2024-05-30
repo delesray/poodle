@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, StringConstraints
 from typing import Annotated
 from schemas.section import SectionBase
+from schemas.student import StudentRatingSchema
 from schemas.tag import TagBase
 
 
@@ -33,9 +34,9 @@ class CourseInfo(BaseModel):
 
 
 class CourseUpdate(BaseModel):
-    title: Annotated[str, StringConstraints(min_length=1)] 
-    description: Annotated[str, StringConstraints(min_length=1)] 
-    objectives: Annotated[str, StringConstraints(min_length=1)] 
+    title: Annotated[str, StringConstraints(min_length=1)]
+    description: Annotated[str, StringConstraints(min_length=1)]
+    objectives: Annotated[str, StringConstraints(min_length=1)]
 
 
 class CourseCreate(BaseModel):
@@ -63,7 +64,7 @@ class CourseRateResponse(BaseModel):
     rating: float = Field(ge=1, le=10)
 
 
-class StudentCourse(BaseModel):
+class StudentCourseSchema(BaseModel):  # name was == ORM model
     course_id: int
     title: str
     description: str
@@ -73,7 +74,7 @@ class StudentCourse(BaseModel):
     is_premium: bool = False
     overall_rating: float | None = 0
     your_rating: float | None = 0
-    your_progress: float | None  = 0
+    your_progress: float | None = 0
 
 
 class CoursePendingRequests(BaseModel):
@@ -86,3 +87,8 @@ class CoursePendingRequests(BaseModel):
             course=course,
             requested_by=requested_by
         )
+
+
+class CourseStudentRatingsSchema(BaseModel):
+    course: CourseBase
+    ratings: list[StudentRatingSchema]

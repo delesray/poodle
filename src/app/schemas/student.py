@@ -29,3 +29,10 @@ class StudentResponseModel(BaseModel):
 class StudentEdit(BaseModel):
     first_name: Annotated[str, StringConstraints(min_length=2)] = None
     last_name: Annotated[str, StringConstraints(min_length=2)] = None
+
+
+class StudentRatingSchema(BaseModel):
+    student_id: int
+    course_id: int
+    rating: int
+

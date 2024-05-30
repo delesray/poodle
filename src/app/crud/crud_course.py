@@ -1,7 +1,21 @@
+from fastapi import status, HTTPException
 from sqlalchemy.orm import Session
 from database.models import Course, Tag
 from schemas.course import CourseInfo
 from typing import List
+
+
+async def get_course_by_id(db: Session, course_id: int, auto_error=False) -> Course | None:
+    query = db.query(Course).filter(Course.course_id == course_id).first()
+
+    if query:
+        return query
+    if auto_error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
+
+
+async def get_course_by_id_or_raise_404(db, course_id):
+    return get_course_by_id(db, course_id, auto_error=True)
 
 
 async def get_all_courses(
@@ -52,14 +66,6 @@ async def course_exists(db: Session, title: str) -> bool:
     return query is not None
 
 
-async def get_course_by_id(db: Session, course_id: int) -> Course:
-    query = db.query(Course).filter(Course.course_id == course_id).first()
-
-    if query:
-        return query
-
-
-
 async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=None):
     # commit must happen in outer func
 
@@ -76,6 +82,7 @@ async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=Non
         course.rating = (course.rating * course.people_rated + new_st_rating) / (course.people_rated + 1)
 
     course.people_rated += 1
+
 
 async def hide_course(db: Session, course: Course):
     course.is_hidden = True
