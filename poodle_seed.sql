@@ -71,5 +71,5 @@ INSERT INTO `poodle`.`courses_tags` (`course_id`, `tag_id`)
 VALUES (1,1),(1,2),(2,5),(3,3),(3,4);
 
 -- enroll 2 students to course 1
-INSERT INTO `poodle`.`students_courses` (`student_id`, `course_id`) VALUES ('4', '1');
-INSERT INTO `poodle`.`students_courses` (`student_id`, `course_id`) VALUES ('5', '1');
+INSERT INTO `poodle`.`students_courses` (`student_id`, `course_id`,`status`) VALUES ('4', '1', '2');
+INSERT INTO `poodle`.`students_courses` (`student_id`, `course_id`,`status`) VALUES ('5', '1', '2');
