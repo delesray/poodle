@@ -25,11 +25,6 @@ async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):
     return teacher
 
 
-async def get_teacher_by_id(db: Session, id: int):  # what if Teacher.account.is_deactivated ?
-    teacher = (db.query(Teacher).filter(Teacher.teacher_id == id).first())
-    return teacher
-
-
 async def get_info(teacher, teacher_email):
     return TeacherSchema(
         teacher_id=teacher.teacher_id,
