@@ -1,3 +1,7 @@
+from typing import Annotated
+
+from fastapi import Depends
+from sqlalchemy.orm import Session
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy_utils import database_exists, create_database
@@ -30,6 +34,10 @@ def get_db():
     finally:
         db.close()
 
+
 def create_db():
     if not database_exists(engine.url):
         create_database(engine.url)
+
+
+dbDep = Annotated[Session, Depends(get_db)]

@@ -1,11 +1,8 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
-from crud import crud_course, crud_admin, crud_user, crud_student
-from database.database import get_db
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, status
+from crud import crud_course, crud_admin, crud_user
 from core.oauth import AdminAuthDep
 from crud.crud_user import Role
-from schemas.course import CourseInfo
+from database.database import dbDep
 
 router = APIRouter(
     prefix="/admins",
@@ -16,12 +13,12 @@ router = APIRouter(
 
 @router.get('/courses')
 async def get_courses(
-        db: Annotated[Session, Depends(get_db)],
+        db: dbDep, admin: AdminAuthDep,
         tag: str | None = None,
         rating: int | None = None,
         name: str | None = None,
         pages: int = 1,
-        items_per_page: int = 5
+        items_per_page: int = 5,
 ):
     """
     Enables an admin to view all courses, the number of students in them and their rating.
@@ -46,24 +43,23 @@ async def get_courses(
 
 @router.patch('/accounts/{account_id}')
 async def switch_user_activation(
-        db: Annotated[Session, Depends(get_db)],
-        account_id: int,
+        db: dbDep, admin: AdminAuthDep, account_id: int,
 ):
     user = await crud_user.get_user_by_id_deactivated_also(db, account_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No such user')
+    if admin.admin_id == user.account.id:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f'You cannot deactivate yourself')
 
-    crud_admin.switch_user_activation(db, user)
+    await crud_admin.switch_user_activation(db, user)
 
 
 @router.get('/courses/{course_id}')
 async def get_course_rating_info(
-        db: Annotated[Session, Depends(get_db)],
-        course_id: int,
-        admin: AdminAuthDep
+        db: dbDep, admin: AdminAuthDep, course_id: int,
 ):
     course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
-    students_courses_rating = crud_admin.get_students_ratings_by_course_id(db, course.course_id)
+    students_courses_rating = await crud_admin.get_students_ratings_by_course_id(db, course.course_id)
 
     # todo discuss
     return [course, students_courses_rating]
@@ -71,43 +67,35 @@ async def get_course_rating_info(
 
 @router.patch('/students/{student_id}')
 async def make_student_premium(
-        db: Annotated[Session, Depends(get_db)],
-        student_id: int,
-        admin: AdminAuthDep
+        db: dbDep, admin: AdminAuthDep, student_id: int,
 ):
     student = await crud_user.get_specific_user_or_raise_404(db, student_id, role=Role.STUDENT)
-    crud_admin.make_student_premium(db, student)
+    await crud_admin.make_student_premium(db, student)
 
 
 @router.post('/teachers/{teacher_id}')
 async def approve_teacher_registration(
-        db: Annotated[Session, Depends(get_db)],
-        teacher_id: int,
-        admin: AdminAuthDep
+        db: dbDep, admin: AdminAuthDep, teacher_id: int,
 ):
     # todo Admins could approve registrations for teachers (via email).
     teacher = await crud_user.get_specific_user_or_raise_404(db, teacher_id, role=Role.TEACHER)
-    crud_admin.approve_teacher_registration(db, teacher)
+    await crud_admin.approve_teacher_registration(db, teacher)
 
 
 @router.delete('/courses/{course_id}')
 async def hide_course(
-        db: Annotated[Session, Depends(get_db)],
-        course_id: int,
-        admin: AdminAuthDep
+        db: dbDep, admin: AdminAuthDep, course_id: int,
 ):
-    course = crud_course.get_course_by_id_or_raise_404(db, course_id)
-    crud_admin.hide_course(db, course)
+    course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
+    await crud_admin.hide_course(db, course)
 
 
 @router.delete('/courses/{course_id}/students/{student_id}')
 async def remove_student_from_course(
-        db: Annotated[Session, Depends(get_db)],
-        course_id: int, student_id: int,
-        admin: AdminAuthDep
+        db: dbDep, admin: AdminAuthDep, course_id: int, student_id: int
 ):
     course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
     student = await crud_user.get_specific_user_or_raise_404(db, student_id, role=Role.STUDENT)
 
     # todo test if it is already deleted what happens
-    crud_admin.remove_student_from_course(db, student.student_id, course.course_id)
+    await crud_admin.remove_student_from_course(db, student.student_id, course.course_id)

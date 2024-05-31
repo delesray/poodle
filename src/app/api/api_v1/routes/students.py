@@ -1,5 +1,4 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 from crud import crud_course, crud_section
 from core.oauth import StudentAuthDep
 from api.api_v1.routes import utils
@@ -8,11 +7,9 @@ from schemas.course import CourseInfo, CourseRate, CourseRateResponse, StudentCo
 from schemas.section import SectionBase
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
-from database.database import get_db
-from sqlalchemy.orm import Session
 from database.models import Course
-
 from fastapi import UploadFile
+from database.database import dbDep
 
 router = APIRouter(
     prefix="/students",
@@ -22,7 +19,7 @@ router = APIRouter(
 
 
 @router.post('/register', status_code=status.HTTP_201_CREATED, response_model=StudentResponseModel)
-async def register_student(db: Annotated[Session, Depends(get_db)], student: StudentCreate):
+async def register_student(db: dbDep, student: StudentCreate):
     """
     Registers a student.
 
@@ -44,7 +41,7 @@ async def register_student(db: Annotated[Session, Depends(get_db)], student: Stu
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED)
-async def update_profile_picture(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, file: UploadFile):
+async def update_profile_picture(db: dbDep, student: StudentAuthDep, file: UploadFile):
     """
     Lets an authenticated student add or edit their profile picture.
 
@@ -66,7 +63,7 @@ async def update_profile_picture(db: Annotated[Session, Depends(get_db)], studen
 
 
 @router.get('/', response_model=StudentResponseModel)
-async def view_account(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+async def view_account(db: dbDep, student: StudentAuthDep):
     """
     Shows authenticated student's profile information.
 
@@ -82,7 +79,7 @@ async def view_account(db: Annotated[Session, Depends(get_db)], student: Student
 
 
 @router.put('/', status_code=status.HTTP_201_CREATED, response_model=StudentResponseModel)
-async def edit_account(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, updates: StudentEdit):
+async def edit_account(db: dbDep, student: StudentAuthDep, updates: StudentEdit):
     """
     Edits authenticated student's profile information.
 
@@ -99,7 +96,7 @@ async def edit_account(db: Annotated[Session, Depends(get_db)], student: Student
 
 
 @router.patch('/', status_code=status.HTTP_204_NO_CONTENT)
-async def change_password(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep,
+async def change_password(db: dbDep, student: StudentAuthDep,
                           pass_update: UserChangePassword):
     """
     Changes authenticated student's password.
@@ -137,7 +134,7 @@ async def view_my_courses(student: StudentAuthDep):
 
 
 @router.get('/courses/pending', response_model=list[CourseInfo] | None)
-async def view_pending_courses(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep):
+async def view_pending_courses(db: dbDep, student: StudentAuthDep):
     """
     Returns authenticated student's pending requests for courses.
 
@@ -154,7 +151,7 @@ async def view_pending_courses(db: Annotated[Session, Depends(get_db)], student:
 
 
 @router.get('/courses/{course_id}', response_model=StudentCourseSchema)
-async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
+async def view_course(db: dbDep, student: StudentAuthDep, course_id: int):
     """
     Returns authenticated student's chosen course with details.
 
@@ -184,7 +181,7 @@ async def view_course(db: Annotated[Session, Depends(get_db)], student: StudentA
 
 @router.get('/courses/{course_id}/sections/{section_id}', response_model=SectionBase)
 async def view_course_section(
-        db: Annotated[Session, Depends(get_db)], student: StudentAuthDep,
+        db: dbDep, student: StudentAuthDep,
         course_id: int, section_id: int
 ):
     """
@@ -229,7 +226,7 @@ async def view_course_section(
 
 
 @router.post('/courses/{course_id}/subscription')
-async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int):
+async def subscribe_for_course(db: dbDep, student: StudentAuthDep, course_id: int):
     """
     Sends a subscription request by email to the owner of the course.
 
@@ -270,7 +267,7 @@ async def subscribe_for_course(db: Annotated[Session, Depends(get_db)], student:
 
 @router.delete('/courses/{course_id}/subscription', status_code=status.HTTP_204_NO_CONTENT)
 async def unsubscribe(
-        db: Annotated[Session, Depends(get_db)],
+        db: dbDep,
         student: StudentAuthDep,
         course_id: int):
     """
@@ -293,7 +290,7 @@ async def unsubscribe(
 
 
 @router.post('/courses/{course_id}/rating', status_code=status.HTTP_201_CREATED, response_model=CourseRateResponse)
-async def rate_course(db: Annotated[Session, Depends(get_db)], student: StudentAuthDep, course_id: int,
+async def rate_course(db: dbDep, student: StudentAuthDep, course_id: int,
                       rating: CourseRate):
     """
     Enables authenticated student to rate a course, if the student is enrolled in the course.

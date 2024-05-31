@@ -2,16 +2,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from schemas.course import CourseInfo
-from database.database import get_db
 from crud import crud_user, crud_course
 from core.security import create_access_token, TokenData
-from sqlalchemy.orm import Session
+from database.database import dbDep
+
 
 router = APIRouter(tags=['public'])
 
 
 @router.post('/login', include_in_schema=False)
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]):
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: dbDep):
     """
     Logs a user.
 
@@ -40,7 +40,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: 
 
 @router.get('/courses', response_model=list[CourseInfo])
 async def get_courses(
-        db: Annotated[Session, Depends(get_db)],
+        db: dbDep,
         tag: str | None = None,
         rating: int | None = None,
         name: str | None = None,
