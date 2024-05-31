@@ -4,7 +4,7 @@ from crud import crud_user
 from database.models import Course, Student
 from database.database import get_db
 from sqlalchemy.orm import Session
-from crud.crud_user import create, exists, add_picture
+from crud.crud_user import create, exists, add_picture, email_exists
 from crud import crud_teacher, crud_student
 from crud.crud_course import course_exists, get_course_common_info, get_course_by_id
 from crud.crud_course import course_exists, get_course_common_info, hide_course
@@ -34,15 +34,22 @@ async def register_teacher(db: Annotated[Session, Depends(get_db)], teacher: Tea
     **Returns**: a TeacherSchema object with the created teacher's details.
 
     **Raises**:
-    - `HTTPException 409`, if a user with the same email has already been registered.
-
+    - `HTTPException 409`: if a user with the same email has already been registered.
+    - `HTTPException 400`: if the account with the same email is deactivated.
     """
-    if await exists(db, teacher.email):
-        raise HTTPException(
-            status_code=409,
-            detail="Email already registered",
-        )
-    #new_teacher = await create(db, user)
+    account = await email_exists(db, teacher.email)
+    if account:
+        if account.is_deactivated:
+            raise HTTPException(
+                status_code=400,
+                detail="Account with this email is deactivated"
+            )
+        else:
+            raise HTTPException(
+                status_code=409,
+                detail="Email already registered",
+            )
+                      
     return await create(db, teacher)
 
 

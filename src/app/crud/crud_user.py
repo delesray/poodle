@@ -189,3 +189,8 @@ async def resize_picture(image_data: UploadFile, target_size: tuple) -> bytes | 
 
     except (OSError, UnidentifiedImageError) as e:
         return e
+
+
+async def email_exists(db: Session, email: str) -> Account | None:
+   return db.query(Account).filter(Account.email == email).first()
+
