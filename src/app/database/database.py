@@ -40,4 +40,5 @@ def create_db():
         create_database(engine.url)
 
 
-dbDep = Annotated[Session, Depends(get_db)]
+# todo curr dependancy mock change
+dbDep = Annotated[Session | None, Depends(get_db)]

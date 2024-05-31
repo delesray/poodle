@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr, StringConstraints
 
 class StudentCreate(BaseModel):
     email: EmailStr
-    password: Annotated[str, StringConstraints(min_length=4)] = None
+    password: Annotated[str, StringConstraints(min_length=4)]
     first_name: Annotated[str, StringConstraints(min_length=2)] = None
     last_name: Annotated[str, StringConstraints(min_length=2)] = None
 
@@ -35,4 +35,3 @@ class StudentRatingSchema(BaseModel):
     student_id: int
     course_id: int
     rating: int
-

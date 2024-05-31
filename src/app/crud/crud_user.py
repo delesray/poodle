@@ -92,7 +92,7 @@ class TeacherFactory():
         )
 
 
-class StudentFactory():
+class StudentFactory:
     @staticmethod
     async def create_db_user(db: Session, user_schema: Union[StudentCreate, TeacherCreate]):
         new_user = await create_user(db, user_schema)

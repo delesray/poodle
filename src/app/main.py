@@ -1,12 +1,13 @@
 import uvicorn
 from fastapi import FastAPI
 from database import models
-from database.database import engine, create_db
+# from database.database import engine, create_db
+from database import database
 from api.api_v1.api import api_router
 
 
-create_db()
-models.Base.metadata.create_all(bind=engine)
+database.create_db()
+models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
 app.include_router(api_router)

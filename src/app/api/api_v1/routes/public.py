@@ -4,14 +4,17 @@ from fastapi.security import OAuth2PasswordRequestForm
 from schemas.course import CourseInfo
 from crud import crud_user, crud_course
 from core.security import create_access_token, TokenData
-from database.database import dbDep
+from database.database import dbDep  # how am i supposed to mock this with pytest mocker
+
+# dbDep = Annotated[Session, Depends(get_db)]
 
 
 router = APIRouter(tags=['public'])
 
 
 @router.post('/login', include_in_schema=False)
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: dbDep):
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+                db: dbDep):  # see i have to somehow mock that dp so that it doesnt go to the database
     """
     Logs a user.
 
