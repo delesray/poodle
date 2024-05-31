@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from schemas.user import UserChangePassword
 from schemas.teacher import TeacherCreate, TeacherSchema
 from schemas.student import StudentCreate, StudentResponseModel
-from database.models import Account, Teacher, Student, Course
+from db.models import Account, Teacher, Student, Course
 from core.hashing import hash_pass
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status, UploadFile

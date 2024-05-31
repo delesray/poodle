@@ -7,9 +7,9 @@ from schemas.course import CourseInfo, CourseRate, CourseRateResponse, StudentCo
 from schemas.section import SectionBase
 from schemas.student import StudentCreate, StudentEdit, StudentResponseModel
 from schemas.user import UserChangePassword
-from database.models import Course
+from db.models import Course
 from fastapi import UploadFile
-from database.database import dbDep
+from db.database import dbDep
 
 router = APIRouter(
     prefix="/students",
@@ -24,7 +24,7 @@ async def register_student(db: dbDep, student: StudentCreate):
     Registers a student.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentCreate): The information of the student to register.
 
     **Returns**: a StudentCreate object with the created student's details.
@@ -46,7 +46,7 @@ async def update_profile_picture(db: dbDep, student: StudentAuthDep, file: Uploa
     Lets an authenticated student add or edit their profile picture.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentCreate): The information of the student to register.
     - `file` (BinaryIO): BinaryIO object containing the image data.
 
@@ -68,7 +68,7 @@ async def view_account(db: dbDep, student: StudentAuthDep):
     Shows authenticated student's profile information.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
 
     **Returns**: a StudentResponseModel object with the student's account details.
@@ -84,7 +84,7 @@ async def edit_account(db: dbDep, student: StudentAuthDep, updates: StudentEdit)
     Edits authenticated student's profile information.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
     - `updates` (StudentEdit): StudentEdit object that specifies the desired account updates.
 
@@ -102,7 +102,7 @@ async def change_password(db: dbDep, student: StudentAuthDep,
     Changes authenticated student's password.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
     - `pass_update` (UserChangePassword):
 
@@ -139,7 +139,7 @@ async def view_pending_courses(db: dbDep, student: StudentAuthDep):
     Returns authenticated student's pending requests for courses.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
 
     **Raises**:
@@ -156,7 +156,7 @@ async def view_course(db: dbDep, student: StudentAuthDep, course_id: int):
     Returns authenticated student's chosen course with details.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
     - `course_id` (integer): The ID of the course the student wants to view.
 
@@ -188,7 +188,7 @@ async def view_course_section(
     Returns authenticated student's chosen course section.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
     - `course_id` (integer): The ID of the course the student wants to view.
     - `section_id` (integer): The ID of the section the student wants to view.
@@ -231,7 +231,7 @@ async def subscribe_for_course(db: dbDep, student: StudentAuthDep, course_id: in
     Sends a subscription request by email to the owner of the course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
     - `course_id` (integer): the ID of the course the student wants to enroll in.
 
@@ -274,7 +274,7 @@ async def unsubscribe(
     Unsubscribes authenticated student from a course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
     - `course_id` (integer): the ID of the course the student wants to enroll in.
 
@@ -296,7 +296,7 @@ async def rate_course(db: dbDep, student: StudentAuthDep, course_id: int,
     Enables authenticated student to rate a course, if the student is enrolled in the course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
     - `course_id` (integer): ID of the course to rate.
     - `rating` (CourseRate): rating the student wants to give.

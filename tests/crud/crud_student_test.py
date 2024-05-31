@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from crud.crud_student import is_student_enrolled
 from crud.crud_user import StudentFactory, TeacherFactory
-from database.models import Account, Student, Course, Teacher, StudentCourse, Status
+from db.models import Account, Student, Course, Teacher, StudentCourse, Status
 from crud import crud_student
 from schemas.student import StudentCreate
 from schemas.teacher import TeacherCreate

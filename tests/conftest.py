@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, StaticPool
 from sqlalchemy.orm import Session, sessionmaker
 
-from database.database import get_db, Base
+from db.database import get_db, Base
 from main import app
 
 
@@ -18,9 +18,9 @@ def db() -> Session:
     """
     Provides a SQLAlchemy session for testing purposes.
 
-    This fixture returns a session connected to an in-memory SQLite database.
-    It's intended for use in tests that require database access but should not
-    affect the production database.
+    This fixture returns a session connected to an in-memory SQLite db.
+    It's intended for use in tests that require db access but should not
+    affect the production db.
 
     Returns:
         Session: A SQLAlchemy session object.
@@ -40,11 +40,11 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture()
 def test_db():
     """
-    Sets up and tears down an in-memory SQLite database for testing.
+    Sets up and tears down an in-memory SQLite db for testing.
 
     This fixture creates all tables in the Base metadata before tests run and
     drops them after tests complete. It ensures that tests run with a clean
-    database every time.
+    db every time.
 
     Yields:
         None: This fixture doesn't return any value.
@@ -58,12 +58,12 @@ def override_get_db():
     """
     Overrides the 'get_db' dependency for testing.
 
-    This function replaces the standard database session with a session connected
-    to the in-memory SQLite database. It's used to override the app's dependency
-    during tests to ensure isolation from the production database.
+    This function replaces the standard db session with a session connected
+    to the in-memory SQLite db. It's used to override the app's dependency
+    during tests to ensure isolation from the production db.
 
     Yields:
-        Generator[Session, None, None]: A generator yielding the test database session.
+        Generator[Session, None, None]: A generator yielding the test db session.
     """
     try:
         db = TestingSessionLocal()

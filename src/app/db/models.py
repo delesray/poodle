@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlalchemy import ForeignKey, Integer, String, text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from database.database import Base
+from db.database import Base
 from enum import Enum
 
 

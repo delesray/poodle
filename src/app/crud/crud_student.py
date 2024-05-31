@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
-from database.models import Account, Student, Status, Student, StudentCourse as DBStudentCourse, StudentRating, \
+from db.models import Account, Student, Status, Student, StudentCourse as DBStudentCourse, StudentRating, \
     StudentSection, \
     Section
 from schemas.student import StudentEdit, StudentResponseModel

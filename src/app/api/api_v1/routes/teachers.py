@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Body, status
-from database.models import Course, Student
+from db.models import Course, Student
 from crud.crud_user import create, add_picture, email_exists
 from crud import crud_teacher, crud_student
 from crud.crud_course import get_course_by_id
@@ -14,7 +14,7 @@ from core.oauth import TeacherAuthDep
 from typing import List, Dict
 from typing import Union
 from fastapi import UploadFile
-from database.database import dbDep
+from db.database import dbDep
 
 router = APIRouter(prefix='/teachers', tags=['teachers'])
 
@@ -25,7 +25,7 @@ async def register_teacher(db: dbDep, teacher: TeacherCreate):
     Registers a teacher.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `teacher` (TeacherCreate): The information of the teacher to register.
 
     **Returns**: a TeacherSchema object with the created teacher's details.
@@ -56,7 +56,7 @@ async def update_profile_picture(db: dbDep, teacher: TeacherAuthDep, file: Uploa
     Lets an authenticated teacher add or edit their profile picture.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `teacher` (TeacherAuthDep): The authenticated teacher.
     - `file` (UploadFile): The uploaded file containing the image data.
 
@@ -80,7 +80,7 @@ async def view_account(db: dbDep, teacher: TeacherAuthDep):
     Shows authenticated teacher's profile information.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
 
     **Returns**: a TeacherSchema object with the teacher's account details.
@@ -103,7 +103,7 @@ async def update_account(
     Edits authenticated teacher's profile information.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `updates` (TeacherEdit): TeacherEdit object that specifies the desired account updates.
 
@@ -128,7 +128,7 @@ async def create_course(
     Creates a new course for an authenticated teacher.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `course` (CourseCreate): CourseCreate object that specifies the details of the new course.
 
@@ -159,7 +159,7 @@ async def update_course_home_page_picture(
     Lets an authenticated teacher add or edit the home page picture for a course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `teacher` (TeacherAuthDep): The authenticated teacher.
     - `course_id` (int): The ID of the course for which the home page picture is being updated.
     - `file` (UploadFile): The uploaded file containing the image data.
@@ -193,7 +193,7 @@ async def view_pending_requests(db: dbDep, teacher: TeacherAuthDep):
     Returns authenticated teacher's pending requests for courses.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
 
     **Raises**:
@@ -210,7 +210,7 @@ async def get_courses(db: dbDep, teacher: TeacherAuthDep):
     Returns teacher's courses.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
 
     **Raises**:
@@ -234,7 +234,7 @@ async def view_course_by_id(
     Retrieves a course by its ID along with associated tags and sections.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `course_id` (int): The ID of the course to retrieve.
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `sort` (str, optional): Sort order, either 'asc' or 'desc'.
@@ -281,7 +281,7 @@ async def approve_enrollment(db: dbDep,
     An email notification is sent to the student after the request is approved or denied.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `student` (string): The student's email.
     - `course_id` (integer): The ID of the course.
@@ -320,7 +320,7 @@ async def update_course_info(
     Updates the information of a specific course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `course_id` (int): The ID of the course to update.
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `updates` (CourseUpdate): The updated course information.
@@ -354,7 +354,7 @@ async def update_section(
     Updates the information of a specific section within a course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `course_id` (int): The ID of the course containing the section to update.
     - `section_id` (int): The ID of the section to update.
     - `user` (TeacherAuthDep): The authentication dependency for users with role Teacher.
@@ -397,7 +397,7 @@ async def add_sections(
     Create sections for a course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `course_id` (int): The ID of the course for which sections are being created.
     - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
     - `sections` (List[SectionBase]): A list of SectionBase objects containing section details.
@@ -431,7 +431,7 @@ async def remove_section(
     Removes a section from a course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `course_id` (int): The ID of the course.
     - `section_id` (int): The ID of the section to remove.
     - `teacher` (TeacherAuthDep): The authenticated teacher.
@@ -475,7 +475,7 @@ async def add_tags(
     Add tags to a course.
 
     **Parameters:**
-    - `db` (Session)`: The SQLAlchemy database session.
+    - `db` (Session)`: The SQLAlchemy db session.
     - `course_id` (int)`: The ID of the course for which tags are being created.
     - `teacher` (TeacherAuthDep)`: The authentication dependency for users with the Teacher role.
     - `tags` (List[TagBase])`: A list of TagBase objects containing tag details.
@@ -511,7 +511,7 @@ async def remove_tag(
     Removes a tag from a course.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `course_id` (int): The ID of the course.
     - `tag_id` (int): The ID of the tag to remove.
     - `teacher` (TeacherAuthDep): The authenticated teacher.
@@ -553,7 +553,7 @@ async def deactivate_course(db: dbDep, course_id: int, teacher: TeacherAuthDep):
     Deactivates a course if the teacher owns it and no students are enrolled.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `course_id` (int): The ID of the course to deactivate.
     - `teacher` (TeacherAuthDep): The authenticated teacher.
 
@@ -592,7 +592,7 @@ async def generate_courses_reports(
     Generate reports for courses owned by the authenticated teacher, with options for sorting and filtering by student progress.
 
     **Parameters:**
-    - `db` (AsyncSession): The SQLAlchemy database session.
+    - `db` (AsyncSession): The SQLAlchemy db session.
     - `teacher` (TeacherAuthDep): The authenticated teacher.
     - `min_progress` (str): The minimum progress percentage to filter students. Defaults to "0.0".
     - `sort` (str | None): Optional sorting order for courses, either 'asc' or 'desc'. Defaults to None.

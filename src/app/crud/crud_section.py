@@ -2,7 +2,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from crud import crud_student
-from database.models import Section, StudentSection
+from db.models import Section, StudentSection
 from schemas.section import SectionBase, SectionUpdate
 from typing import List
 

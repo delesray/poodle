@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from crud import crud_course, crud_admin, crud_user
 from core.oauth import AdminAuthDep
 from crud.crud_user import Role
-from database.database import dbDep
+from db.database import dbDep
 
 router = APIRouter(
     prefix="/admins",
@@ -26,7 +26,7 @@ async def get_courses(
     Pagination is also supported.
 
     **Parameters:**
-    - `db` (Session): The SQLAlchemy database session.
+    - `db` (Session): The SQLAlchemy db session.
     - `tag` (string): the course tags to filter by.
     - `rating` (integer): the minimum desired course rating to filter by.
     - `pages` (integer): the number of pages to be returned.

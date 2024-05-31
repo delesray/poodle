@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from database.models import Course, Student, StudentCourse, Teacher, Tag, CourseTag, Section, Status
+from db.models import Course, Student, StudentCourse, Teacher, Tag, CourseTag, Section, Status
 from schemas.course import CourseCreate, CourseBase, CoursePendingRequests, CourseSectionsTags, CourseUpdate
 from crud.crud_section import create_sections, transfer_object
 from crud.crud_tag import create_tags

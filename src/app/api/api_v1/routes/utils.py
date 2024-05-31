@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from database.models import Account
+from db.models import Account
 from core.hashing import verify_password
 
 

@@ -4,10 +4,10 @@ from typing import Annotated
 from core.security import verify_token_access, oauth2_scheme, oauth2_scheme_optional, TokenData
 from schemas.user import AnonymousUser, User
 from crud.crud_user import exists
-from database.models import Account, Role, Student, Teacher, Admin
-from database.database import get_db
+from db.models import Account, Role, Student, Teacher, Admin
+from db.database import get_db
 from sqlalchemy.orm import Session
-from database.models import Account
+from db.models import Account
 
 
 async def get_admin_required(

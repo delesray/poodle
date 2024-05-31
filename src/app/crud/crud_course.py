@@ -1,6 +1,6 @@
 from fastapi import status, HTTPException
 from sqlalchemy.orm import Session
-from database.models import Course, Tag
+from db.models import Course, Tag
 from schemas.course import CourseInfo
 from typing import List
 

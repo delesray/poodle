@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from database.models import Student, StudentCourse, Course, Teacher, StudentRating, Account
+from db.models import Student, StudentCourse, Course, Teacher, StudentRating, Account
 
 
 async def remove_student_from_course(db: Session, student_id: int, course_id) -> None:

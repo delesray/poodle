@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from database.models import Tag, CourseTag
+from db.models import Tag, CourseTag
 from schemas.tag import TagBase
 from typing import List, Dict
 from typing import Union
