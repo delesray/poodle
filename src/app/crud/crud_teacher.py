@@ -59,7 +59,8 @@ async def make_course(db: Session, teacher: Teacher, new_course: CourseCreate):
     course_info_response = get_coursebase_model(teacher, course_info)
     course_tags, course_sections = [], []
     if new_course.tags:
-        course_tags = await create_tags(db, new_course.tags, course_info.course_id)
+        created_tags = await create_tags(db, new_course.tags, course_info.course_id)
+        course_tags = created_tags.get("created")
     if new_course.sections:
         course_sections = await create_sections(db, new_course.sections, course_info.course_id)
 
