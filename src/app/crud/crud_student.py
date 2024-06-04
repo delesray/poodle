@@ -20,9 +20,8 @@ async def get_student_by_id(db: Session, user_id: int, auto_error=False) -> Stud
 
 
 async def get_by_email(db: Session, email: str):
-    # todo maybe add filter ?  not Account.is_deactivated
     student = (db.query(Student).join(Student.account).filter(
-        Account.email == email).first())
+        Account.email == email, Account.is_deactivated == False).first())
 
     if student:
         return student

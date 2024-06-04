@@ -77,7 +77,7 @@ async def make_student_premium(
 async def approve_teacher_registration(
         db: dbDep, admin: AdminAuthDep, teacher_id: int,
 ):
-    # todo Admins could approve registrations for teachers (via email).
+
     teacher = await crud_user.get_specific_user_or_raise_404(db, teacher_id, role=Role.TEACHER)
     await crud_admin.approve_teacher_registration(db, teacher)
 
