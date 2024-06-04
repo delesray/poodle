@@ -14,7 +14,7 @@ router = APIRouter(tags=['public'])
 
 @router.post('/login', include_in_schema=False)
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-                db: dbDep):  # see i have to somehow mock that dp so that it doesnt go to the db
+                db: dbDep):
     """
     Logs a user.
 
