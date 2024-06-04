@@ -32,7 +32,7 @@ def test_login_returns_token_when_correct_credentials(client: TestClient, mocker
 
     response = client.post('/login', data=login_data)
     assert response.status_code == 200
-    assert response.json() == token.dict()
+    assert response.json() == token.model_dump()
 
 
 def test_login_raises_401_when_incorrect_credentials(client: TestClient, mocker):
