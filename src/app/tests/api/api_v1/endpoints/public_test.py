@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from db.models import Account
 from core.security import Token
 from schemas.course import CourseInfo
+from fastapi import status
 
 
 user = Account(email='dummy@mail.com',
@@ -31,7 +32,7 @@ def test_login_returns_token_when_correct_credentials(client: TestClient, mocker
     }
 
     response = client.post('/login', data=login_data)
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
     assert response.json() == token.model_dump()
 
 
@@ -44,7 +45,7 @@ def test_login_raises_401_when_incorrect_credentials(client: TestClient, mocker)
     }
 
     response = client.post('/login', data=login_data)
-    assert response.status_code == 401
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {'detail': 'Invalid credentials'}
 
 
@@ -55,7 +56,7 @@ def test_get_all_courses_returns_all_courses_if_courses(client: TestClient, mock
     mocker.patch('api.api_v1.routes.public.crud_course.get_all_courses', return_value=courses)
 
     response = client.get('/courses/')
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
     response_courses = response.json()
 
     assert len(response_courses) == len(courses)
@@ -74,5 +75,5 @@ def test_get_all_courses_returns_empty_list_if_no_courses(client: TestClient, mo
     mocker.patch('api.api_v1.routes.public.crud_course.get_all_courses', return_value=courses)
 
     response = client.get('/courses/')
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
     assert response.json() == []
