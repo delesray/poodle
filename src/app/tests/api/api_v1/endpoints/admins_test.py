@@ -2,8 +2,6 @@ import pytest
 from fastapi.testclient import TestClient
 from db.models import Account, Admin
 from fastapi import status, HTTPException
-from core.oauth import get_admin_required
-from main import app
 
 dummy_user = Account(
     account_id=1,
@@ -17,7 +15,7 @@ dummy_admin = Admin(
     account=dummy_user,
 )
 
-app.dependency_overrides[get_admin_required] = lambda: dummy_admin
+
 ROUTER_PREFIX = 'admins'
 NON_EXISTING_ID = 999
 

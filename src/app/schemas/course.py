@@ -42,8 +42,7 @@ class CourseUpdate(BaseModel):
 class CourseCreate(BaseModel):
     title: Annotated[str, StringConstraints(min_length=1)]
     description: Annotated[str, StringConstraints(min_length=1)]
-    objectives: Annotated[  # what students are expected to learn and accomplish by the end of the course
-        str, StringConstraints(min_length=1)]
+    objectives: Annotated[str, StringConstraints(min_length=1)]
     is_premium: bool = False
     tags: list[TagBase] | None = None
     sections: list[SectionBase] | None = None
@@ -64,7 +63,7 @@ class CourseRateResponse(BaseModel):
     rating: float = Field(ge=1, le=10)
 
 
-class StudentCourseSchema(BaseModel):  # name was == ORM model
+class StudentCourseSchema(BaseModel):
     course_id: int
     title: str
     description: str

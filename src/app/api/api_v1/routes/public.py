@@ -4,9 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from schemas.course import CourseInfo
 from crud import crud_user, crud_course
 from core.security import create_access_token, TokenData
-from db.database import dbDep  # how am i supposed to mock this with pytest mocker
-
-# dbDep = Annotated[Session, Depends(get_db)]
+from db.database import dbDep
 
 
 router = APIRouter(tags=['public'])

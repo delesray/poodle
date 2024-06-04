@@ -168,21 +168,12 @@ async def add_picture(db: Session, picture: UploadFile, entity_type: str, entity
 
 
 async def resize_picture(image_data: UploadFile, target_size: tuple) -> bytes | str:
-    """
-    Resizes an image from a BinaryIO object to the specified target size (width, height)
-    """
+
     try:
-        # Read the entire file content into a bytes object
         image_data = image_data.file.read()
-
-        # Open the image from the bytes object
         image = Image.open(BytesIO(image_data))
-        # Resize the image
         resized_image = image.resize(target_size)
-
-        # Create a BytesIO object to store the resized image (in-memory)
         resized_data = BytesIO()
-        # Save in the original format
         resized_image.save(resized_data, format=image.format)
 
         return resized_data.getvalue()
@@ -193,4 +184,3 @@ async def resize_picture(image_data: UploadFile, target_size: tuple) -> bytes | 
 
 async def email_exists(db: Session, email: str) -> Account | None:
    return db.query(Account).filter(Account.email == email).first()
-

@@ -53,7 +53,6 @@ async def update_profile_picture(db: dbDep, student: StudentAuthDep, file: Uploa
     **Returns**: Successful message, if the picture is uploaded.
 
     **Raises**: 
-    - HTTPException 409, if a user with the same email has already been registered.
     - HTTPException 400, if the file is corruped or the student uploaded an unsupported media type.
     """
     if await crud_user.add_picture(db=db, picture=file, entity_type='student', entity_id=student.student_id):
