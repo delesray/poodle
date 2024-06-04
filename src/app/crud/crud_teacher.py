@@ -10,7 +10,6 @@ from email_notification import build_teacher_enroll_request, send_email
 from schemas.student import StudentResponseModel
 from sqlalchemy.future import select
 from typing import List, Dict
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):

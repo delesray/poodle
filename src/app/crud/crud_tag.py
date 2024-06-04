@@ -51,8 +51,3 @@ async def delete_tag(db: Session, tag_id: int):
         if tag:
             db.delete(tag)
             db.commit()   
-    
-
-
-   
-

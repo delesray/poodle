@@ -2,9 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
-from db.models import Account, Student, Status, Student, StudentCourse as DBStudentCourse, StudentRating, \
-    StudentSection, \
-    Section
+from db.models import Account, Student, Status, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourseSchema
 from email_notification import send_email, build_student_enroll_request
@@ -120,7 +118,7 @@ async def get_student_progress(db: Session, student_id: int, course_id: int) -> 
 
 
 async def update_add_student_rating(db: Session, student: Student, course_id: int, rating: int):
-    # maggi spaghetti
+
     existing_rating = db.query(StudentRating).filter(
         StudentRating.student_id == student.student_id,
         StudentRating.course_id == course_id
@@ -191,26 +189,3 @@ async def view_pending_requests(db: Session, student: Student):
                                       course.is_premium,
                                       [tag.name for tag in course.tags])
                 for course in res]
-
-# def update_progress_for_course(db: Session, student_id, course_id) -> None:
-#     """Goes to students_progress table, calculates the new progress and updates it"""
-#
-#     # because we need the divisor to make the avg calculation
-#     sections_count = crud_section.get_sections_count_for_course(db, course_id)
-#
-#     stmt = (
-#         update(StudentCourse)
-#         .where(StudentCourse.student_id == student_id, StudentCourse.course_id == course_id)
-#         .values(progress=StudentCourse.progress + 6)
-#     )
-#     db.execute(stmt)
-#     db.commit()
-#     a = 2
-
-
-# def viewed_section(db: Session, student_id: int, section_id: int) -> bool:
-#     query = (db.query(StudentSection)
-#              .filter(StudentSection.student_id == student_id,
-#                      StudentSection.section_id == section_id).first())
-#
-#     return query is not None
