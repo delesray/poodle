@@ -1,6 +1,6 @@
 from fastapi import status, HTTPException
 from sqlalchemy.orm import Session
-from db.models import Course, Tag
+from db.models import Course, Tag, StudentCourse
 from schemas.course import CourseInfo
 from typing import List
 
@@ -15,7 +15,7 @@ async def get_course_by_id(db: Session, course_id: int, auto_error=False) -> Cou
 
 
 async def get_course_by_id_or_raise_404(db, course_id):
-    return get_course_by_id(db, course_id, auto_error=True)
+    return await get_course_by_id(db, course_id, auto_error=True)
 
 
 async def get_all_courses(
@@ -23,8 +23,10 @@ async def get_all_courses(
         pages: int,
         items_per_page: int,
         tag: str = None,
-        rating: int = None,
-        name: str = None
+        rating: float = None,
+        name: str = None,
+        teacher_id: int = None,
+        student_id: int = None,
 ):
     filters = [Course.is_hidden == False]
 
@@ -34,10 +36,20 @@ async def get_all_courses(
         filters.append(Course.rating >= rating)
     if name:
         filters.append(Course.title.like(f"%{name}%"))
+    if teacher_id:
+        filters.append(Course.owner_id == teacher_id)
 
-    courses = db.query(Course).filter(*filters).order_by(Course.rating.desc()
-                                                         ).offset((pages - 1) * items_per_page).limit(
-        items_per_page).all()
+    if student_id:
+        filters.append(StudentCourse.student_id == student_id)
+        courses = (db.query(Course).join(StudentCourse, StudentCourse.course_id == Course.course_id)
+                   .filter(*filters).order_by(Course.rating.desc())
+                   .offset((pages - 1) * items_per_page)
+                   .limit(items_per_page).all())
+    else:
+        courses = (db.query(Course)
+                   .filter(*filters).order_by(Course.rating.desc())
+                   .offset((pages - 1) * items_per_page)
+                   .limit(items_per_page).all())
 
     courses_list: List[CourseInfo] = []
 

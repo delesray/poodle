@@ -43,7 +43,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 async def get_courses(
         db: dbDep,
         tag: str | None = None,
-        rating: int | None = None,
+        rating: float | None = None,
         name: str | None = None,
         pages: int = 1,
         items_per_page: int = 5

@@ -306,7 +306,6 @@ async def rate_course(db: dbDep, student: StudentAuthDep, course_id: int,
 
     **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
     """
-    # todo course check dependency probably impossible
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id, auto_error=True)
 
     if not course:
