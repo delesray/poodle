@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from schemas.course import CourseInfo
 from crud import crud_user, crud_course
-from core.security import create_access_token, TokenData
+from core.security import create_access_token, TokenData, Token
 from db.database import dbDep
 
 
@@ -12,7 +12,7 @@ router = APIRouter(tags=['public'])
 
 @router.post('/login', include_in_schema=False)
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-                db: dbDep):
+                db: dbDep) -> Token:
     """
     Logs a user.
 
@@ -47,7 +47,7 @@ async def get_courses(
         name: str | None = None,
         pages: int = 1,
         items_per_page: int = 5
-):
+) -> list[CourseInfo]:
     """
     - Displays title, description and tags of all courses.
     - Courses can be searched by tag and/or rating.

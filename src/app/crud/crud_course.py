@@ -14,7 +14,7 @@ async def get_course_by_id(db: Session, course_id: int, auto_error=False) -> Cou
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
 
 
-async def get_course_by_id_or_raise_404(db, course_id):
+async def get_course_by_id_or_raise_404(db, course_id) -> Course | None:
     return await get_course_by_id(db, course_id, auto_error=True)
 
 
@@ -28,7 +28,7 @@ async def get_all_courses(
         teacher_id: int = None,
         student_id: int = None,
 ) -> List[CourseInfo]:
-    filters = [Course.is_hidden == False]
+    filters = [Course.is_hidden is False]
 
     if tag:
         filters.append(Course.tags.any(Tag.name.like(f"%{tag}%")))
@@ -61,7 +61,7 @@ async def get_all_courses(
     return courses_list
 
 
-async def get_course_tags(course: Course):
+async def get_course_tags(course: Course) -> list[str]:
     return [tag.name for tag in course.tags]
 
 
@@ -78,7 +78,7 @@ async def course_exists(db: Session, title: str) -> bool:
     return query is not None
 
 
-async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=None):
+async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=None) -> None:
     course = db.query(Course).where(Course.course_id == course_id).first()
 
     if old_st_rating:
@@ -93,6 +93,6 @@ async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=Non
     course.people_rated += 1
 
 
-async def hide_course(db: Session, course: Course):
+async def hide_course(db: Session, course: Course) -> None:
     course.is_hidden = True
     db.commit()

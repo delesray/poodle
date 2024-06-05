@@ -19,7 +19,7 @@ router = APIRouter(
 
 
 @router.post('/register', status_code=status.HTTP_201_CREATED, response_model=StudentResponseModel)
-async def register_student(db: dbDep, student: StudentCreate):
+async def register_student(db: dbDep, student: StudentCreate) -> StudentResponseModel:
     """
     Registers a student.
 
@@ -41,7 +41,7 @@ async def register_student(db: dbDep, student: StudentCreate):
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED)
-async def update_profile_picture(db: dbDep, student: StudentAuthDep, file: UploadFile):
+async def update_profile_picture(db: dbDep, student: StudentAuthDep, file: UploadFile) -> str:
     """
     Lets an authenticated student add or edit their profile picture.
 
@@ -63,7 +63,7 @@ async def update_profile_picture(db: dbDep, student: StudentAuthDep, file: Uploa
 
 
 @router.get('/', response_model=StudentResponseModel)
-async def view_account(db: dbDep, student: StudentAuthDep):
+async def view_account(db: dbDep, student: StudentAuthDep) -> StudentResponseModel:
     """
     Shows authenticated student's profile information.
 
@@ -79,7 +79,7 @@ async def view_account(db: dbDep, student: StudentAuthDep):
 
 
 @router.put('/', status_code=status.HTTP_201_CREATED, response_model=StudentResponseModel)
-async def edit_account(db: dbDep, student: StudentAuthDep, updates: StudentEdit):
+async def edit_account(db: dbDep, student: StudentAuthDep, updates: StudentEdit) -> StudentResponseModel:
     """
     Edits authenticated student's profile information.
 
@@ -97,7 +97,7 @@ async def edit_account(db: dbDep, student: StudentAuthDep, updates: StudentEdit)
 
 @router.patch('/', status_code=status.HTTP_204_NO_CONTENT)
 async def change_password(db: dbDep, student: StudentAuthDep,
-                          pass_update: UserChangePassword):
+                          pass_update: UserChangePassword) -> None:
     """
     Changes authenticated student's password.
 
@@ -118,7 +118,7 @@ async def change_password(db: dbDep, student: StudentAuthDep,
 
 
 @router.get('/courses', response_model=list[CourseInfo])
-async def view_my_courses(student: StudentAuthDep):
+async def view_my_courses(student: StudentAuthDep) -> list[CourseInfo]:
     """
     Returns authenticated student's courses.
 
@@ -134,7 +134,7 @@ async def view_my_courses(student: StudentAuthDep):
 
 
 @router.get('/courses/pending', response_model=list[CourseInfo] | None)
-async def view_pending_courses(db: dbDep, student: StudentAuthDep):
+async def view_pending_courses(db: dbDep, student: StudentAuthDep) -> list[CourseInfo] | None:
     """
     Returns authenticated student's pending requests for courses.
 
@@ -151,7 +151,7 @@ async def view_pending_courses(db: dbDep, student: StudentAuthDep):
 
 
 @router.get('/courses/{course_id}', response_model=StudentCourseSchema)
-async def view_course(db: dbDep, student: StudentAuthDep, course_id: int):
+async def view_course(db: dbDep, student: StudentAuthDep, course_id: int) -> StudentCourseSchema:
     """
     Returns authenticated student's chosen course with details.
 
@@ -183,7 +183,7 @@ async def view_course(db: dbDep, student: StudentAuthDep, course_id: int):
 async def view_course_section(
         db: dbDep, student: StudentAuthDep,
         course_id: int, section_id: int
-):
+) -> SectionBase:
     """
     Returns authenticated student's chosen course section.
 
@@ -226,7 +226,7 @@ async def view_course_section(
 
 
 @router.post('/courses/{course_id}/subscription')
-async def subscribe_for_course(db: dbDep, student: StudentAuthDep, course_id: int):
+async def subscribe_for_course(db: dbDep, student: StudentAuthDep, course_id: int) -> str:
     """
     Sends a subscription request by email to the owner of the course.
 
@@ -269,7 +269,7 @@ async def subscribe_for_course(db: dbDep, student: StudentAuthDep, course_id: in
 async def unsubscribe(
         db: dbDep,
         student: StudentAuthDep,
-        course_id: int):
+        course_id: int) -> None:
     """
     Unsubscribes authenticated student from a course.
 
@@ -291,7 +291,7 @@ async def unsubscribe(
 
 @router.post('/courses/{course_id}/rating', status_code=status.HTTP_201_CREATED, response_model=CourseRateResponse)
 async def rate_course(db: dbDep, student: StudentAuthDep, course_id: int,
-                      rating: CourseRate):
+                      rating: CourseRate) -> CourseRateResponse:
     """
     Enables authenticated student to rate a course, if the student is enrolled in the course.
 
