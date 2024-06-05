@@ -34,7 +34,7 @@ async def get_courses(
     - `pages` (integer): the number of pages to be returned.
     - `items_per_page`: the number of items per page to be returned.
 
-    **Returns**: a list of AdminCourseInfo models.
+    **Returns**: List[CourseInfo].
     """
 
     return await crud_course.get_all_courses(
@@ -47,6 +47,21 @@ async def get_courses(
 async def switch_user_activation(
         db: dbDep, admin: AdminAuthDep, account_id: int,
 ):
+    """
+    Switches user activation status
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy db session.
+    - `admin` (AdminAuthDep): gets the admin with dependency.
+    - `account_id`:
+
+    **Raises**:
+    - HTTPException 404, if no such user.
+    - HTTPException 409, if admin tries to deactivate himself.
+
+    **Returns**: None.
+    """
+
     user = await crud_user.get_user_by_id_deactivated_also(db, account_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No such user')
@@ -60,6 +75,19 @@ async def switch_user_activation(
 async def get_course_rating_info(
         db: dbDep, admin: AdminAuthDep, course_id: int,
 ):
+    """
+    Gets course rating info
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy db session.
+    - `admin` (AdminAuthDep): gets the admin with dependency.
+    - `course_id`:
+
+    **Raises**:
+    - HTTPException 404, if no such course.
+
+    **Returns**: course and students_courses_rating.
+    """
     course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
     students_courses_rating = await crud_admin.get_students_ratings_by_course_id(db, course.course_id)
 
@@ -70,6 +98,20 @@ async def get_course_rating_info(
 async def make_student_premium(
         db: dbDep, admin: AdminAuthDep, student_id: int,
 ):
+    """
+    Makes student premium
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy db session.
+    - `admin` (AdminAuthDep): gets the admin with dependency.
+    - `student_id`:
+
+    **Raises**:
+    - HTTPException 404, if no such user.
+
+    **Returns**: None
+    """
+
     student = await crud_user.get_specific_user_or_raise_404(db, student_id, role=Role.STUDENT)
     await crud_admin.make_student_premium(db, student)
 
@@ -78,6 +120,20 @@ async def make_student_premium(
 async def approve_teacher_registration(
         db: dbDep, admin: AdminAuthDep, teacher_id: int,
 ):
+    """
+    Approves teacher registration
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy db session.
+    - `admin` (AdminAuthDep): gets the admin with dependency.
+    - `teacher_id`:
+
+    **Raises**:
+    - HTTPException 404, if no such user.
+
+    **Returns**: None
+    """
+
     teacher = await crud_user.get_specific_user_or_raise_404(db, teacher_id, role=Role.TEACHER)
     await crud_admin.approve_teacher_registration(db, teacher)
 
@@ -86,6 +142,19 @@ async def approve_teacher_registration(
 async def hide_course(
         db: dbDep, admin: AdminAuthDep, course_id: int,
 ):
+    """
+    Hides course
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy db session.
+    - `admin` (AdminAuthDep): gets the admin with dependency.
+    - `course_id`:
+
+    **Raises**:
+    - HTTPException 404, if no such course.
+
+    **Returns**: None
+    """
     course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
     await crud_admin.hide_course(db, course)
 
@@ -94,6 +163,20 @@ async def hide_course(
 async def remove_student_from_course(
         db: dbDep, admin: AdminAuthDep, course_id: int, student_id: int
 ):
+    """
+    Remove student from course
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy db session.
+    - `admin` (AdminAuthDep): gets the admin with dependency.
+    - `student_id`:
+    - `course_id`:
+
+    **Raises**:
+    - HTTPException 404, if no such user or course.
+
+    **Returns**: None
+    """
     course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
     student = await crud_user.get_specific_user_or_raise_404(db, student_id, role=Role.STUDENT)
 

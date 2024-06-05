@@ -27,7 +27,7 @@ async def get_all_courses(
         name: str = None,
         teacher_id: int = None,
         student_id: int = None,
-):
+) -> List[CourseInfo]:
     filters = [Course.is_hidden == False]
 
     if tag:
@@ -79,7 +79,6 @@ async def course_exists(db: Session, title: str) -> bool:
 
 
 async def update_rating(db: Session, course_id, new_st_rating, old_st_rating=None):
-
     course = db.query(Course).where(Course.course_id == course_id).first()
 
     if old_st_rating:

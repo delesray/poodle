@@ -24,7 +24,7 @@ async def approve_teacher_registration(db: Session, teacher: Teacher) -> None:
 
 
 async def make_student_premium(db: Session, student: Student) -> None:
-    student.premium = True
+    student.is_premium = True
     db.commit()
     db.refresh(student)
 
