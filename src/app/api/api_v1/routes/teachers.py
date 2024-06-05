@@ -38,12 +38,12 @@ async def register_teacher(db: dbDep, teacher: TeacherCreate):
     if account:
         if account.is_deactivated:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Account with this email is deactivated"
             )
         else:
             raise HTTPException(
-                status_code=409,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="Email already registered",
             )
 
@@ -69,13 +69,13 @@ async def update_profile_picture(db: dbDep, teacher: TeacherAuthDep, file: Uploa
     if await add_picture(db, file, 'teacher', teacher.teacher_id):
         return 'Profile picture successfully uploaded!'
     raise HTTPException(
-        status_code=400,
+        status_code=status.HTTP_400_BAD_REQUEST,
         detail="File is corrupted or media type is not supported"
     )
 
 
 @router.get('/', response_model=TeacherSchema)
-async def view_account(db: dbDep, teacher: TeacherAuthDep):
+async def view_account(teacher: TeacherAuthDep):
     """
     Shows authenticated teacher's profile information.
 
@@ -141,7 +141,7 @@ async def create_course(
     """
     if await course_exists(db, course.title):
         raise HTTPException(
-            status_code=409,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Course with such title already exists",
         )
 
@@ -175,14 +175,14 @@ async def update_course_home_page_picture(
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg
         )
 
     if await add_picture(db, file, 'course', course.course_id):
         return 'Home page picture successfully uploaded!'
     raise HTTPException(
-        status_code=400,
+        status_code=status.HTTP_400_BAD_REQUEST,
         detail="File is corrupted or media type is not supported"
     )
 
@@ -249,13 +249,13 @@ async def view_course_by_id(
     """
     if sort and sort.lower() not in ['asc', 'desc']:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid sort parameter"
         )
 
     if sort_by and sort_by.lower() not in ['section_id', 'title']:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid sort_by parameter"
         )
 
@@ -263,7 +263,7 @@ async def view_course_by_id(
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg
         )
 
@@ -335,7 +335,7 @@ async def update_course_info(
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg
         )
 
@@ -371,7 +371,7 @@ async def update_section(
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg
         )
 
@@ -379,7 +379,7 @@ async def update_section(
     valid_section, msg = validate_section(section, course_id)
     if not valid_section:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=msg
         )
 
@@ -412,7 +412,7 @@ async def add_sections(
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg
         )
 
@@ -447,7 +447,7 @@ async def remove_section(
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg
         )
 
@@ -455,7 +455,7 @@ async def remove_section(
     valid_section, msg = validate_section(section, course_id)
     if not valid_section:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=msg
         )
 
@@ -492,7 +492,7 @@ async def add_tags(
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg
         )
 
@@ -527,14 +527,14 @@ async def remove_tag(
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg
         )
 
     course_tag = await course_has_tag(db, course_id, tag_id)
     if not course_tag:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Tag with ID:{tag_id} not associated with course ID:{course_id}"
         )
 
@@ -568,13 +568,13 @@ async def deactivate_course(db: dbDep, course_id: int, teacher: TeacherAuthDep):
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=msg
         )
 
     if course.students_enrolled:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot deactivate a course with enrolled students"
         )
     await hide_course(db, course)
@@ -608,13 +608,13 @@ async def generate_courses_reports(
         min_progress = round(float(min_progress), 2)
     except ValueError:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid min_progress parameter"
         )
 
     if sort and sort.lower() not in ['asc', 'desc']:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid sort parameter"
         )
 
