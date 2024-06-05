@@ -65,7 +65,7 @@ async def switch_user_activation(
     user = await crud_user.get_user_by_id_deactivated_also(db, account_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No such user')
-    if admin.admin_id == user.account_id:
+    if admin.dummy_admin_id == user.account_id:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f'You cannot deactivate yourself')
 
     await crud_admin.switch_user_activation(db, user)
