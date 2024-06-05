@@ -2,15 +2,15 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
-from db.models import Account, Student, Status, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, Section
+from db.models import Account, Status, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourseSchema
 from email_notification import send_email, build_student_enroll_request
 
 
-async def get_student_by_id(db: Session, user_id: int, auto_error=False) -> Student | None:
+async def get_student_by_id(db: Session, user_id: int, auto_error=False) -> Account | None:
     query = (db.query(Account)
-             .filter(Account.student_id == user_id, not Account.is_deactivated)
+             .filter(Account.account_id == user_id, Account.is_deactivated == False)
              .first())
 
     if query:
@@ -19,7 +19,7 @@ async def get_student_by_id(db: Session, user_id: int, auto_error=False) -> Stud
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No such user')
 
 
-async def get_by_email(db: Session, email: str):
+async def get_by_email(db: Session, email: str) -> Student | None:
     student = (db.query(Student).join(Student.account).filter(
         Account.email == email, Account.is_deactivated == False).first())
 
@@ -27,14 +27,14 @@ async def get_by_email(db: Session, email: str):
         return student
 
 
-async def get_student(db: Session, email: str):
+async def get_student(db: Session, email: str) -> StudentResponseModel | None:
     student = await get_by_email(db, email)
 
     if student:
         return StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium)
 
 
-async def edit_account(db: Session, email: str, updates: StudentEdit):
+async def edit_account(db: Session, email: str, updates: StudentEdit) -> StudentResponseModel:
     student = await get_by_email(db, email)
 
     student.first_name, student.last_name = updates.first_name, \
@@ -46,7 +46,7 @@ async def edit_account(db: Session, email: str, updates: StudentEdit):
     return StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium)
 
 
-async def get_my_courses(student: Student):
+async def get_my_courses(student: Student) -> list[CourseInfo]:
     my_courses = student.courses_enrolled
 
     my_courses_pydantic: list[CourseInfo] = []
@@ -58,7 +58,7 @@ async def get_my_courses(student: Student):
     return my_courses_pydantic
 
 
-async def add_pending_student_request(db: Session, student: Student, course_id: int):
+async def add_pending_student_request(db: Session, student: Student, course_id: int) -> None:
     pending_enrollment = DBStudentCourse(
         student_id=student.student_id,
         course_id=course_id
@@ -76,21 +76,21 @@ async def add_pending_student_request(db: Session, student: Student, course_id: 
         db.refresh(pending_enrollment)
 
 
-async def unsubscribe_from_course(db: Session, student_id: int, course_id: int):
+async def unsubscribe_from_course(db: Session, student_id: int, course_id: int) -> None:
     db.query(DBStudentCourse).filter(DBStudentCourse.student_id ==
                                      student_id, DBStudentCourse.course_id == course_id).delete()
     db.commit()
 
 
-async def is_student_enrolled(student: Student, course_id: int):
+async def is_student_enrolled(student: Student, course_id: int) -> bool:
     return course_id in set([course.course_id for course in student.courses_enrolled])
 
 
-async def get_premium_courses_count(student: Student):
+async def get_premium_courses_count(student: Student) -> int:
     return len([course for course in student.courses_enrolled if course.is_premium])
 
 
-async def get_student_rating(db: Session, student_id: int, course_id: int):
+async def get_student_rating(db: Session, student_id: int, course_id: int) -> StudentRating | None:
     query = db.query(StudentRating).filter(StudentRating.student_id ==
                                            student_id, StudentRating.course_id == course_id).first()
 
@@ -116,8 +116,7 @@ async def get_student_progress(db: Session, student_id: int, course_id: int) -> 
     return f'{progress:.2f}'
 
 
-async def update_add_student_rating(db: Session, student: Student, course_id: int, rating: int):
-
+async def update_add_student_rating(db: Session, student: Student, course_id: int, rating: int) -> CourseRateResponse | str:
     existing_rating = db.query(StudentRating).filter(
         StudentRating.student_id == student.student_id,
         StudentRating.course_id == course_id
@@ -140,12 +139,12 @@ async def update_add_student_rating(db: Session, student: Student, course_id: in
     except Exception as e:
         db.rollback()
 
-        return e
+        return str(e)
 
     return CourseRateResponse(course=course.title, rating=f'{rating:.2f}')
 
 
-async def get_course_information(db: Session, course_id: int, student: Student):
+async def get_course_information(db: Session, course_id: int, student: Student) -> StudentCourseSchema:
     course: Student = await crud_course.get_course_common_info(db=db, course_id=course_id)
     student_rating = await get_student_rating(db=db, student_id=student.student_id, course_id=course_id)
     student_progress = await get_student_progress(db=db, student_id=student.student_id, course_id=course_id)
@@ -165,7 +164,7 @@ async def get_course_information(db: Session, course_id: int, student: Student):
         )
 
 
-async def send_notification(course: Student, student: Student):
+async def send_notification(course: Student, student: Student) -> str:
     teacher_email = course.owner.account.email
     student_email = student.account.email
     course_title, course_id = course.title, course.course_id
@@ -176,7 +175,7 @@ async def send_notification(course: Student, student: Student):
     return 'Pending approval from course owner'
 
 
-async def view_pending_requests(db: Session, student: Student):
+async def view_pending_requests(db: Session, student: Student) -> list[CourseInfo]:
     res = db.query(Student).join(DBStudentCourse).filter(DBStudentCourse.student_id == student.student_id,
                                                          DBStudentCourse.course_id == Student.course_id,
                                                          DBStudentCourse.status == Status.pending.value).all()

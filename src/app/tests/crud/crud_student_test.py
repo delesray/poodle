@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from crud.crud_student import is_student_enrolled
 from db.models import Account, Student, Course, Teacher, StudentCourse, Status
 from crud import crud_student
+from fastapi import status, HTTPException
 
 
 async def create_dummy_student(db: Session) -> tuple[Account, Student]:
@@ -68,8 +69,35 @@ async def subscribe_dummy_student(db: Session, student_id, course_id):
 
 
 @pytest.mark.asyncio
-async def test_unsubscribe_student(db, test_db):
+async def test_get_student_by_id_returns_student_if_exists(db, test_db):
+    account, _ = await create_dummy_student(db)
+
+    res = await crud_student.get_student_by_id(db, account.account_id)
+    assert res == account
+
+
+@pytest.mark.asyncio
+async def test_get_student_by_id_raises_404_if_auto_error(db, test_db):
+    test_account_id = 3
+
+    with pytest.raises(HTTPException) as exc_info:
+        await crud_student.get_student_by_id(db, test_account_id, auto_error=True)
+
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+    assert str(exc_info.value.detail) == 'No such user'
+
+
+@pytest.mark.asyncio
+async def test_get_student_by_email_returns_student_if_exists(db, test_db):
     account, student = await create_dummy_student(db)
+
+    res = await crud_student.get_by_email(db, account.email)
+    assert res == student
+
+
+@pytest.mark.asyncio
+async def test_unsubscribe_student(db, test_db):
+    _, student = await create_dummy_student(db)
     course = await create_dummy_course(db)
     enrollment = await subscribe_dummy_student(db, student.student_id, course.course_id)
 
