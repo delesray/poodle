@@ -159,7 +159,6 @@ async def get_course_information(db: Session, course_id: int, student: Student):
             owner_id=course.owner_id,
             owner_name=course.owner.first_name + ' ' + course.owner.last_name,
             is_premium=course.is_premium,
-            home_page_picture=course.home_page_picture,
             overall_rating=course.rating,
             your_rating=student_rating if student_rating else 0,
             your_progress=student_progress

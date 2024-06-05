@@ -1,14 +1,11 @@
 import pytest
 from sqlalchemy.orm import Session
 from crud.crud_student import is_student_enrolled
-from crud.crud_user import StudentFactory, TeacherFactory
 from db.models import Account, Student, Course, Teacher, StudentCourse, Status
 from crud import crud_student
-from schemas.student import StudentCreate
-from schemas.teacher import TeacherCreate
 
 
-async def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Student]:
+async def create_dummy_student(db: Session) -> tuple[Account, Student]:
     account_id = 1
     account = Account(
         account_id=account_id,
@@ -19,8 +16,7 @@ async def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Stud
     student = Student(
         student_id=account_id,
         first_name='Dummy',
-        last_name='Student',
-        # is_premium=is_premium,
+        last_name='Student'
     )
     db.add_all([account, student])
     db.commit()
@@ -85,4 +81,4 @@ async def test_unsubscribe_student(db, test_db):
     await crud_student.unsubscribe_from_course(db, student.student_id, course.course_id)
 
     res = await is_student_enrolled(student, course.course_id)
-    assert res == False
+    assert res is False
