@@ -7,7 +7,7 @@ from typing import List
 
 async def get_section_by_id(db, section_id) -> Section:
     section = db.query(Section).filter(Section.section_id == section_id).first()
-   
+
     if section:
         return section
 
@@ -62,14 +62,15 @@ async def update_section_info(db: Session, section: Section, updates: SectionUpd
     section.content_type = updates.content_type
     section.external_link = updates.external_link
     section.description = updates.description
-      
+
     db.commit()
     db.refresh(section)
 
     return SectionBase.from_query(
-            section.section_id, section.title, section.content_type, section.external_link, 
-            section.description, section.course_id
-        )
+        section.section_id, section.title, section.content_type, section.external_link,
+        section.description, section.course_id
+    )
+
 
 async def delete_section(db, section: Section):
     db.delete(section)
@@ -92,12 +93,12 @@ def transfer_object(section: Section) -> SectionBase:
     )
     return dto
 
+
 def validate_section(section: Section, course_id: int) -> tuple[bool, str]:
     if not section:
         return False, f"Section not found"
-    
+
     if section.course_id != course_id:
         return False, f"Section ID:{section.section_id} is not a part of course ID{course_id}"
-    
+
     return True, "OK"
-        

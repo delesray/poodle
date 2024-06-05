@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from db.models import Account, Student, Teacher, Course, StudentCourse, Status, Admin
+from db.models import Account, Student, Teacher, Course, StudentCourse, Status, Admin, Section
 
 
 async def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Student]:
@@ -87,3 +87,14 @@ async def create_dummy_admin(db: Session):
 
 
 NON_EXISTING_ID = 999
+
+
+async def create_dummy_section(db):
+    course = await create_dummy_course(db)
+    section = Section(
+        section_id=1,
+        title='section',
+        content_type='txt',
+        course_id=course.course_id,
+    )
+    return section, course
