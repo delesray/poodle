@@ -35,7 +35,6 @@ async def get_courses(
     **Returns**: a list of AdminCourseInfo models.
     """
 
-    # todo ?
     return await crud_course.get_all_courses(
         db=db, tag=tag, rating=rating, name=name, pages=pages, items_per_page=items_per_page
     )
@@ -61,7 +60,6 @@ async def get_course_rating_info(
     course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
     students_courses_rating = await crud_admin.get_students_ratings_by_course_id(db, course.course_id)
 
-    # todo discuss
     return [course, students_courses_rating]
 
 
