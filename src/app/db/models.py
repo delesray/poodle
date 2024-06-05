@@ -28,7 +28,7 @@ class Account(Base):
     __tablename__ = "accounts"
 
     account_id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String(30), unique=True) 
+    email: Mapped[str] = mapped_column(String(30), unique=True)
     password: Mapped[str] = mapped_column(String(200))
     role: Mapped[Role]
     is_deactivated: Mapped[Optional[bool]] = mapped_column(server_default='0')
@@ -81,7 +81,8 @@ class Student(Base):
     courses_enrolled: Mapped[List['Course']] = relationship(
         'Course',
         secondary='students_courses',
-        primaryjoin=f"and_(Student.student_id == foreign(StudentCourse.student_id), StudentCourse.status == {Status.active.value})",
+        primaryjoin=f"and_(Student.student_id == foreign(StudentCourse.student_id), StudentCourse.status == {
+            Status.active.value})",
         secondaryjoin="Course.course_id == foreign(StudentCourse.course_id)",
         back_populates="students_enrolled"
     )
@@ -120,7 +121,8 @@ class Course(Base):
         back_populates="courses_rated")
 
     sections: Mapped[List['Section']] = relationship(back_populates="course")
-    tags: Mapped[List['Tag']] = relationship(secondary="courses_tags", back_populates="courses")
+    tags: Mapped[List['Tag']] = relationship(
+        secondary="courses_tags", back_populates="courses")
 
     def __repr__(self):
         return f"<Course(course_id={self.course_id}, title={self.title}, owner_id={self.owner_id})>"
@@ -133,7 +135,8 @@ class StudentCourse(Base):
         ForeignKey('students.student_id'), primary_key=True)
     course_id: Mapped[int] = mapped_column(
         ForeignKey('courses.course_id'), primary_key=True)
-    status: Mapped[int] = mapped_column(Integer, server_default=text(str(Status.pending.value)))
+    status: Mapped[int] = mapped_column(
+        Integer, server_default=text(str(Status.pending.value)))
 
     def __repr__(self):
         return f"<StudentCourse(student_id={self.student_id}, course_id={self.course_id})>"
@@ -186,9 +189,10 @@ class Tag(Base):
     __tablename__ = 'tags'
 
     tag_id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(45), unique=True) 
+    name: Mapped[str] = mapped_column(String(45), unique=True)
 
-    courses: Mapped[List['Course']] = relationship(secondary="courses_tags", back_populates="tags")
+    courses: Mapped[List['Course']] = relationship(
+        secondary="courses_tags", back_populates="tags")
 
     def __repr__(self):
         return f"<Tag(tag_id={self.tag_id}, name={self.name})>"

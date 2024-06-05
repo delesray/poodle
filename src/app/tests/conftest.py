@@ -2,30 +2,11 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, StaticPool
 from sqlalchemy.orm import Session, sessionmaker
-
+from core.oauth import get_student_required, get_admin_required
 from db.database import get_db, Base
 from main import app
-
-
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
-
-
-@pytest.fixture
-def db() -> Session:
-    """
-    Provides a SQLAlchemy session for testing purposes.
-
-    This fixture returns a session connected to an in-memory SQLite db.
-    It's intended for use in tests that require db access but should not
-    affect the production db.
-
-    Returns:
-        Session: A SQLAlchemy session object.
-    """
-    return TestingSessionLocal()
+from tests.api.api_v1.endpoints.admins_test import dummy_admin
+from tests.api.api_v1.endpoints.student_test import dummy_student
 
 
 SQLite_DATABASE_URL = "sqlite:///:memory:"
@@ -37,6 +18,22 @@ engine = create_engine(
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+@pytest.fixture
+def client():
+    with TestClient(app) as c:
+        yield c
+
+
+@pytest.fixture
+def db() -> Session:
+    """
+    This fixture returns a session connected to an in-memory SQLite db.
+    It's intended for use in tests that require db access but should not
+    affect the production db.
+    """
+    return TestingSessionLocal()
+
+
 @pytest.fixture()
 def test_db():
     """
@@ -45,9 +42,6 @@ def test_db():
     This fixture creates all tables in the Base metadata before tests run and
     drops them after tests complete. It ensures that tests run with a clean
     db every time.
-
-    Yields:
-        None: This fixture doesn't return any value.
     """
     Base.metadata.create_all(bind=engine)
     yield
@@ -59,11 +53,7 @@ def override_get_db():
     Overrides the 'get_db' dependency for testing.
 
     This function replaces the standard db session with a session connected
-    to the in-memory SQLite db. It's used to override the app's dependency
-    during tests to ensure isolation from the production db.
-
-    Yields:
-        Generator[Session, None, None]: A generator yielding the test db session.
+    to the in-memory SQLite db.
     """
     try:
         db = TestingSessionLocal()
@@ -73,3 +63,5 @@ def override_get_db():
 
 
 app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_student_required] = lambda: dummy_student
+app.dependency_overrides[get_admin_required] = lambda: dummy_admin

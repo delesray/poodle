@@ -35,7 +35,6 @@ async def get_courses(
     **Returns**: a list of AdminCourseInfo models.
     """
 
-    # todo ?
     return await crud_course.get_all_courses(
         db=db, tag=tag, rating=rating, name=name, pages=pages, items_per_page=items_per_page
     )
@@ -48,7 +47,7 @@ async def switch_user_activation(
     user = await crud_user.get_user_by_id_deactivated_also(db, account_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No such user')
-    if admin.admin_id == user.account.id:
+    if admin.admin_id == user.account_id:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f'You cannot deactivate yourself')
 
     await crud_admin.switch_user_activation(db, user)
@@ -61,7 +60,6 @@ async def get_course_rating_info(
     course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
     students_courses_rating = await crud_admin.get_students_ratings_by_course_id(db, course.course_id)
 
-    # todo discuss
     return [course, students_courses_rating]
 
 
@@ -77,7 +75,7 @@ async def make_student_premium(
 async def approve_teacher_registration(
         db: dbDep, admin: AdminAuthDep, teacher_id: int,
 ):
-    # todo Admins could approve registrations for teachers (via email).
+
     teacher = await crud_user.get_specific_user_or_raise_404(db, teacher_id, role=Role.TEACHER)
     await crud_admin.approve_teacher_registration(db, teacher)
 

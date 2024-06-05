@@ -1,6 +1,5 @@
 import pytest
 from sqlalchemy.orm import Session
-
 from crud.crud_student import is_student_enrolled
 from crud.crud_user import StudentFactory, TeacherFactory
 from db.models import Account, Student, Course, Teacher, StudentCourse, Status

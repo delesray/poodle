@@ -35,4 +35,3 @@ class SectionUpdate(BaseModel):
     content_type: ContentType
     external_link: str | None = None
     description: str | None = None
-    

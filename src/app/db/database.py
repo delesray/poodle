@@ -1,5 +1,4 @@
 from typing import Annotated
-
 from fastapi import Depends
 from sqlalchemy.orm import Session
 import sqlalchemy
@@ -11,15 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# from src.app.core.config import settings
-
-# SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db" # connect_args={"check_same_thread": False}
-# SQLALCHEMY_DATABASE_URL = settings.DB_URL
-
-# SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
 SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{os.environ['DB_USER']}:{os.environ['DB_PASS']}@localhost/poodle?charset=utf8mb4"
-
-# factory that can create new db connections
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -40,5 +31,4 @@ def create_db():
         create_database(engine.url)
 
 
-# todo curr dependancy mock change
 dbDep = Annotated[Session | None, Depends(get_db)]
