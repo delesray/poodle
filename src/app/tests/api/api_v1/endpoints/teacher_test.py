@@ -17,7 +17,7 @@ dummy_account = Account(account_id=1,
 
 
 dummy_teacher = Teacher(
-    student_id=1,
+    teacher_id=1,
     account=dummy_account,
 )
 
