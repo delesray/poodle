@@ -40,6 +40,47 @@ teacher_response = {
 token = Token(access_token='valid_token',
               token_type='bearer')
 
+
+course_request = {
+    "title": "New Course",
+    "description": "Course description",
+    "objectives": "Course objectives",
+    "is_premium": True,
+    "tags": [{"name": "Tag1"}, {"name": "Tag2"}],
+    "sections": [{
+        "title": "Section 1",
+        "content_type": "video", 
+        "external_link": "http://example.com",
+        "description": "Section description"
+    }]
+}
+
+course_response = {
+    "course": {
+        "course_id": 1,
+        "title": "New Course",
+        "description": "Course description",
+        "objectives": "Course objectives",
+        "owner_id": 1,
+        "owner_names": "Teacher Name",
+        "is_premium": True,
+        "rating": None,
+        "people_rated": 0
+    },
+    "tags": [
+        {"tag_id": 1, "name": "Tag1"},
+        {"tag_id": 2, "name": "Tag2"}
+    ],
+    "sections": [{
+        "section_id": 1,
+        "title": "Section 1",
+        "content_type": "video",  
+        "external_link": "http://example.com",
+        "description": "Section description",
+        "course_id": 1
+    }]
+}
+
 @pytest.mark.asyncio
 async def test_teacher_not_authenticated(client: TestClient):
 
@@ -128,5 +169,47 @@ def test_view_account_returns_teacher_account_info(client: TestClient, mocker):
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == teacher_response
-
     
+
+def test_update_account_returns_updated_teacher_info(client: TestClient, mocker):
+    update_request = {
+    "first_name": "newFirstName",
+    "last_name": "newLastName",
+    "phone_number": "1234567890",
+    "linked_in": "newLinkedInProfile"
+}
+
+    update_response = {
+    "teacher_id": 1,
+    "email": "dummy@mail.com",
+    "first_name": "newFirstName",
+    "last_name": "newLastName",
+    "phone_number": "1234567890",
+    "linked_in": "newLinkedInProfile"
+}
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.edit_account', return_value=dummy_teacher)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.get_info', return_value=update_response)
+
+    response = client.put('/teachers', json=update_request)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == update_response    
+
+
+def test_create_course_returns_created_course(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.course_exists', return_value=False)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.make_course', return_value=course_response)
+
+    response = client.post('/teachers/courses', json=course_request)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.json() == course_response
+    
+
+def test_create_course_returns_409_when_course_exists(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.course_exists', return_value=True)
+
+    response = client.post('/teachers/courses', json=course_request)
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {'detail': 'Course with such title already exists'}
