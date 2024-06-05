@@ -2,11 +2,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, StaticPool
 from sqlalchemy.orm import Session, sessionmaker
-from core.oauth import get_student_required, get_admin_required
+from core.oauth import get_student_required, get_admin_required, get_teacher_required
 from db.database import get_db, Base
 from main import app
 from tests.api.api_v1.endpoints.admins_test import dummy_admin
 from tests.api.api_v1.endpoints.student_test import dummy_student
+from tests.api.api_v1.endpoints.teacher_test import dummy_teacher
 
 
 SQLite_DATABASE_URL = "sqlite:///:memory:"
@@ -64,4 +65,5 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 app.dependency_overrides[get_student_required] = lambda: dummy_student
+app.dependency_overrides[get_teacher_required] = lambda: dummy_teacher
 app.dependency_overrides[get_admin_required] = lambda: dummy_admin

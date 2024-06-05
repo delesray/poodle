@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Body, status
 from db.models import Course, Student
-from crud.crud_user import create, add_picture, email_exists
+from crud import crud_user 
 from crud import crud_teacher, crud_student
 from crud.crud_course import get_course_by_id
 from crud.crud_course import course_exists, get_course_common_info, hide_course
@@ -34,7 +34,7 @@ async def register_teacher(db: dbDep, teacher: TeacherCreate):
     - `HTTPException 409`: if a user with the same email has already been registered.
     - `HTTPException 400`: if the account with the same email is deactivated.
     """
-    account = await email_exists(db, teacher.email)
+    account = await crud_user.email_exists(db, teacher.email)
     if account:
         if account.is_deactivated:
             raise HTTPException(
@@ -47,7 +47,7 @@ async def register_teacher(db: dbDep, teacher: TeacherCreate):
                 detail="Email already registered",
             )
 
-    return await create(db, teacher)
+    return await crud_user.create(db, teacher)
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED)
@@ -66,7 +66,7 @@ async def update_profile_picture(db: dbDep, teacher: TeacherAuthDep, file: Uploa
     - `HTTPException 401`: if the teacher is not authenticated.
     - `HTTPException 400`, if the file is corruped or the teacher uploaded an unsupported media type.
     """
-    if await add_picture(db, file, 'teacher', teacher.teacher_id):
+    if await crud_user.add_picture(db, file, 'teacher', teacher.teacher_id):
         return 'Profile picture successfully uploaded!'
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -179,7 +179,7 @@ async def update_course_home_page_picture(
             detail=msg
         )
 
-    if await add_picture(db, file, 'course', course.course_id):
+    if await crud_user.add_picture(db, file, 'course', course.course_id):
         return 'Home page picture successfully uploaded!'
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,

@@ -4,13 +4,22 @@ from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 from schemas.teacher import TeacherSchema, TeacherCreate
 from core.security import Token
-from db.models import Account
+from db.models import Account, Teacher
 from fastapi import status
+from main import app
+from core.oauth import get_teacher_required
 
-account = Account(email='dummy@mail.com',
+dummy_account = Account(account_id=1,
+                  email='dummy@mail.com',
                   password='dummy pass',
-                  role='student',
+                  role='teacher',
                   is_deactivated=False)
+
+
+dummy_teacher = Teacher(
+    student_id=1,
+    account=dummy_account,
+)
 
 teacher_request = {
     "email": "dummy@mail.com",
@@ -28,8 +37,33 @@ teacher_response = {
     "linked_in": None
 }
 
+token = Token(access_token='valid_token',
+              token_type='bearer')
+
+@pytest.mark.asyncio
+async def test_teacher_not_authenticated(client: TestClient):
+
+    # store the current dependency override
+    original_override = app.dependency_overrides.get(get_teacher_required)
+
+    # delete it
+    if get_teacher_required in app.dependency_overrides:
+        del app.dependency_overrides[get_teacher_required]
+
+    # execute the test with the original dep
+    response = client.get('/teachers')
+    data = response.json()
+
+    assert response.status_code == 401
+    assert data['detail'] == 'Not authenticated'
+
+    # restore the dependency override for the rest of the tests
+    if original_override:
+        app.dependency_overrides[get_teacher_required] = original_override
+
+
 def test_register_teacher_returns_registered_teacher_model(client: TestClient, mocker):
-    mocker.patch('crud.crud_user.email_exists', return_value=None)
+    mocker.patch('api.api_v1.routes.teachers.crud_user.email_exists', return_value=None)
     mocker.patch('crud.crud_user.create', return_value=teacher_response)
 
     response = client.post('/teachers/register', json=teacher_request)
@@ -39,21 +73,23 @@ def test_register_teacher_returns_registered_teacher_model(client: TestClient, m
     
 
 def test_register_teacher_returns_409_when_email_exists(client: TestClient, mocker):
-    mocker.patch('crud.crud_user.email_exists', return_value=account)
+    mocker.patch('api.api_v1.routes.teachers.crud_user.email_exists', return_value=dummy_account)
 
-    response = client.post('/students/register', json=teacher_request)
+    response = client.post('/teachers/register', json=teacher_request)
 
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json() == {'detail': 'Email already registered'}
 
 
 def test_register_teacher_returns_400_when_account_deactivated(client: TestClient, mocker):
-    account_deactivate = Account(email='dummy@mail.com',
+    account_deactivate = Account(
+                      account_id=1,
+                      email='dummy@mail.com',
                       password='dummy pass',
                       role='teacher',
                       is_deactivated=True)
     
-    mocker.patch('crud.crud_user.email_exists', return_value=account_deactivate)
+    mocker.patch('api.api_v1.routes.teachers.crud_user.email_exists', return_value=account_deactivate)
     
     response = client.post('/teachers/register', json=teacher_request)
 
@@ -62,7 +98,7 @@ def test_register_teacher_returns_400_when_account_deactivated(client: TestClien
     
 
 def test_update_profile_picture_returns_successful_msg(client: TestClient, mocker):
-    mocker.patch('crud.crud_user.add_picture', return_value=True)
+    mocker.patch('api.api_v1.routes.teachers.crud_user.add_picture', return_value=True)
 
     test_file = io.BytesIO(b"fake image data")
     files = {'file': ('test_image.png', test_file, 'image/png')}
@@ -74,7 +110,7 @@ def test_update_profile_picture_returns_successful_msg(client: TestClient, mocke
 
 
 def test_update_profile_picture_invalid_file(client: TestClient, mocker):
-    mocker.patch('crud.crud_user.add_picture', return_value=False)
+    mocker.patch('api.api_v1.routes.teachers.crud_user.add_picture', return_value=False)
 
     test_file = io.BytesIO(b"fake image data")
     files = {'file': ('test_image.png', test_file, 'image/png')}
@@ -86,7 +122,7 @@ def test_update_profile_picture_invalid_file(client: TestClient, mocker):
 
 
 def test_view_account_returns_teacher_account_info(client: TestClient, mocker):
-    mocker.patch('crud.crud_teacher.get_info', return_value=teacher_response)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.get_info', return_value=teacher_response)
 
     response = client.get('/teachers')
 
