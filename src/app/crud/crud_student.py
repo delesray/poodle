@@ -184,7 +184,7 @@ async def send_notification(db: Session, course: Course, student: Student) -> st
     
     except Exception:
         db.rollback()
-        return 'Operation failed. Please try again later'
+        return 'Subscription failed. Please try again later'
 
 
 async def view_pending_requests(db: Session, student: Student) -> list[CourseInfo]:
