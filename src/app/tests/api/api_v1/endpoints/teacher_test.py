@@ -162,7 +162,7 @@ dummy_course_report = {
             "title": dummy_course.title,
             "students": [{
                 "student_info": StudentResponseModel.from_query(first_name="dummyName", last_name="dummyName"),
-                "progress": "0.00"
+                "progress": "50.00"
             }]
         }
 @pytest.mark.asyncio
@@ -603,7 +603,7 @@ def test_deactivate_course_with_enrolled_students(client: TestClient, mocker):
 def test_generate_courses_reports_returns_list_of_courses_with_student_progresses(client: TestClient, mocker):
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.get_courses_reports', return_value=dummy_course_report)
 
-    response = client.get('/teachers/reports?min_progress=50.0&sort=asc')
+    response = client.get('/teachers/reports?min_progress=50.0')
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
@@ -614,7 +614,7 @@ def test_generate_courses_reports_returns_list_of_courses_with_student_progresse
                                   "last_name": "dummyName",
                                   "is_premium": False
                                 },
-                "progress": "0.00"
+                "progress": "50.00"
             }]
         }
     
