@@ -8,6 +8,7 @@ from fastapi import status
 from main import app
 from schemas.course import CourseInfo
 
+
 dummy_account = Account(account_id=1,
                         email='dummy@mail.com',
                         password='dummy pass',

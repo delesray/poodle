@@ -1,91 +1,18 @@
 import pytest
-from sqlalchemy.orm import Session
 from crud.crud_student import is_student_enrolled
-from db.models import Account, Student, Course, Teacher, StudentCourse, Status
+from db.models import Status
 from crud import crud_student
 from fastapi import status, HTTPException
-
 from schemas.course import CourseInfo
 from schemas.student import StudentResponseModel, StudentEdit
-
-
-async def get_non_existent_account_id():
-    non_existent_account_id = 3
-    return non_existent_account_id
-
-
-async def get_non_existent_email():
-    non_existent_email = 'dummyMail@mail.com'
-    return non_existent_email
-
-
-async def create_dummy_student(db: Session) -> tuple[Account, Student]:
-    account_id = 1
-    account = Account(
-        account_id=account_id,
-        email='s@s.com',
-        password='pass',
-        role='student',
-    )
-    student = Student(
-        student_id=account_id,
-        first_name='Dummy',
-        last_name='Student'
-    )
-    db.add_all([account, student])
-    db.commit()
-    return account, student
-
-
-async def create_dummy_teacher(db: Session):
-    account_id = 2
-    account = Account(
-        account_id=account_id,
-        email='t@t.com',
-        password='pass',
-        role='teacher',
-    )
-    teacher = Teacher(
-        teacher_id=account_id,
-        first_name='Dummy',
-        last_name='Teacher',
-    )
-    db.add_all([account, teacher])
-    db.commit()
-    return account, teacher
-
-
-async def create_dummy_course(db: Session):
-    _, teacher = await create_dummy_teacher(db)
-    course = Course(
-        course_id=1,
-        title="dummy",
-        description='dummy',
-        objectives='dummy',
-        owner_id=teacher.teacher_id,
-    )
-
-    db.add(course)
-    db.commit()
-    return course
-
-
-async def subscribe_dummy_student(db: Session, student_id, course_id):
-    enrollment = StudentCourse(
-        student_id=student_id,
-        course_id=course_id,
-        status=Status.active.value,
-    )
-    db.add(enrollment)
-    db.commit()
-    return enrollment
+from tests import dummies
 
 
 @pytest.mark.asyncio
-async def test_unsubscribe_student(db, test_db):
-    _, student = await create_dummy_student(db)
-    course = await create_dummy_course(db)
-    enrollment = await subscribe_dummy_student(db, student.student_id, course.course_id)
+async def test_unsubscribe_student(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
 
     assert enrollment.status == Status.active.value
     assert enrollment.student_id == student.student_id
@@ -99,16 +26,16 @@ async def test_unsubscribe_student(db, test_db):
 
 
 @pytest.mark.asyncio
-async def test_get_student_by_id_returns_student_if_exists(db, test_db):
-    account, _ = await create_dummy_student(db)
+async def test_get_student_by_id_returns_student_if_exists(db):
+    account, _ = await dummies.create_dummy_student(db)
 
     res = await crud_student.get_student_by_id(db, account.account_id)
     assert res == account
 
 
 @pytest.mark.asyncio
-async def test_get_student_by_id_raises_404_if_auto_error(db, test_db):
-    test_account_id = await get_non_existent_account_id()
+async def test_get_student_by_id_raises_404_if_auto_error(db):
+    test_account_id = await dummies.get_non_existent_account_id()
 
     with pytest.raises(HTTPException) as exc_info:
         await crud_student.get_student_by_id(db, test_account_id, auto_error=True)
@@ -119,15 +46,15 @@ async def test_get_student_by_id_raises_404_if_auto_error(db, test_db):
 
 @pytest.mark.asyncio
 async def test_get_student_by_email_returns_student_if_exists(db):
-    account, student = await create_dummy_student(db)
+    account, student = await dummies.create_dummy_student(db)
 
     res = await crud_student.get_by_email(db, account.email)
     assert res == student
 
 
 @pytest.mark.asyncio
-async def test_get_student_returns_student_response_model_if_exists(db, test_db):
-    account, student = await create_dummy_student(db)
+async def test_get_student_returns_student_response_model_if_exists(db):
+    account, student = await dummies.create_dummy_student(db)
 
     res = await crud_student.get_student(db, account.email)
 
@@ -137,16 +64,16 @@ async def test_get_student_returns_student_response_model_if_exists(db, test_db)
 
 
 @pytest.mark.asyncio
-async def test_get_student_returns_none_if_no_student(db, test_db):
-    test_account_email = await get_non_existent_email()
+async def test_get_student_returns_none_if_no_student(db):
+    test_account_email = await dummies.get_non_existent_email()
     res = await crud_student.get_student(db, test_account_email)
 
     assert res is None
 
 
 @pytest.mark.asyncio
-async def test_get_edit_student_account_returns_edited_student_response_model(db, test_db):
-    account, student = await create_dummy_student(db)
+async def test_get_edit_student_account_returns_edited_student_response_model(db):
+    account, student = await dummies.create_dummy_student(db)
 
     res = await crud_student.get_by_email(db, account.email)
     assert res == student
@@ -161,8 +88,8 @@ async def test_get_edit_student_account_returns_edited_student_response_model(db
 
 
 @pytest.mark.asyncio
-async def test_get_courses_returns_empty_list_when_no_courses(db, test_db):
-    _, student = await create_dummy_student(db)
+async def test_get_courses_returns_empty_list_when_no_courses(db):
+    _, student = await dummies.create_dummy_student(db)
 
     res = await crud_student.get_my_courses(student)
 
@@ -170,13 +97,90 @@ async def test_get_courses_returns_empty_list_when_no_courses(db, test_db):
 
 
 @pytest.mark.asyncio
-async def test_get_courses_returns_courses_list(db, test_db):
-    _, student = await create_dummy_student(db)
-    course = await create_dummy_course(db)
-    enrollment1 = await subscribe_dummy_student(db, student.student_id, course.course_id)
+async def test_get_courses_returns_courses_list(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment1 = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
 
     assert enrollment1.status == Status.active.value
 
     res = await crud_student.get_my_courses(student)
 
     assert res == [CourseInfo(title='dummy', description='dummy', is_premium=False, tags=[])]
+
+
+@pytest.mark.asyncio
+async def test_is_student_enrolled_returns_false_when_not_enrolled(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+
+    res = await crud_student.is_student_enrolled(student, course.course_id)
+
+    assert res is False
+
+
+@pytest.mark.asyncio
+async def test_is_student_enrolled_returns_true_when_enrolled(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+
+    res = await crud_student.is_student_enrolled(student, course.course_id)
+
+    assert res is True
+
+
+@pytest.mark.asyncio
+async def test_get_premium_courses_count_returns_correct_count(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    course.is_premium = True
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+
+    res = await crud_student.get_premium_courses_count(student)
+
+    assert res == 1
+
+
+@pytest.mark.asyncio
+async def test_get_premium_courses_count_returns_correct_zero_when_no_premium_courses(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+
+    res = await crud_student.get_premium_courses_count(student)
+
+    assert res == 0
+
+
+@pytest.mark.asyncio
+async def test_get_student_rating_when_has_rated(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+
+    await dummies.dummy_student_rating(db, student.student_id, course.course_id)
+    res = await crud_student.get_student_rating(db, student.student_id, course.course_id)
+
+    assert res == await dummies.get_default_tst_rating()
+
+
+@pytest.mark.asyncio
+async def test_get_student_rating_when_has_rated(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+
+    res = await crud_student.get_student_rating(db, student.student_id, course.course_id)
+
+    assert res is None

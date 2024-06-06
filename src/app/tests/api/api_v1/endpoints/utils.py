@@ -3,9 +3,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from db.models import Account, Student
 from api.api_v1.routes.utils import change_pass_raise
-from fastapi import status, HTTPException
+from fastapi import HTTPException
 from schemas.user import UserChangePassword
 from core.hashing import hash_pass
+from tests import dummies
 
 
 async def create_dummy_student(db: Session) -> tuple[Account, Student]:
