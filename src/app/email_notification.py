@@ -5,12 +5,11 @@ import os
 def email_vars_setup():
     api_key = os.getenv('MAIL_API_KEY')
     api_secret = os.getenv('MAIL_API_SECRET_KEY')
-    sender_mail = os.getenv('SENDER_EMAIL')
 
-    return api_key, api_secret, sender_mail
+    return api_key, api_secret
 
 
-api_key, api_secret, send_email = email_vars_setup()
+api_key, api_secret = email_vars_setup()
 mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
 
@@ -18,7 +17,7 @@ async def build_student_enroll_request(receiver_mail: str,
                                        student_email: str, 
                                        course_title: str, 
                                        course_id: int, 
-                                       sender_mail: str=sender_mail):
+                                       sender_mail: str=os.getenv('SENDER_EMAIL')):
     return {
         'Messages': [
             {
@@ -42,7 +41,7 @@ async def build_student_enroll_request(receiver_mail: str,
 async def build_teacher_enroll_request(receiver_mail: str, 
                                        course_title: str, 
                                        response: bool,
-                                       sender_mail: str=sender_mail):
+                                       sender_mail: str=os.getenv('SENDER_EMAIL')):
     
     response_str = 'granted' if response else 'denied'
 
