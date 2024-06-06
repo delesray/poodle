@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # Database config
     DB_USER: str = os.environ.get('DB_USER', 'root')
     DB_PASS: str = os.environ.get('DB_PASS', 'password')
-    DB_URL: str = f"mysql+pymysql://{DB_PASS}:{DB_PASS}@localhost/poodle?charset=utf8mb4"
+    DB_URL: str = f"mysql+pymysql://{DB_USER}:{DB_PASS}@localhost/poodle?charset=utf8mb4"
     # todo postgresql url
 
     # Authentication
@@ -35,3 +35,4 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+print(settings.DB_URL)
