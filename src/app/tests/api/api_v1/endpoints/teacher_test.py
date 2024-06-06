@@ -1,10 +1,11 @@
 import pytest
 import io
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
-from schemas.teacher import TeacherSchema, TeacherCreate
+from unittest.mock import patch, AsyncMock
+from schemas.course import CourseSectionsTags, CourseUpdate, CourseBase
+from schemas.section import SectionBase, SectionUpdate
 from core.security import Token
-from db.models import Account, Teacher, Course
+from db.models import Account, Teacher, Course, Section
 from fastapi import status
 from main import app
 from core.oauth import get_teacher_required
@@ -18,7 +19,9 @@ dummy_account = Account(account_id=1,
 
 dummy_teacher = Teacher(
     teacher_id=1,
-    account=dummy_account,
+    first_name="dummyName",
+    last_name="dummyName",
+    account=dummy_account
 )
 
 teacher_request = {
@@ -91,8 +94,51 @@ dummy_course = Course(
     is_hidden=False,
     home_page_picture=None,
     rating=None,
-    people_rated=0,
-    owner=dummy_teacher
+    people_rated=0
+)
+
+dummy_coursebase = CourseBase(
+        course_id=1,
+        title="Test Course",
+        description="A test course",
+        objectives="Test objectives",
+        owner_id=1,
+        owner_names=f"{dummy_teacher.first_name} {dummy_teacher.last_name}",
+        is_premium=False,
+        rating=None,
+        people_rated=0
+    )
+
+dummy_section = Section(
+    section_id=1,
+    title="Test Section",
+    content_type="video",
+    external_link="http://example.com",
+    description="A test section",
+    course_id=1
+)
+
+def create_dummy_sectionbase(title, content_type, external_link, description):
+    return  SectionBase(
+        section_id=1,
+        title=title,
+        content_type=content_type,
+        external_link=external_link,
+        description=description,
+        course_id=1   
+)
+
+dummy_updates_course = CourseUpdate(
+    title="Updated Course",
+    description="Updated description",
+    objectives="Updated objectives"
+)
+
+dummy_updates_section = SectionUpdate(
+    title="Updated Section",
+    content_type="text",
+    external_link="http://updated.com",
+    description="Updated description"
 )
 
 @pytest.mark.asyncio
@@ -268,4 +314,185 @@ def test_view_pending_requests_returns_pending_requests(client: TestClient, mock
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == pending_requests
+
+
+def test_get_courses_returns_list_of_courses(client: TestClient, mocker):
+    dummy_courses = [dummy_coursebase]
+    
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.get_my_courses', return_value=dummy_courses)
+
+    response = client.get('/teachers/courses')
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == [
+        {
+            "course_id": dummy_coursebase.course_id,
+            "title": dummy_coursebase.title,
+            "description": dummy_coursebase.description,
+            "objectives": dummy_coursebase.objectives,
+            "owner_id": dummy_coursebase.owner_id,
+            "owner_names": f'{dummy_teacher.first_name} {dummy_teacher.last_name}',
+            "is_premium": dummy_coursebase.is_premium,
+            "rating": dummy_coursebase.rating,
+            "people_rated": dummy_coursebase.people_rated,
+        }
+    ]    
+
+def test_view_course_by_id_returns_CourseSectionsTags_object(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.get_entire_course', 
+                 return_value=CourseSectionsTags(course=dummy_coursebase, tags=[], sections=[]))
+
+    response = client.get('/teachers/courses/1')
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {
+        "course": {
+            "course_id": dummy_coursebase.course_id,
+            "title": dummy_coursebase.title,
+            "description": dummy_coursebase.description,
+            "objectives": dummy_coursebase.objectives,
+            "owner_id": dummy_coursebase.owner_id,
+            "owner_names": f'{dummy_teacher.first_name} {dummy_teacher.last_name}',
+            "is_premium": dummy_coursebase.is_premium,
+            "rating": dummy_coursebase.rating,
+            "people_rated": dummy_coursebase.people_rated,
+        },
+        "tags": [],
+        "sections": []
+    }
+    
+def test_view_course_by_id_invalid_sort(client: TestClient, mocker):
+    response = client.get('/teachers/courses/1?sort=invalid')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'Invalid sort parameter'}
+    
+def test_view_course_by_id_invalid_sort_by(client: TestClient, mocker):
+    response = client.get('/teachers/courses/1?sort_by=invalid')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'Invalid sort_by parameter'}
+    
+def test_view_course_by_id_access_denied(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(False, "You do not have permission to access this course"))
+
+    response = client.get('/teachers/courses/1')
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {'detail': 'You do not have permission to access this course'}
+    
+def test_update_course_info_returns_updated_course(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.edit_course_info', return_value=dummy_coursebase)
+
+    response = client.put('/teachers/courses/1', json=dummy_updates_course.model_dump())
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {
+            "course_id": dummy_coursebase.course_id,
+            "title": dummy_coursebase.title,
+            "description": dummy_coursebase.description,
+            "objectives": dummy_coursebase.objectives,
+            "owner_id": dummy_coursebase.owner_id,
+            "owner_names": f'{dummy_teacher.first_name} {dummy_teacher.last_name}',
+            "is_premium": dummy_coursebase.is_premium,
+            "rating": dummy_coursebase.rating,
+            "people_rated": dummy_coursebase.people_rated,
+        }
+    
+def test_update_course_info_access_denied(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(False, "You do not have permission to access this course"))
+
+    response = client.put('/teachers/courses/1', json=dummy_updates_course.model_dump())
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {'detail': 'You do not have permission to access this course'}
+    
+def test_update_section_returns_updated_section(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.get_section_by_id', return_value=dummy_section)
+    mocker.patch('api.api_v1.routes.teachers.update_section_info', 
+                 return_value=create_dummy_sectionbase(
+                     title="Updated Section",
+                     content_type="text",
+                     external_link="http://updated.com",
+                     description="Updated description"
+                    )
+    )
+
+    response = client.put('/teachers/courses/1/sections/1', json=dummy_updates_section.model_dump())
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {
+        "section_id": dummy_section.section_id,
+        "title": dummy_updates_section.title,
+        "content_type": dummy_updates_section.content_type,
+        "external_link": dummy_updates_section.external_link,
+        "description": dummy_updates_section.description,
+        "course_id": dummy_section.course_id
+    }
+
+    
+def test_update_section_not_found(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.get_section_by_id', return_value=None)
+
+    response = client.put('/teachers/courses/1/sections/999', json=dummy_updates_section.model_dump())
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {'detail': 'Section not found'}
+    
+    
+def test_add_sections(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.create_sections', 
+                 return_value=[create_dummy_sectionbase(
+                     title = "New Section",
+                     content_type =  "text",
+                     external_link =  "http://new.com",
+                     description = "New description"
+                    )]
+    )
+
+    new_section = {
+        "title": "New Section",
+        "content_type": "text",
+        "external_link": "http://new.com",
+        "description": "New description"
+    }
+
+    response = client.post('/teachers/courses/1/sections', json=[new_section])
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.json() == [
+        {
+            "section_id": dummy_section.section_id,
+            "title": new_section['title'],
+            "content_type": new_section['content_type'],
+            "external_link": new_section['external_link'],
+            "description": new_section['description'],
+            "course_id": dummy_section.course_id
+        }
+    ]
+    
+def test_remove_section(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.get_section_by_id', return_value=dummy_section)
+    mocker.patch('api.api_v1.routes.teachers.delete_section', return_value=None)
+
+    response = client.delete('/teachers/courses/1/sections/1')
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.text == ''
+    
+
     
