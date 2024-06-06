@@ -106,6 +106,16 @@ async def test_get_courses_returns_courses_list(db):
 
 
 @pytest.mark.asyncio
+async def test_add_pending_request_raises_http_exception_when_already_enrolled(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    with pytest.raises(HTTPException):
+        await crud_student.add_pending_student_request(db, student, course.course_id)
+
+
+@pytest.mark.asyncio
 async def test_unsubscribe_student(db):
     _, student = await dummies.create_dummy_student(db)
     course = await dummies.create_dummy_course(db)
@@ -286,9 +296,9 @@ async def test_get_course_information_when_course(db, mocker):
     mocker.patch('crud.crud_student.crud_course.get_course_common_info',
                  return_value=course)
     mocker.patch('crud.crud_student.get_student_rating',
-                               return_value=await dummies.get_default_tst_rating())
+                 return_value=await dummies.get_default_tst_rating())
     mocker.patch('crud.crud_student.get_student_progress',
-                                 return_value=tst_progress)
+                 return_value=tst_progress)
 
     res = await crud_student.get_course_information(db, course.course_id, student)
 
@@ -315,5 +325,56 @@ async def test_get_course_information_when_no_course(db, mocker):
 
 
 @pytest.mark.asyncio
-async def test_send_notification_returns_correct_msg():
-    pass
+async def test_subscribe_returns_correct_msg_when_success(db, mocker):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+
+    mocker.patch('crud.crud_student.add_pending_student_request',
+                 return_value=None)
+    mocker.patch('crud.crud_student.add_pending_student_request',
+                 return_value='request')
+    mocker.patch('crud.crud_student.add_pending_student_request',
+                 return_value=None)
+
+    res = await crud_student.subscribe(db, course, student)
+
+    assert res == 'Pending approval from course owner'
+
+
+@pytest.mark.asyncio
+async def test_subscribe_returns_correct_msg_when_email_not_sent(db, mocker):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    mocker.patch('crud.crud_student.add_pending_student_request',
+                 side_effect=None)
+    mocker.patch('crud.crud_student.build_student_enroll_request',
+                 side_effect=Exception)
+
+    res = await crud_student.subscribe(db, course, student)
+
+    assert res == 'Subscription failed. Please try again later'
+
+
+@pytest.mark.asyncio
+async def test_view_pending_requests_returns_none_when_no_requests(db):
+    _, student = await dummies.create_dummy_student(db)
+
+    res = await crud_student.view_pending_requests(db, student)
+
+    assert res is None
+
+
+@pytest.mark.asyncio
+async def test_view_pending_requests_returns_list_of_courses_when_requests(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    await dummies.subscribe_dummy_student(db, student.student_id, course.course_id, status=Status.pending.value)
+
+    res = await crud_student.view_pending_requests(db, student)
+
+    assert isinstance(res, list)
+    assert len(res) == 1
+    assert res[0].title == course.title
+    assert res[0].description == course.description
+    assert res[0].is_premium == course.is_premium
+    assert res[0].tags == course.tags

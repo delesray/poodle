@@ -71,11 +71,11 @@ async def create_dummy_course(db: Session):
     return course
 
 
-async def subscribe_dummy_student(db: Session, student_id, course_id):
+async def subscribe_dummy_student(db: Session, student_id, course_id, status=Status.active.value):
     enrollment = StudentCourse(
         student_id=student_id,
         course_id=course_id,
-        status=Status.active.value,
+        status=status,
     )
     db.add(enrollment)
     db.commit()
