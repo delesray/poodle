@@ -27,8 +27,7 @@ async def create_dummy_student(db: Session) -> tuple[Account, Student]:
 
 
 @pytest.mark.asyncio
-async def test_change_pass_raise_400_if_new_pass_same_as_old_pass(client: TestClient, db, test_db):
-
+async def test_change_pass_raise_400_if_new_pass_same_as_old_pass(client: TestClient, db):
     account, student = await create_dummy_student(db)
     pass_updates = UserChangePassword(old_password='pass1',
                                       new_password='pass1',
@@ -42,8 +41,7 @@ async def test_change_pass_raise_400_if_new_pass_same_as_old_pass(client: TestCl
 
 
 @pytest.mark.asyncio
-async def test_change_pass_raise_401_if_current_pass_does_not_match(client: TestClient, db, test_db):
-
+async def test_change_pass_raise_401_if_current_pass_does_not_match(client: TestClient, db):
     account, student = await create_dummy_student(db)
     pass_updates = UserChangePassword(old_password='pass1',
                                       new_password='pass3',
@@ -57,8 +55,7 @@ async def test_change_pass_raise_401_if_current_pass_does_not_match(client: Test
 
 
 @pytest.mark.asyncio
-async def test_change_pass_raise_400_if_new_password_does_not_match(client: TestClient, db, test_db):
-
+async def test_change_pass_raise_400_if_new_password_does_not_match(client: TestClient, db):
     account, student = await create_dummy_student(db)
     pass_updates = UserChangePassword(old_password='pass',
                                       new_password='pass3',

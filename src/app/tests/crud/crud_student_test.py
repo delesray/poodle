@@ -118,7 +118,7 @@ async def test_get_student_by_id_raises_404_if_auto_error(db, test_db):
 
 
 @pytest.mark.asyncio
-async def test_get_student_by_email_returns_student_if_exists(db, test_db):
+async def test_get_student_by_email_returns_student_if_exists(db):
     account, student = await create_dummy_student(db)
 
     res = await crud_student.get_by_email(db, account.email)
