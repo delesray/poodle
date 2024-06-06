@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from db.models import Account, Student, Teacher, Course, StudentCourse, Status, Admin, Section
 
 
-async def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Student]:
+def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Student]:
     account_id = 1
     account = Account(
         account_id=account_id,
@@ -22,7 +22,7 @@ async def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Stud
     return account, student
 
 
-async def create_dummy_teacher(db: Session):
+def create_dummy_teacher(db: Session):
     account_id = 2
     account = Account(
         account_id=account_id,
@@ -80,7 +80,7 @@ dummy_admin = Admin(
 )
 
 
-async def create_dummy_admin(db: Session):
+def create_dummy_admin(db: Session):
     db.add_all([dummy_user, dummy_admin])
     db.commit()
     return dummy_user, dummy_admin

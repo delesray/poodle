@@ -69,7 +69,7 @@ async def subscribe_dummy_student(db: Session, student_id, course_id):
 
 
 @pytest.mark.asyncio
-async def test_get_student_by_id_returns_student_if_exists(db, test_db):
+async def test_get_student_by_id_returns_student_if_exists(db):
     account, _ = await create_dummy_student(db)
 
     res = await crud_student.get_student_by_id(db, account.account_id)
@@ -77,7 +77,7 @@ async def test_get_student_by_id_returns_student_if_exists(db, test_db):
 
 
 @pytest.mark.asyncio
-async def test_get_student_by_id_raises_404_if_auto_error(db, test_db):
+async def test_get_student_by_id_raises_404_if_auto_error(db):
     test_account_id = 3
 
     with pytest.raises(HTTPException) as exc_info:
@@ -88,7 +88,7 @@ async def test_get_student_by_id_raises_404_if_auto_error(db, test_db):
 
 
 @pytest.mark.asyncio
-async def test_get_student_by_email_returns_student_if_exists(db, test_db):
+async def test_get_student_by_email_returns_student_if_exists(db):
     account, student = await create_dummy_student(db)
 
     res = await crud_student.get_by_email(db, account.email)
@@ -96,7 +96,7 @@ async def test_get_student_by_email_returns_student_if_exists(db, test_db):
 
 
 @pytest.mark.asyncio
-async def test_unsubscribe_student(db, test_db):
+async def test_unsubscribe_student(db):
     _, student = await create_dummy_student(db)
     course = await create_dummy_course(db)
     enrollment = await subscribe_dummy_student(db, student.student_id, course.course_id)
