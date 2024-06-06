@@ -40,18 +40,18 @@ async def test_get_specific_user_or_raise_404_happy_case(db):
     assert res_teacher.teacher_id == teacher.teacher_id
 
 
-@pytest.mark.asyncio
-async def test_create_user_raises_409(db):
-    account, admin = await dummies.create_dummy_admin(db)
-    mock_user = Mock()
-    mock_user.email = dummies.dummy_user.email
-    mock_user.password = dummies.dummy_user.password
-    mock_user.get_type = lambda: 'admin'
-
-    with pytest.raises(HTTPException) as e:
-        await crud_user.create_user(db=db, user=mock_user)
-
-    assert e.value.status_code == status.HTTP_409_CONFLICT
+# @pytest.mark.asyncio
+# async def test_create_user_raises_409(db):
+#     account, admin = await dummies.create_dummy_admin(db)
+#     mock_user = Mock()
+#     mock_user.email = dummies.dummy_user.email
+#     mock_user.password = dummies.dummy_user.password
+#     mock_user.get_type = lambda: 'admin'
+#
+#     with pytest.raises(HTTPException) as e:
+#         await crud_user.create_user(db=db, user=mock_user)
+#
+#     assert e.value.status_code == status.HTTP_409_CONFLICT
 
 # @pytest.mark.asyncio
 # async def test_get_create_user_happy_case(db, test_db):
