@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from crud import crud_course
-from db.models import Account, Status, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, Section
+from db.models import Account, Course, Status, Student, StudentCourse as DBStudentCourse, StudentRating, StudentSection, Section
 from schemas.student import StudentEdit, StudentResponseModel
 from schemas.course import CourseInfo, CourseRateResponse, StudentCourseSchema
 from email_notification import send_email, build_student_enroll_request
@@ -145,7 +145,7 @@ async def update_add_student_rating(db: Session, student: Student, course_id: in
 
 
 async def get_course_information(db: Session, course_id: int, student: Student) -> StudentCourseSchema:
-    course: Student = await crud_course.get_course_common_info(db=db, course_id=course_id)
+    course: Course = await crud_course.get_course_common_info(db=db, course_id=course_id)
     student_rating = await get_student_rating(db=db, student_id=student.student_id, course_id=course_id)
     student_progress = await get_student_progress(db=db, student_id=student.student_id, course_id=course_id)
 
@@ -164,20 +164,32 @@ async def get_course_information(db: Session, course_id: int, student: Student) 
         )
 
 
-async def send_notification(course: Student, student: Student) -> str:
+async def send_notification(db: Session, course: Course, student: Student) -> str:
     teacher_email = course.owner.account.email
     student_email = student.account.email
     course_title, course_id = course.title, course.course_id
-    request = await build_student_enroll_request(receiver_mail=teacher_email, student_email=student_email,
-                                                 course_title=course_title, course_id=course_id)
-    await send_email(data=request)
 
-    return 'Pending approval from course owner'
+    try:
+        await add_pending_student_request(db, student, course_id)
+        request = await build_student_enroll_request(receiver_mail=teacher_email, 
+                                                     student_email=student_email,
+                                                    course_title=course_title, 
+                                                    course_id=course_id)
+        await send_email(data=request)
+
+        return 'Pending approval from course owner'
+    
+    except IntegrityError as e:
+        return str(e)
+    
+    except Exception:
+        db.rollback()
+        return 'Operation failed. Please try again later'
 
 
 async def view_pending_requests(db: Session, student: Student) -> list[CourseInfo]:
-    res = db.query(Student).join(DBStudentCourse).filter(DBStudentCourse.student_id == student.student_id,
-                                                         DBStudentCourse.course_id == Student.course_id,
+    res = db.query(Course).join(DBStudentCourse).filter(DBStudentCourse.student_id == student.student_id,
+                                                         DBStudentCourse.course_id == Course.course_id,
                                                          DBStudentCourse.status == Status.pending.value).all()
 
     if res:

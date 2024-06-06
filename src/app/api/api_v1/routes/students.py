@@ -261,8 +261,7 @@ async def subscribe_for_course(db: dbDep, student: StudentAuthDep, course_id: in
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail='Premium courses limit reached')
 
-    await crud_student.add_pending_student_request(db, student, course_id)
-    return await crud_student.send_notification(course=course, student=student)
+    return await crud_student.send_notification(db, course=course, student=student)
 
 
 @router.delete('/courses/{course_id}/subscription', status_code=status.HTTP_204_NO_CONTENT)
