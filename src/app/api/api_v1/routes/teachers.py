@@ -148,7 +148,7 @@ async def create_course(
     return await crud_teacher.make_course(db, teacher, course)
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('/courses/home-page-picture', status_code=status.HTTP_201_CREATED)
 async def update_course_home_page_picture(
         db: dbDep,
         teacher: TeacherAuthDep,

@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 from schemas.teacher import TeacherSchema, TeacherCreate
 from core.security import Token
-from db.models import Account, Teacher
+from db.models import Account, Teacher, Course
 from fastapi import status
 from main import app
 from core.oauth import get_teacher_required
@@ -80,6 +80,20 @@ course_response = {
         "course_id": 1
     }]
 }
+
+dummy_course = Course(
+    course_id=1,
+    title="Test Course",
+    description="A test course",
+    objectives="Test objectives",
+    owner_id=1,
+    is_premium=False,
+    is_hidden=False,
+    home_page_picture=None,
+    rating=None,
+    people_rated=0,
+    owner=dummy_teacher
+)
 
 @pytest.mark.asyncio
 async def test_teacher_not_authenticated(client: TestClient):
@@ -213,3 +227,45 @@ def test_create_course_returns_409_when_course_exists(client: TestClient, mocker
 
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json() == {'detail': 'Course with such title already exists'}
+    
+    
+def test_update_course_home_page_picture_returns_successful_msg(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.crud_user.add_picture', return_value=True)
+
+    test_file = io.BytesIO(b"fake image data")
+    files = {'file': ('test_image.png', test_file, 'image/png')}
+
+    response = client.post('/teachers/courses/home-page-picture?course_id=1', files=files)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.json() == 'Home page picture successfully uploaded!'
+
+
+def test_update_course_home_page_picture_invalid_file(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.crud_user.add_picture', return_value=False)
+
+    test_file = io.BytesIO(b"fake image data")
+    files = {'file': ('test_image.png', test_file, 'image/png')}
+
+    response = client.post('/teachers/courses/home-page-picture?course_id=1', files=files)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'File is corrupted or media type is not supported'}
+    
+
+def test_view_pending_requests_returns_pending_requests(client: TestClient, mocker):
+    pending_requests = [
+        {"course": "Course 1", "requested_by": "student1@mail.com"},
+        {"course": "Course 2", "requested_by": "student2@mail.com"}
+    ]
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.view_pending_requests', return_value=pending_requests)
+
+    response = client.get('/teachers/courses/pending')
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == pending_requests
+    
