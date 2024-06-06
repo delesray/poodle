@@ -4,8 +4,10 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, AsyncMock
 from schemas.course import CourseSectionsTags, CourseUpdate, CourseBase
 from schemas.section import SectionBase, SectionUpdate
+from schemas.tag import TagBase
+from schemas.student import StudentResponseModel
 from core.security import Token
-from db.models import Account, Teacher, Course, Section
+from db.models import Account, Teacher, Course, Section, CourseTag, Student
 from fastapi import status
 from main import app
 from core.oauth import get_teacher_required
@@ -22,6 +24,10 @@ dummy_teacher = Teacher(
     first_name="dummyName",
     last_name="dummyName",
     account=dummy_account
+)
+
+dummy_student = Student(
+    student_id=2
 )
 
 teacher_request = {
@@ -141,6 +147,24 @@ dummy_updates_section = SectionUpdate(
     description="Updated description"
 )
 
+dummy_tagbase = TagBase(
+    tag_id=1,
+    name="Test Tag"
+)
+
+dummy_course_tag = CourseTag(
+    course_id=1,
+    tag_id=1
+)
+
+dummy_course_report = {
+            "course_id": dummy_course.course_id,
+            "title": dummy_course.title,
+            "students": [{
+                "student_info": StudentResponseModel.from_query(first_name="dummyName", last_name="dummyName"),
+                "progress": "50.00"
+            }]
+        }
 @pytest.mark.asyncio
 async def test_teacher_not_authenticated(client: TestClient):
 
@@ -450,7 +474,7 @@ def test_update_section_not_found(client: TestClient, mocker):
     assert response.json() == {'detail': 'Section not found'}
     
     
-def test_add_sections(client: TestClient, mocker):
+def test_add_sections_returns_list_of_created_sections(client: TestClient, mocker):
     mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
     mocker.patch('api.api_v1.routes.teachers.create_sections', 
@@ -483,7 +507,7 @@ def test_add_sections(client: TestClient, mocker):
         }
     ]
     
-def test_remove_section(client: TestClient, mocker):
+def test_remove_section_removes_section_from_course(client: TestClient, mocker):
     mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
     mocker.patch('api.api_v1.routes.teachers.get_section_by_id', return_value=dummy_section)
@@ -494,5 +518,115 @@ def test_remove_section(client: TestClient, mocker):
     assert response.status_code == status.HTTP_204_NO_CONTENT
     assert response.text == ''
     
+def test_add_tags_returns_list_of_tags_and_list_of_duplicated_tagIds(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.create_tags', return_value={"created": [dummy_tagbase], "duplicated_tags_ids": [1]})
 
+    new_tag = {
+        "name": "Test Tag"
+    }
+
+    response = client.post('/teachers/courses/1/tags', json=[new_tag])
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.json() == {
+        "created": [{"tag_id": dummy_tagbase.tag_id, "name": new_tag['name']}],
+        "duplicated_tags_ids": [1]
+    }
     
+    
+def test_add_tags_access_denied(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(False, "You do not have permission to access this course"))
+
+    new_tag = {
+        "name": "New Tag"
+    }
+
+    response = client.post('/teachers/courses/1/tags', json=[new_tag])
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {'detail': 'You do not have permission to access this course'}
+    
+    
+def test_remove_tag_removes_tag_from_course(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.course_has_tag', return_value=dummy_course_tag)
+    mocker.patch('api.api_v1.routes.teachers.delete_tag_from_course', return_value=None)
+    mocker.patch('api.api_v1.routes.teachers.check_tag_associations', return_value=0)
+    mocker.patch('api.api_v1.routes.teachers.delete_tag', return_value=None)
+
+    response = client.delete('/teachers/courses/1/tags/1')
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.text == ''
+    
+
+def test_remove_tag_not_found(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.course_has_tag', return_value=None)
+
+    response = client.delete('/teachers/courses/1/tags/999')
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {'detail': 'Tag with ID:999 not associated with course ID:1'}
+    
+    
+def test_deactivate_course(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+    mocker.patch('api.api_v1.routes.teachers.hide_course', return_value=None)
+
+    dummy_course.students_enrolled = []
+
+    response = client.patch('/teachers/courses/1/deactivate')
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.text == ''
+    
+    
+def test_deactivate_course_with_enrolled_students(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
+
+    dummy_course.students_enrolled = [dummy_student]
+
+    response = client.patch('/teachers/courses/1/deactivate')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'Cannot deactivate a course with enrolled students'}
+    
+    
+def test_generate_courses_reports_returns_list_of_courses_with_student_progresses(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.crud_teacher.get_courses_reports', return_value=dummy_course_report)
+
+    response = client.get('/teachers/reports?min_progress=50.0')
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {
+            "course_id": dummy_course.course_id,
+            "title": dummy_course.title,
+            "students": [{
+                "student_info": {"first_name": "dummyName",
+                                  "last_name": "dummyName",
+                                  "is_premium": False
+                                },
+                "progress": "50.00"
+            }]
+        }
+    
+def test_generate_courses_reports_invalid_min_progress(client: TestClient):
+    response = client.get('/teachers/reports?min_progress=invalid&sort=asc')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'Invalid min_progress parameter'}
+    
+    
+def test_generate_courses_reports_invalid_sort(client: TestClient):
+    response = client.get('/teachers/reports?min_progress=0.0&sort=invalid')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'Invalid sort parameter'}

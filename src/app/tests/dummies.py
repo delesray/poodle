@@ -1,9 +1,25 @@
 from sqlalchemy.orm import Session
 
-from db.models import Account, Student, Teacher, Course, StudentCourse, Status, Admin, Section
+from db.models import Account, Student, Teacher, Course, StudentCourse, Status, Admin, Section, StudentRating, \
+    StudentSection
 
 
-def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Student]:
+async def get_non_existent_account_id():
+    non_existent_account_id = 3
+    return non_existent_account_id
+
+
+async def get_non_existent_email():
+    non_existent_email = 'dummyMail@mail.com'
+    return non_existent_email
+
+
+async def get_default_tst_rating():
+    default_tst_rating = 5
+    return default_tst_rating
+
+
+async def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Student]:
     account_id = 1
     account = Account(
         account_id=account_id,
@@ -22,7 +38,7 @@ def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Student]:
     return account, student
 
 
-def create_dummy_teacher(db: Session):
+async def create_dummy_teacher(db: Session):
     account_id = 2
     account = Account(
         account_id=account_id,
@@ -55,15 +71,25 @@ async def create_dummy_course(db: Session):
     return course
 
 
-async def subscribe_dummy_student(db: Session, student_id, course_id):
+async def subscribe_dummy_student(db: Session, student_id, course_id, status=Status.active.value):
     enrollment = StudentCourse(
         student_id=student_id,
         course_id=course_id,
-        status=Status.active.value,
+        status=status,
     )
     db.add(enrollment)
     db.commit()
     return enrollment
+
+
+async def dummy_student_rating(db: Session, student_id, course_id):
+    rating = await get_default_tst_rating()
+    new_rating = StudentRating(
+        student_id=student_id,
+        course_id=course_id,
+        rating=rating)
+    db.add(new_rating)
+    db.commit()
 
 
 dummy_admin_id = 3
@@ -80,7 +106,7 @@ dummy_admin = Admin(
 )
 
 
-def create_dummy_admin(db: Session):
+async def create_dummy_admin(db: Session):
     db.add_all([dummy_user, dummy_admin])
     db.commit()
     return dummy_user, dummy_admin
@@ -98,3 +124,11 @@ async def create_dummy_section(db):
         course_id=course.course_id,
     )
     return section, course
+
+
+async def dummy_view_section(db, student_id, section_id):
+    visited_section = StudentSection(student_id=student_id,
+                                     section_id=section_id)
+
+    db.add(visited_section)
+    db.commit()

@@ -8,6 +8,7 @@ from fastapi import status
 from main import app
 from schemas.course import CourseInfo
 
+
 dummy_account = Account(account_id=1,
                         email='dummy@mail.com',
                         password='dummy pass',
@@ -427,7 +428,7 @@ def test_subscribe_for_course_returns_correct_msg_when_success(client: TestClien
                  return_value=False)
     mocker.patch('api.api_v1.routes.students.crud_student.add_pending_student_request',
                  return_value=None)
-    mocker.patch('api.api_v1.routes.students.crud_student.send_notification',
+    mocker.patch('api.api_v1.routes.students.crud_student.subscribe',
                  return_value=msg)
 
     course_id = 1
