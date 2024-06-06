@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
-from db.models import Account, Student, Teacher, Course, StudentCourse, Status, Admin, Section, StudentRating
+from db.models import Account, Student, Teacher, Course, StudentCourse, Status, Admin, Section, StudentRating, \
+    StudentSection
 
 
 async def get_non_existent_account_id():
@@ -123,3 +124,11 @@ async def create_dummy_section(db):
         course_id=course.course_id,
     )
     return section, course
+
+
+async def dummy_view_section(db, student_id, section_id):
+    visited_section = StudentSection(student_id=student_id,
+                                     section_id=section_id)
+
+    db.add(visited_section)
+    db.commit()

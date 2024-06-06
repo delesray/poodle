@@ -1,28 +1,24 @@
 import pytest
 from crud.crud_student import is_student_enrolled
-from db.models import Status
+from db.models import Status, Section
 from crud import crud_student
 from fastapi import status, HTTPException
-from schemas.course import CourseInfo
+from schemas.course import CourseInfo, CourseRateResponse, StudentCourseSchema
 from schemas.student import StudentResponseModel, StudentEdit
 from tests import dummies
 
 
-@pytest.mark.asyncio
-async def test_unsubscribe_student(db):
-    _, student = await dummies.create_dummy_student(db)
-    course = await dummies.create_dummy_course(db)
-    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+async def create_dummy_section(db, course_id):
+    section = Section(
+        section_id=1,
+        title='section',
+        content_type='text',
+        course_id=course_id
+    )
+    db.add(section)
+    db.commit()
 
-    assert enrollment.status == Status.active.value
-    assert enrollment.student_id == student.student_id
-    assert enrollment.course_id == course.course_id
-
-    # act
-    await crud_student.unsubscribe_from_course(db, student.student_id, course.course_id)
-
-    res = await is_student_enrolled(student, course.course_id)
-    assert res is False
+    return section
 
 
 @pytest.mark.asyncio
@@ -110,6 +106,23 @@ async def test_get_courses_returns_courses_list(db):
 
 
 @pytest.mark.asyncio
+async def test_unsubscribe_student(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+    assert enrollment.student_id == student.student_id
+    assert enrollment.course_id == course.course_id
+
+    # act
+    await crud_student.unsubscribe_from_course(db, student.student_id, course.course_id)
+
+    res = await is_student_enrolled(student, course.course_id)
+    assert res is False
+
+
+@pytest.mark.asyncio
 async def test_is_student_enrolled_returns_false_when_not_enrolled(db):
     _, student = await dummies.create_dummy_student(db)
     course = await dummies.create_dummy_course(db)
@@ -174,7 +187,7 @@ async def test_get_student_rating_when_has_rated(db):
 
 
 @pytest.mark.asyncio
-async def test_get_student_rating_when_has_rated(db):
+async def test_get_student_rating_when_not_has_rated(db):
     _, student = await dummies.create_dummy_student(db)
     course = await dummies.create_dummy_course(db)
     enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
@@ -184,3 +197,123 @@ async def test_get_student_rating_when_has_rated(db):
     res = await crud_student.get_student_rating(db, student.student_id, course.course_id)
 
     assert res is None
+
+
+@pytest.mark.asyncio
+async def test_get_student_progress_when_not_has_progress(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+
+    res = await crud_student.get_student_progress(db, student.student_id, course.course_id)
+
+    assert res == '0.00'
+
+
+@pytest.mark.asyncio
+async def test_get_student_progress_when_has_progress(db):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+
+    section = await create_dummy_section(db, course.course_id)
+    await dummies.dummy_view_section(db, student.student_id, section.section_id)
+
+    res = await crud_student.get_student_progress(db, student.student_id, course.course_id)
+
+    assert res == '100.00'
+
+
+@pytest.mark.asyncio
+async def test_update_add_student_rating_when_no_existing_rating(db, mocker):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+
+    rating = await crud_student.get_student_rating(db, student.student_id, course.course_id)
+
+    assert rating is None
+
+    mocker.patch('crud.crud_student.crud_course.update_rating', return_value=None)
+    rating = await dummies.get_default_tst_rating()
+    res = await crud_student.update_add_student_rating(db, student, course.course_id, rating)
+
+    assert isinstance(res, CourseRateResponse)
+    assert res.course == course.title
+    assert res.rating == rating
+
+
+@pytest.mark.asyncio
+async def test_update_add_student_rating_when_existing_rating(db, mocker):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    enrollment = await dummies.subscribe_dummy_student(db, student.student_id, course.course_id)
+
+    assert enrollment.status == Status.active.value
+
+    rating = await crud_student.get_student_rating(db, student.student_id, course.course_id)
+
+    assert rating is None
+
+    mocker.patch('crud.crud_student.crud_course.update_rating', return_value=None)
+    rating = await dummies.get_default_tst_rating()
+    res = await crud_student.update_add_student_rating(db, student, course.course_id, rating)
+
+    assert isinstance(res, CourseRateResponse)
+    assert res.course == course.title
+    assert res.rating == rating
+
+    new_rating = 7
+    new_res = await crud_student.update_add_student_rating(db, student, course.course_id, new_rating)
+
+    assert isinstance(new_res, CourseRateResponse)
+    assert new_res.course == course.title
+    assert new_res.rating == new_rating
+
+
+@pytest.mark.asyncio
+async def test_get_course_information_when_course(db, mocker):
+    _, student = await dummies.create_dummy_student(db)
+    course = await dummies.create_dummy_course(db)
+    tst_progress = 100.0
+
+    mocker.patch('crud.crud_student.crud_course.get_course_common_info',
+                 return_value=course)
+    mocker.patch('crud.crud_student.get_student_rating',
+                               return_value=await dummies.get_default_tst_rating())
+    mocker.patch('crud.crud_student.get_student_progress',
+                                 return_value=tst_progress)
+
+    res = await crud_student.get_course_information(db, course.course_id, student)
+
+    assert isinstance(res, StudentCourseSchema)
+    assert res.course_id == course.course_id
+    assert res.title == course.title
+    assert res.owner_id == course.owner_id
+    assert res.owner_name == 'Dummy Teacher'
+    assert res.your_rating == await dummies.get_default_tst_rating()
+    assert res.your_progress == tst_progress
+
+
+@pytest.mark.asyncio
+async def test_get_course_information_when_no_course(db, mocker):
+    _, student = await dummies.create_dummy_student(db)
+    tst_course_id = 5
+
+    mocker.patch('crud.crud_student.crud_course.get_course_common_info',
+                 return_value=None)
+
+    res = await crud_student.get_course_information(db, tst_course_id, student)
+
+    assert res is None
+
+
+@pytest.mark.asyncio
+async def test_send_notification_returns_correct_msg():
+    pass
