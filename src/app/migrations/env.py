@@ -7,7 +7,6 @@ from alembic import context
 # access to the values within the .ini file in use.
 
 # !
-from db.database import Base
 from core.settings import settings
 from db.models import *
 
