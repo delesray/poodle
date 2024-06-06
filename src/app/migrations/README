@@ -1,0 +1,23 @@
+Generic single-database configuration.
+
+the current revision state is saved in the db
+alembic current (goes to db and gives you the current migration you are at)
+
+upgrading to a new migration saves it to alembics vcs so deleting it from that point manually will cause errors
+
+- if a change is made to the models
+    run:
+    alembic revision --autogenerate -m "changes_description_here"
+    This will register the changes in migrations/versions
+
+    then apply the changes to db:
+    alembic upgrade head (to the newest or you can specify with the first unique symbols of the migration)
+
+- if you want to reverse changes
+    alembic downgrade -1 (specifies how many versions down you want to downgrade)
+
+- if you want to downgrade to beginning
+    alembic downgrade base
+
+- if you want to check the current version you are at
+    alembic current
