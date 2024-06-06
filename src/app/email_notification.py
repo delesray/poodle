@@ -1,13 +1,16 @@
 from mailjet_rest import Client
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
 
-api_key = os.environ['MAIL_API_KEY']
-api_secret = os.environ['MAIL_API_SECRET_KEY']
-sender_mail = os.environ['SENDER_EMAIL']
+def email_vars_setup():
+    api_key = os.getenv('MAIL_API_KEY')
+    api_secret = os.getenv('MAIL_API_SECRET_KEY')
+    sender_mail = os.getenv('SENDER_EMAIL')
 
+    return api_key, api_secret, sender_mail
+
+
+api_key, api_secret, send_email = email_vars_setup()
 mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
 
