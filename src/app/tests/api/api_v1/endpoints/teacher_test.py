@@ -25,9 +25,10 @@ dummy_teacher = Teacher(
     last_name="dummyName",
     account=dummy_account
 )
-
+dummy_student_account = Account(account_id=2, email='dummy_student@mail.com')
 dummy_student = Student(
-    student_id=2
+    student_id=2,
+    account=dummy_student_account
 )
 
 teacher_request = {
@@ -630,3 +631,20 @@ def test_generate_courses_reports_invalid_sort(client: TestClient):
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {'detail': 'Invalid sort parameter'}
+    
+    
+def test_approve_enrollment_returns_success_msg(client: TestClient, mocker):
+    mocker.patch('app.api.api_v1.routes.teachers.get_course_by_id', return_value=dummy_course)
+    mocker.patch('app.api.api_v1.routes.teachers.crud_teacher.is_teacher_owner', return_value=True)
+    mocker.patch('app.api.api_v1.routes.teachers.crud_student.get_by_email', return_value=dummy_student)
+    mocker.patch('app.api.api_v1.routes.teachers.crud_teacher.student_enroll_response', return_value='Request response submitted')
+
+    response = client.put('/courses/requests', json={
+        "student": dummy_student.account.email,
+        "course_id": dummy_course.course_id,
+        "response": "Approve"
+    })
+
+    assert response.status_code == 201
+    assert response.json() == {'detail': 'Request response submitted'}
+
