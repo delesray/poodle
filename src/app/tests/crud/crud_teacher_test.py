@@ -10,11 +10,6 @@ from schemas.section import SectionBase
 from tests import dummies
 
 
-TITLE="Test Title",
-CONTENT_TYPE="video",
-EXTERNAL_LINK="http://example.com",
-DESCRIPTION="Test Description"
-
 async def create_dummy_course(db: Session, teacher: Teacher):
     course = Course(
         course_id=1,
@@ -27,14 +22,26 @@ async def create_dummy_course(db: Session, teacher: Teacher):
     db.commit()
     return course
 
-def create_dummy_sectionbase(section_id=None, title=TITLE, content_type=CONTENT_TYPE,
-                             external_link=EXTERNAL_LINK, description=DESCRIPTION, course_id=None):
+
+async def create_dummy_section(db, section_id, course_id):
+    section = Section(
+        section_id=section_id,
+        title='section',
+        content_type='text',
+        course_id=course_id
+    )
+    db.add(section)
+    db.commit()
+
+    return section
+
+def create_dummy_sectionbase(section_id=None, course_id=None):
     return SectionBase(
         section_id=section_id,
-        title=title,
-        content_type=content_type,
-        external_link=external_link,
-        description=description,
+        title="Test Title",
+        content_type="video",
+        external_link="http://example.com",
+        description="Test Description",
         course_id=course_id   
 )
 
@@ -90,17 +97,19 @@ async def test_make_course_returns_created_CourseSectionsTags_model(db):
 @pytest.mark.asyncio
 async def test_get_entire_course_returns_CourseSectionsTags_model_with_sorting(db):
     _, teacher = await dummies.create_dummy_teacher(db)
-    course = create_dummy_course(db, teacher)
-    tag = dummies.create_dummy_tag(db)
-    dummies.add_dummy_tag(db, course.course_id, tag.tag_id)
+    course = await create_dummy_course(db, teacher)
+    tag = await dummies.create_dummy_tag(db)
+    await dummies.add_dummy_tag(db, course.course_id, tag.tag_id)
  
-    section_1 = create_dummy_sectionbase(section_id=1, course_id=course.course_id)
-    section_2 = create_dummy_sectionbase(section_id=2, course_id=course.course_id)
+    section_1 = await create_dummy_section(db, section_id=1, course_id=course.course_id)
+    section_2 = await create_dummy_section(db, section_id=2, course_id=course.course_id)
     
     course_with_details = await crud_teacher.get_entire_course(db, course, teacher, sort='asc', sort_by='section_id')
 
     assert course_with_details.course.course_id == course.course_id
     assert len(course_with_details.tags) == 1
     assert len(course_with_details.sections) == 2
+    assert course_with_details.sections[0].section_id == section_1.section_id
     assert course_with_details.sections[1].section_id == section_2.section_id
+ 
  
