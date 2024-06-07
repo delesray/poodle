@@ -16,11 +16,11 @@ Python back-end web application, powered by FastAPI. Designed to implement an e-
 
 **Testing Database:** SQLite (with **SQLAlchemy ORM**)
 
-**Database migrations:** implemented using Alembic
+**Database migrations:** Alembic
 
-**Continuous Integration (CI):** implemented with GitHub Actions
+**Continuous Integration (CI):** GitHub Actions
 
-**Email Notification:** implemented with [Mailjet API](https://dev.mailjet.com/)
+**Email Notification:** [Mailjet API](https://dev.mailjet.com/)
 
 ## Installion and setup
 
