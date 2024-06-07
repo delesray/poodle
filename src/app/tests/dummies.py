@@ -57,7 +57,7 @@ async def create_dummy_student(db: Session, is_premium=0) -> tuple[Account, Stud
     return account, student
 
 
-async def create_dummy_teacher(db: Session):
+async def create_dummy_teacher(db: Session) -> tuple[Account, Teacher]:
     account_id = 2
     account = Account(
         account_id=account_id,

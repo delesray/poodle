@@ -24,7 +24,7 @@ async def edit_account(db: Session, teacher: Teacher, updates: TeacherEdit):
     return teacher
 
 
-async def get_info(teacher, teacher_email):
+async def get_info(teacher: Teacher, teacher_email: str):
     return TeacherSchema(
         teacher_id=teacher.teacher_id,
         email=teacher_email,
