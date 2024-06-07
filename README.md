@@ -111,7 +111,6 @@ python -m pytest tests
         * View rating for course
         * Hide course
         * Make student account premium
-        * Approve teacher registration
         * Remove student from course
 
 

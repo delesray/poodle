@@ -61,7 +61,7 @@ async def get_courses(
     - `pages` (integer): the number of pages to be returned.
     - `items_per_page`: the number of items per page to be returned.
 
-    **Returns**: a list of PublicCourseInfo models.
+    **Returns**: a list of CourseInfo models.
     """
 
     return await crud_course.get_all_courses(

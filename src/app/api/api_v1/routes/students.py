@@ -104,7 +104,7 @@ async def change_password(db: dbDep, student: StudentAuthDep,
     **Parameters:**
     - `db` (Session): The SQLAlchemy db session.
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
-    - `pass_update` (UserChangePassword):
+    - `pass_update` (UserChangePassword): The form for changing student's password.
 
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
@@ -125,10 +125,10 @@ async def view_my_courses(student: StudentAuthDep) -> list[CourseInfo]:
     **Parameters:**
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
 
+    **Returns**: A list of CourseInfo response models with the information for each course the student is enrolled in.
+
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
-
-    **Returns**: A list of CourseInfo response models with the information for each course the student is enrolled in.
     """
     return await crud_student.get_my_courses(student=student)
 
@@ -140,12 +140,13 @@ async def view_pending_courses(db: dbDep, student: StudentAuthDep) -> list[Cours
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy db session.
+
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
+    
+    **Returns**: A list of CourseInfo response models with the information for each course the student has requested to enroll in.
 
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
-
-    **Returns**: A list of CourseInfo response models with the information for each course the student has requested to enroll in.
     """
     return await crud_student.view_pending_requests(db, student)
 
@@ -160,12 +161,12 @@ async def view_course(db: dbDep, student: StudentAuthDep, course_id: int) -> Stu
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
     - `course_id` (integer): The ID of the course the student wants to view.
 
+    **Returns**: A StudentCourse response object with detailed information about the course and the student's progress and rating of the course.
+
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
     - HTTPException 404, if the course is not found.
     - HTTPException 409, if the student is not enrolled in the course.
-
-    **Returns**: A StudentCourse response object with detailed information about the course and the student's progress and rating of the course.
     """
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
@@ -235,15 +236,14 @@ async def subscribe_for_course(db: dbDep, student: StudentAuthDep, course_id: in
     - `student` (StudentAuthDep): The authentication dependency for users with role Student.
     - `course_id` (integer): the ID of the course the student wants to enroll in.
 
+    **Returns**: 'Pending approval' message.
+
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
     - HTTPException 404, if the course is not found.
     - HTTPException 403, if the student does not have a premium account but is attempting to enroll in a premium course.
     - HTTPException 400, if the student has reached their premium courses limit (5).
     - HTTPException 409, if the student is attempting to duplicate a course enrollment.
-
-
-    **Returns**: 'Pending approval' message.
     """
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id)
 
@@ -300,11 +300,11 @@ async def rate_course(db: dbDep, student: StudentAuthDep, course_id: int,
     - `course_id` (integer): ID of the course to rate.
     - `rating` (CourseRate): rating the student wants to give.
 
+    **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
+    
     **Raises**:
     - HTTPException 401, if the student is not authenticated.
     - HTTPException 409, if the student is not enrolled in the course.
-
-    **Returns**: a CourseRateResponse object with the title of the course and the rating of the student.
     """
 
     course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id, auto_error=True)
