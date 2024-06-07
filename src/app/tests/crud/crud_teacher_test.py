@@ -1,14 +1,24 @@
 import pytest
 from sqlalchemy.orm import Session
 from crud import crud_teacher
-from db.models import Teacher, Course, Status, Section
-from fastapi import status, HTTPException
-from schemas.course import CourseCreate, CourseInfo
+from db.models import Teacher, Course, Section
+from schemas.course import CourseCreate, CourseUpdate
 from schemas.teacher import TeacherEdit
 from schemas.tag import TagBase
 from schemas.section import SectionBase
 from tests import dummies
 
+
+def get_dummy_teacher(teacher_id: int):
+    return Teacher(
+    teacher_id=teacher_id
+)
+
+def get_dummy_course(teacher_id: int, course_id: int):
+    return Course(
+    course_id=course_id,
+    owner_id=teacher_id
+)
 
 async def create_dummy_course(db: Session, teacher: Teacher):
     course = Course(
@@ -112,4 +122,50 @@ async def test_get_entire_course_returns_CourseSectionsTags_model_with_sorting(d
     assert course_with_details.sections[0].section_id == section_1.section_id
     assert course_with_details.sections[1].section_id == section_2.section_id
  
+@pytest.mark.asyncio 
+async def test_edit_course_info_returns_updated_course(db):
+    _, teacher = await dummies.create_dummy_teacher(db)
+    course = await create_dummy_course(db, teacher)
+
+    updates = CourseUpdate(
+        title="Updated Title",
+        description="Updated Description",
+        objectives="Updated Objectives"
+    )
+    
+    updated_course = await crud_teacher.edit_course_info(db, course, teacher, updates)
+
+    assert updated_course.title == "Updated Title"
+    assert updated_course.description == "Updated Description"
+    assert updated_course.objectives == "Updated Objectives"
+    
+    
+def test_validate_course_access_returns_error_message_when_course_not_exists():
+    teacher = get_dummy_teacher(1)
+
+    result, message = crud_teacher.validate_course_access(None, teacher)
+    
+    assert result is False
+    assert message == "Course does not exist"
+
+
+def test_validate_course_access_returns_error_message_when_teacher_not_own_course():
+    teacher_1 = get_dummy_teacher(1)
+    teacher_2 = get_dummy_teacher(2)
+    course = get_dummy_course(teacher_1.teacher_id, 1)
+
+    result, message = crud_teacher.validate_course_access(course, teacher_2)
+    
+    assert result is False
+    assert message == "You do not have permission to access this course"
+    
+
+def test_validate_course_access_returns_OK_message_when_teacher_owns_existing_course():  
+    teacher = get_dummy_teacher(1)
+    course = get_dummy_course(teacher.teacher_id, 1)
+    
+    result, message = crud_teacher.validate_course_access(course, teacher)
+    
+    assert result is True
+    assert message == "OK"
  
