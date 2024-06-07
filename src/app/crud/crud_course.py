@@ -28,7 +28,7 @@ async def get_all_courses(
         teacher_id: int = None,
         student_id: int = None,
 ) -> List[CourseInfo]:
-    filters = [Course.is_hidden is False]
+    filters = [Course.is_hidden == False]
 
     if tag:
         filters.append(Course.tags.any(Tag.name.like(f"%{tag}%")))

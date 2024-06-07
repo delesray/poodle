@@ -13,13 +13,9 @@ async def remove_student_from_course(db: Session, student_id: int, course_id) ->
 
 
 async def hide_course(db: Session, course: Course) -> None:
-    course.hidden = True
+    course.is_hidden = True
     db.commit()
     db.refresh(course)
-
-
-async def approve_teacher_registration(db: Session, teacher: Teacher) -> None:
-    raise NotImplementedError()
 
 
 async def make_student_premium(db: Session, student: Student) -> None:
@@ -29,7 +25,6 @@ async def make_student_premium(db: Session, student: Student) -> None:
 
 
 async def get_students_ratings_by_course_id(db: Session, course_id: int) -> list[StudentRating]:
-    # empty list is ok
     query = (db.query(StudentRating).filter(StudentRating.course_id == course_id))
     return query.all()
 
