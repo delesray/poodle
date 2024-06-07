@@ -33,23 +33,23 @@ async def create_tags(db: Session, tags: List[TagBase], course_id: int) -> Dict[
     return result
 
 
-async def course_has_tag(db: Session, course_id: int, tag_id: int):
+async def course_has_tag(db: Session, course_id: int, tag_id: int) -> CourseTag:
     course_tag = db.query(CourseTag).filter_by(course_id=course_id, tag_id=tag_id).first()
 
     return course_tag
 
 
-async def delete_tag_from_course(db: Session, course_tag: CourseTag):
+async def delete_tag_from_course(db: Session, course_tag: CourseTag) -> None:
     db.delete(course_tag)
     db.commit()
 
 
-async def check_tag_associations(db: Session, tag_id: int):
+async def check_tag_associations(db: Session, tag_id: int) -> int:
     tag_associations = db.query(CourseTag).filter_by(tag_id=tag_id).count()
     return tag_associations
 
 
-async def delete_tag(db: Session, tag_id: int):
+async def delete_tag(db: Session, tag_id: int) -> None:
     tag = db.query(Tag).filter_by(tag_id=tag_id).first()
     if tag:
         db.delete(tag)
