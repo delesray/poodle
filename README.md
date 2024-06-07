@@ -134,4 +134,4 @@ requirements.txt             - project requirements
 
 ## Database
 
-![Database Schema](./db_schema.png)
+![Database Schema](poodle/db_schema.png)
