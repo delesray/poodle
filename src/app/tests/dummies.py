@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 
 from db.models import Account, Student, Teacher, Course, StudentCourse, Status, Admin, Section, StudentRating, \
-    StudentSection
+    StudentSection, Tag, CourseTag
+from schemas.tag import TagBase
 
 
 async def get_non_existent_account_id():
@@ -132,3 +133,23 @@ async def dummy_view_section(db, student_id, section_id):
 
     db.add(visited_section)
     db.commit()
+
+
+async def create_dummy_tag(db):
+    tag = Tag(tag_id=1, name='dummyTag')
+    db.add(tag)
+    db.commit()
+
+    return tag
+
+
+async def add_dummy_tag(db, course_id, tag_id):
+    add_tag = CourseTag(course_id=course_id, tag_id=tag_id)
+    db.add(add_tag)
+    db.commit()
+
+    return add_tag
+
+
+async def create_dummy_tag_base(tag_id, name):
+    return TagBase(tag_id=tag_id, name=name)
