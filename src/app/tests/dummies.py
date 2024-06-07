@@ -1,8 +1,26 @@
+from unittest.mock import Mock
+
 from sqlalchemy.orm import Session
 
 from db.models import Account, Student, Teacher, Course, StudentCourse, Status, Admin, Section, StudentRating, \
     StudentSection, Tag, CourseTag
 from schemas.tag import TagBase
+
+NON_EXISTING_ID = 999
+
+
+def get_mock_admin():
+    account_mock = Mock(spec=Account)
+    account_mock.account_id = 4
+    account_mock.email = '<EMAIL>'
+    account_mock.password = '<PASSWORD>'
+    account_mock.role = 'admin'
+    account_mock.is_active = True
+
+    admin_mock = Mock(spec=Admin)
+    admin_mock.admin_id = 4
+    admin_mock.account = account_mock
+    return admin_mock
 
 
 async def get_non_existent_account_id():
@@ -93,27 +111,23 @@ async def dummy_student_rating(db: Session, student_id, course_id):
     db.commit()
 
 
-dummy_admin_id = 3
-dummy_user = Account(
-    account_id=dummy_admin_id,
-    email='dummy@admin.com',
-    password='dummypass',
-    role='admin',
-    is_deactivated=False,
-)
-dummy_admin = Admin(
-    admin_id=dummy_admin_id,
-    account=dummy_user,
-)
-
-
 async def create_dummy_admin(db: Session):
+    dummy_admin_id = 3
+    dummy_user = Account(
+        account_id=dummy_admin_id,
+        email='dummy@admin.com',
+        password='dummypass',
+        role='admin',
+        is_deactivated=False,
+    )
+    dummy_admin = Admin(
+        admin_id=dummy_admin_id,
+        account=dummy_user,
+    )
+
     db.add_all([dummy_user, dummy_admin])
     db.commit()
     return dummy_user, dummy_admin
-
-
-NON_EXISTING_ID = 999
 
 
 async def create_dummy_section(db):

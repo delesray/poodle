@@ -43,4 +43,4 @@ def db() -> Session:
 app.dependency_overrides[get_db] = lambda: None
 app.dependency_overrides[get_student_required] = lambda: dummy_student
 app.dependency_overrides[get_teacher_required] = lambda: dummy_teacher
-app.dependency_overrides[get_admin_required] = lambda: dummies.dummy_admin
+app.dependency_overrides[get_admin_required] = lambda: dummies.get_mock_admin()
