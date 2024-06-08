@@ -5,7 +5,7 @@ services:
     image: mariadb:10.5.25
     container_name: mariadb
     environment:
-#      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: poodle
       MYSQL_USER: user
       MYSQL_PASSWORD: password
