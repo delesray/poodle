@@ -4,7 +4,7 @@ Python back-end web application, powered by FastAPI. Designed to implement an e-
 
 ## Technologies Used
 
-**API:** FastAPI
+**Framework:** FastAPI
 
 **Authentication:** OAuth2 with JWT
 
@@ -12,7 +12,7 @@ Python back-end web application, powered by FastAPI. Designed to implement an e-
 
 **Production Database:** MariaDB (with **SQLAlchemy ORM**)
 
-**Testing:** Pytest
+**Testing framework:** Pytest
 
 **Testing Database:** SQLite (with **SQLAlchemy ORM**)
 
