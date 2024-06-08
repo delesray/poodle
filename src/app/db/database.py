@@ -11,8 +11,8 @@ Base = declarative_base()
 
 
 def get_engine_and_session() -> tuple:
-    DB_USER = os.getenv('DB_USER')
-    DB_PASS = os.getenv('DB_PASS')
+    DB_USER = 'user'
+    DB_PASS = 'password'
     DB_PORT = 3306
     DB_NAME = 'poodle'
     DB_HOST = 'db'
