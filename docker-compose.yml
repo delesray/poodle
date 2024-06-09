@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     image: mariadb:10.5.25
-    container_name: mariadb
+    container_name: mariadb_1
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: poodle
@@ -16,7 +16,7 @@ services:
 
   web:
     build: .
-    container_name: api
+    container_name: api_1
     depends_on:
       - db
     ports:
