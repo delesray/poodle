@@ -99,6 +99,6 @@ def validate_section(section: Section, course_id: int) -> tuple[bool, str]:
         return False, f"Section not found"
 
     if section.course_id != course_id:
-        return False, f"Section ID:{section.section_id} is not a part of course ID{course_id}"
+        return False, f"Section ID:{section.section_id} is not a part of course ID:{course_id}"
 
     return True, "OK"

@@ -633,4 +633,13 @@ def test_generate_courses_reports_invalid_sort(client: TestClient):
     assert response.json() == {'detail': 'Invalid sort parameter'}
     
     
+def test_change_password_returns_204_when_success(client: TestClient, mocker):
+    mocker.patch('api.api_v1.routes.teachers.utils.change_pass_raise', return_value=None)
+    mocker.patch('api.api_v1.routes.teachers.crud_user.change_password', return_value=None)
 
+    pass_updates = {'old_password': 'pass1',
+                    'new_password': 'pass1',
+                    'confirm_password': 'pass2'}
+    response = client.patch('/teachers', json=pass_updates)
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT

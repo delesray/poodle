@@ -7,6 +7,8 @@ from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, Cours
 from schemas.section import SectionBase, SectionUpdate
 from schemas.tag import TagBase
 from core.oauth import TeacherAuthDep
+from schemas.user import UserChangePassword
+from api.api_v1.routes import utils
 from typing import List, Dict
 from typing import Union
 from fastapi import UploadFile
@@ -112,6 +114,28 @@ async def update_account(
     edited_teacher_account = await crud_teacher.edit_account(db, teacher, updates)
 
     return await crud_teacher.get_info(edited_teacher_account, teacher.account.email)
+
+
+@router.patch('/', status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(db: dbDep, teacher: TeacherAuthDep,
+                          pass_update: UserChangePassword) -> None:
+    """
+    Changes authenticated teacher's password.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy db session.
+    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `pass_update` (UserChangePassword): The form for changing teacher's password.
+
+    **Raises**:
+    - HTTPException 401, if the teacher is not authenticated.
+    - HTTPException 401, if old password does not match.
+    - HTTPException 400, if new password is the same as the old one.
+    - HTTPException 400, if new password confirmation does not match.
+    """
+    await utils.change_pass_raise(account=teacher.account, pass_update=pass_update)
+
+    await crud_user.change_password(db=db, pass_update=pass_update, account=teacher.account)
 
 
 @router.post("/courses", status_code=status.HTTP_201_CREATED, response_model=CourseSectionsTags)
