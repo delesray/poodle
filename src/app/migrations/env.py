@@ -63,10 +63,13 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # ! to create the db schema beforehand if it doesn't exist
-    from db.database import create_db
-    create_db()
-    # !
+    # # ! to create the db schema beforehand if it doesn't exist
+    # from db import models, database
+    # from db.database import get_engine_and_session
+    # database.create_db()
+    # engine = get_engine_and_session()[0]
+    # models.Base.metadata.create_all(bind=engine)
+    # # !
 
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),

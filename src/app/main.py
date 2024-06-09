@@ -1,7 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
-from db import models
-from db import database
+from db import models, database
 from db.database import get_engine_and_session
 from api.api_v1.api import api_router
 

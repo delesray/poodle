@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     DB_PASS: str = os.environ.get('DB_PASS', 'password')
     DB_PORT: int = 3306
     DB_NAME: str = 'poodle'
-    DB_HOST: str = 'localhost'
+    DB_HOST: str = 'db'
     DB_URL: str = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
 
     # todo postgresql url
