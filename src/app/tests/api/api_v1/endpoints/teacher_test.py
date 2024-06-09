@@ -282,7 +282,7 @@ def test_update_account_returns_updated_teacher_info(client: TestClient, mocker)
 
 
 def test_create_course_returns_created_course(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.course_exists', return_value=False)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.course_exists', return_value=False)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.make_course', return_value=course_response)
 
     response = client.post('/teachers/courses', json=course_request)
@@ -292,7 +292,7 @@ def test_create_course_returns_created_course(client: TestClient, mocker):
     
 
 def test_create_course_returns_409_when_course_exists(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.course_exists', return_value=True)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.course_exists', return_value=True)
 
     response = client.post('/teachers/courses', json=course_request)
 
@@ -301,7 +301,7 @@ def test_create_course_returns_409_when_course_exists(client: TestClient, mocker
     
     
 def test_update_course_home_page_picture_returns_successful_msg(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
     mocker.patch('api.api_v1.routes.teachers.crud_user.add_picture', return_value=True)
 
@@ -315,7 +315,7 @@ def test_update_course_home_page_picture_returns_successful_msg(client: TestClie
 
 
 def test_update_course_home_page_picture_invalid_file(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
     mocker.patch('api.api_v1.routes.teachers.crud_user.add_picture', return_value=False)
 
@@ -364,7 +364,7 @@ def test_get_courses_returns_list_of_courses(client: TestClient, mocker):
     ]    
 
 def test_view_course_by_id_returns_CourseSectionsTags_object(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.get_entire_course', 
                  return_value=CourseSectionsTags(course=dummy_coursebase, tags=[], sections=[]))
@@ -401,7 +401,7 @@ def test_view_course_by_id_invalid_sort_by(client: TestClient, mocker):
     assert response.json() == {'detail': 'Invalid sort_by parameter'}
     
 def test_view_course_by_id_access_denied(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(False, "You do not have permission to access this course"))
 
     response = client.get('/teachers/courses/1')
@@ -410,7 +410,7 @@ def test_view_course_by_id_access_denied(client: TestClient, mocker):
     assert response.json() == {'detail': 'You do not have permission to access this course'}
     
 def test_update_course_info_returns_updated_course(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.edit_course_info', return_value=dummy_coursebase)
 
@@ -430,7 +430,7 @@ def test_update_course_info_returns_updated_course(client: TestClient, mocker):
         }
     
 def test_update_course_info_access_denied(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(False, "You do not have permission to access this course"))
 
     response = client.put('/teachers/courses/1', json=dummy_updates_course.model_dump())
@@ -439,10 +439,10 @@ def test_update_course_info_access_denied(client: TestClient, mocker):
     assert response.json() == {'detail': 'You do not have permission to access this course'}
     
 def test_update_section_returns_updated_section(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
-    mocker.patch('api.api_v1.routes.teachers.get_section_by_id', return_value=dummy_section)
-    mocker.patch('api.api_v1.routes.teachers.update_section_info', 
+    mocker.patch('api.api_v1.routes.teachers.crud_section.get_section_by_id', return_value=dummy_section)
+    mocker.patch('api.api_v1.routes.teachers.crud_section.update_section_info', 
                  return_value=create_dummy_sectionbase(
                      title="Updated Section",
                      content_type="text",
@@ -465,9 +465,9 @@ def test_update_section_returns_updated_section(client: TestClient, mocker):
 
     
 def test_update_section_not_found(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
-    mocker.patch('api.api_v1.routes.teachers.get_section_by_id', return_value=None)
+    mocker.patch('api.api_v1.routes.teachers.crud_section.get_section_by_id', return_value=None)
 
     response = client.put('/teachers/courses/1/sections/999', json=dummy_updates_section.model_dump())
 
@@ -476,9 +476,9 @@ def test_update_section_not_found(client: TestClient, mocker):
     
     
 def test_add_sections_returns_list_of_created_sections(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
-    mocker.patch('api.api_v1.routes.teachers.create_sections', 
+    mocker.patch('api.api_v1.routes.teachers.crud_section.create_sections', 
                  return_value=[create_dummy_sectionbase(
                      title = "New Section",
                      content_type =  "text",
@@ -509,10 +509,10 @@ def test_add_sections_returns_list_of_created_sections(client: TestClient, mocke
     ]
     
 def test_remove_section_removes_section_from_course(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
-    mocker.patch('api.api_v1.routes.teachers.get_section_by_id', return_value=dummy_section)
-    mocker.patch('api.api_v1.routes.teachers.delete_section', return_value=None)
+    mocker.patch('api.api_v1.routes.teachers.crud_section.get_section_by_id', return_value=dummy_section)
+    mocker.patch('api.api_v1.routes.teachers.crud_section.delete_section', return_value=None)
 
     response = client.delete('/teachers/courses/1/sections/1')
 
@@ -520,9 +520,9 @@ def test_remove_section_removes_section_from_course(client: TestClient, mocker):
     assert response.text == ''
     
 def test_add_tags_returns_list_of_tags_and_list_of_duplicated_tagIds(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
-    mocker.patch('api.api_v1.routes.teachers.create_tags', return_value={"created": [dummy_tagbase], "duplicated_tags_ids": [1]})
+    mocker.patch('api.api_v1.routes.teachers.crud_tag.create_tags', return_value={"created": [dummy_tagbase], "duplicated_tags_ids": [1]})
 
     new_tag = {
         "name": "Test Tag"
@@ -538,7 +538,7 @@ def test_add_tags_returns_list_of_tags_and_list_of_duplicated_tagIds(client: Tes
     
     
 def test_add_tags_access_denied(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(False, "You do not have permission to access this course"))
 
     new_tag = {
@@ -552,12 +552,12 @@ def test_add_tags_access_denied(client: TestClient, mocker):
     
     
 def test_remove_tag_removes_tag_from_course(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
-    mocker.patch('api.api_v1.routes.teachers.course_has_tag', return_value=dummy_course_tag)
-    mocker.patch('api.api_v1.routes.teachers.delete_tag_from_course', return_value=None)
-    mocker.patch('api.api_v1.routes.teachers.check_tag_associations', return_value=0)
-    mocker.patch('api.api_v1.routes.teachers.delete_tag', return_value=None)
+    mocker.patch('api.api_v1.routes.teachers.crud_tag.course_has_tag', return_value=dummy_course_tag)
+    mocker.patch('api.api_v1.routes.teachers.crud_tag.delete_tag_from_course', return_value=None)
+    mocker.patch('api.api_v1.routes.teachers.crud_tag.check_tag_associations', return_value=0)
+    mocker.patch('api.api_v1.routes.teachers.crud_tag.delete_tag', return_value=None)
 
     response = client.delete('/teachers/courses/1/tags/1')
 
@@ -566,9 +566,9 @@ def test_remove_tag_removes_tag_from_course(client: TestClient, mocker):
     
 
 def test_remove_tag_not_found(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
-    mocker.patch('api.api_v1.routes.teachers.course_has_tag', return_value=None)
+    mocker.patch('api.api_v1.routes.teachers.crud_tag.course_has_tag', return_value=None)
 
     response = client.delete('/teachers/courses/1/tags/999')
 
@@ -577,9 +577,9 @@ def test_remove_tag_not_found(client: TestClient, mocker):
     
     
 def test_deactivate_course(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
-    mocker.patch('api.api_v1.routes.teachers.hide_course', return_value=None)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.hide_course', return_value=None)
 
     dummy_course.students_enrolled = []
 
@@ -590,7 +590,7 @@ def test_deactivate_course(client: TestClient, mocker):
     
     
 def test_deactivate_course_with_enrolled_students(client: TestClient, mocker):
-    mocker.patch('api.api_v1.routes.teachers.get_course_common_info', return_value=dummy_course)
+    mocker.patch('api.api_v1.routes.teachers.crud_course.get_course_common_info', return_value=dummy_course)
     mocker.patch('api.api_v1.routes.teachers.crud_teacher.validate_course_access', return_value=(True, "OK"))
 
     dummy_course.students_enrolled = [dummy_student]
@@ -633,18 +633,4 @@ def test_generate_courses_reports_invalid_sort(client: TestClient):
     assert response.json() == {'detail': 'Invalid sort parameter'}
     
     
-# def test_approve_enrollment_returns_success_msg(client: TestClient, mocker):
-#     mocker.patch('app.api.api_v1.routes.teachers.get_course_by_id', return_value=dummy_course)
-#     mocker.patch('app.api.api_v1.routes.teachers.crud_teacher.is_teacher_owner', return_value=True)
-#     mocker.patch('app.api.api_v1.routes.teachers.crud_student.get_by_email', return_value=dummy_student)
-#     mocker.patch('app.api.api_v1.routes.teachers.crud_teacher.student_enroll_response', return_value='Request response submitted')
-
-#     response = client.put('/courses/requests', json={
-#         "student": dummy_student.account.email,
-#         "course_id": dummy_course.course_id,
-#         "response": "Approve"
-#     })
-
-#     assert response.status_code == 201
-#     assert response.json() == {'detail': 'Request response submitted'}
 
