@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 
 class Settings(BaseSettings):
-    load_dotenv('envs/env.docker')
+    load_dotenv()
     # App
     APP_NAME: str = os.environ.get('APP_NAME', 'poodle')
     DEBUG: bool = bool(os.environ.get('DEBUG', False))  # todo future consider the debug modes
@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     DB_PASS: str = os.environ.get('DB_PASS', 'password')
     DB_PORT: int = 3306
     DB_NAME: str = 'poodle'
-    DB_HOST: str = 'db'
+    DB_HOST: str = 'localhost'
     DB_URL: str = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
 
     # todo postgresql url
