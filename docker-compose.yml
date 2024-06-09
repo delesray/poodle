@@ -26,5 +26,5 @@ services:
       - db
 
 
-#volumes: # ignoring volumes because clean state of db needed at the current state
-#  db_data:
+#volumes:
+#  db_data: # to save and restore data even if the containers are deleted
