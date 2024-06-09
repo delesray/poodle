@@ -84,7 +84,7 @@ async def get_entire_course(db: Session, course: Course, teacher: Teacher, sort:
     if sort_by:
         sections_query = sections_query.order_by(
             getattr(Section, sort_by).desc() if sort and sort == 'desc' else getattr(Section, sort_by).asc()
-        )
+        ) # when sort_by is provided without sort, the sections are sorted in ascending order by default
 
     sections = sections_query.all()
     for section in sections:
@@ -182,8 +182,8 @@ async def calculate_student_progresses(db: Session, courses_with_students: List[
 
 async def get_courses_reports(db: Session, teacher: Teacher, min_progress: float, sort: str = None):
     courses_query = (
-        select(Course)
-        .options(joinedload(Course.students_enrolled))
+        select(Course)                                 #preventing the "N+1 problem"
+        .options(joinedload(Course.students_enrolled)) #all related students are fetched in the same query as the courses
         .where(Course.owner_id == teacher.teacher_id)
     )
     
@@ -192,8 +192,8 @@ async def get_courses_reports(db: Session, teacher: Teacher, min_progress: float
     elif sort == 'desc':
         courses_query = courses_query.order_by(Course.course_id.desc())
     
-    result = db.execute(courses_query)
-    courses_with_students = result.scalars().unique().all()
+    result = db.execute(courses_query) #result contains raw SQL rows
+    courses_with_students = result.scalars().all() # scalars() converts raw SQL rows into ORM objects(Course instances)
 
     student_progress_dict = await calculate_student_progresses(db, courses_with_students)
     courses_reports = generate_reports(courses_with_students, student_progress_dict, min_progress)
