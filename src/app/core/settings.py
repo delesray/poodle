@@ -16,10 +16,10 @@ class Settings(BaseSettings):
     # DB_URL: str = f"mysql+pymysql://{DB_USER}:{DB_PASS}@localhost/poodle?charset=utf8mb4"
 
     DB_USER: str = os.environ.get('DB_USER', 'root')
-    DB_PASS: str = os.environ.get('DB_PASS', 'password')
-    DB_PORT: int = 3306
-    DB_NAME: str = 'poodle'
-    DB_HOST: str = 'db'
+    DB_PASS: str = os.environ.get('DB_PASS', 'pass')
+    DB_PORT: int = os.environ.get('DB_PORT', 5432)
+    DB_NAME: str = os.environ.get('DB_NAME', 'notfound')
+    DB_HOST: str = os.environ.get('DB_HOST', 'localhost')
     DB_URL: str = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
 
     # todo postgresql url
@@ -42,3 +42,4 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+print(settings.DB_URL)
