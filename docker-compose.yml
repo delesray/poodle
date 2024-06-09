@@ -7,8 +7,6 @@ services:
       dockerfile: Dockerfile
 #    command: sh -c "alembic revision --autogenerate -m 'initial' && alembic upgrade head"
     container_name: app_1
-    command: ?? 
-      - uvicorn main:app ??? ?
     ports:
       - "8000:80"
     env_file:
