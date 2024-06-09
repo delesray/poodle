@@ -168,15 +168,15 @@ async def view_pending_requests(db: Session, teacher: Teacher):
     return [CoursePendingRequests.from_query(course.title, student.account.email) for course, student in res]
 
 
-async def calculate_student_progresses(db: Session, courses_with_students: List[Course]) -> Dict[int, str]:
+async def calculate_student_progresses(db: Session, courses_with_students: List[Course]) -> Dict[tuple[int, int], str]:
     student_progress_dict = {}
 
     for course in courses_with_students:
         for student in course.students_enrolled:
-            if student.student_id not in student_progress_dict:
+            key = (student.student_id, course.course_id)
+            if key not in student_progress_dict:
                 student_progress = await get_student_progress(db, student.student_id, course.course_id)
-                student_progress_dict[student.student_id] = student_progress
-
+                student_progress_dict[key] = student_progress
     return student_progress_dict
 
 
@@ -203,14 +203,15 @@ async def get_courses_reports(db: Session, teacher: Teacher, min_progress: float
 
 def generate_reports(courses_with_students: List[Course], student_progress_dict: Dict[int, str], min_progress: float):
     reports = []
+      
     for course in courses_with_students:
         students = [
             {
                 "student_info": StudentResponseModel.from_query(student.first_name, student.last_name, student.is_premium),
-                "progress": student_progress_dict[student.student_id]
+                "progress": student_progress_dict[(student.student_id, course.course_id)]
             }
             for student in course.students_enrolled
-            if float(student_progress_dict[student.student_id]) >= min_progress  
+            if float(student_progress_dict[(student.student_id, course.course_id)]) >= min_progress
         ]
         course_report = {
             "course_id": course.course_id,
