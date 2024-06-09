@@ -14,6 +14,7 @@ services:
   web:
     build:
       dockerfile: Dockerfile
+#    command: sh -c "alembic revision --autogenerate -m 'initial' && alembic upgrade head"
     container_name: app_1
     ports:
       - "8000:80"
