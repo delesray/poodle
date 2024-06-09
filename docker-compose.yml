@@ -4,11 +4,8 @@ services:
   db:
     image: mariadb:10.5.25
     container_name: mariadb_1
-    environment:
-      MARIADB_ROOT_PASSWORD: rootpassword
-      MARIADB_DATABASE: poodle
-      MARIADB_USER: user
-      MARIADB_PASSWORD: password
+    env_file:
+      - ./envs/db.env
     ports:
       - "3306:3306"
 #    volumes:
