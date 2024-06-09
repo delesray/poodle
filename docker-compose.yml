@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   db:
-    image: mariadb:10.5.25
+    build:
+      dockerfile: db.Dockerfile
+#    image: mariadb:10.5.25
     container_name: mariadb_1
     env_file:
       - ./envs/db.env
