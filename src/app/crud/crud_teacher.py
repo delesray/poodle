@@ -193,7 +193,7 @@ async def get_courses_reports(db: Session, teacher: Teacher, min_progress: float
         courses_query = courses_query.order_by(Course.course_id.desc())
     
     result = db.execute(courses_query) #result contains raw SQL rows
-    courses_with_students = result.scalars().all() # scalars() converts raw SQL rows into ORM objects(Course instances)
+    courses_with_students = result.scalars().unique().all() # scalars() converts raw SQL rows into ORM objects
 
     student_progress_dict = await calculate_student_progresses(db, courses_with_students)
     courses_reports = generate_reports(courses_with_students, student_progress_dict, min_progress)
