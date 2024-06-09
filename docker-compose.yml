@@ -26,5 +26,5 @@ services:
       - db
 
 
-#volumes:
+#volumes: # ignoring volumes because clean state of db needed at the current state
 #  db_data:
