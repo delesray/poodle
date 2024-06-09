@@ -1,6 +1,6 @@
 Make sure:
 - that you have Docker Desktop installed
-- ports 3306 and 8000 are free for the containers
+- ports 3307 and 8007 are free for the containers
 
 Clone the docker branch in a folder:
 ```bash
@@ -18,4 +18,4 @@ docker-compose -f docker-compose.yml up --build
 ```
 
 Open a browser and access:
-http://localhost:8000/docs
+http://localhost:8007/docs
