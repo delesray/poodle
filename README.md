@@ -2,6 +2,7 @@
 
 Python back-end web application, powered by FastAPI. Designed to implement an e-learning platform where teachers can
 easily create courses, and students can enroll in courses based on their subscription tier.
+![poodle_intro_img.png](poodle_intro_img.png)
 
 ## Table of contents
 
@@ -12,7 +13,6 @@ easily create courses, and students can enroll in courses based on their subscri
 * [Structure](#project-structure)
 * [Database](#database)
 
-![poodle_intro_img.png](poodle_intro_img.png)
 
 ## Technologies Used
 
