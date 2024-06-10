@@ -1,6 +1,18 @@
 # Poodle: e-learning platform
 
-Python back-end web application, powered by FastAPI. Designed to implement an e-learning platform where teachers can easily create courses, and students can enroll in courses based on their subscription tier.
+Python back-end web application, powered by FastAPI. Designed to implement an e-learning platform where teachers can
+easily create courses, and students can enroll in courses based on their subscription tier.
+
+## Table of contents
+
+* [Technologies](#technologies-used)
+* [Setup](#installion-and-setup)
+* [Setup with Docker](#docker-setup-link)
+* [Features](#features)
+* [Structure](#project-structure)
+* [Database](#database)
+
+![poodle_intro_img.png](poodle_intro_img.png)
 
 ## Technologies Used
 
@@ -23,7 +35,6 @@ Python back-end web application, powered by FastAPI. Designed to implement an e-
 **Email Notification:** [Mailjet API](https://dev.mailjet.com/)
 
 ## Installion and setup
-#### For setup with Docker check docker-production branch and README
 
 ### 1. Clone the project using HTTPS
 
@@ -39,7 +50,8 @@ git clone git@github.com:delesray/poodle.git
 
 ### 2. Install the packages listed in the **requirements.txt** file, located at project root level (`poodle`)
 
-(Optional) **Inctructions on creating and activating a virtual environment:** [Link](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
+(Optional) **Inctructions on creating and activating a virtual environment:
+** [Link](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
 
 ```
 pip install -r requirements.txt
@@ -54,6 +66,10 @@ uvicorn main:app --reload
 ### 4. Swagger docs: [Link](http://127.0.0.1:8000/docs)
 
 Available when you run the server (step 3).
+
+## Docker Setup: [Link](https://github.com/delesray/poodle/tree/docker-production?tab=readme-ov-file)
+
+### Setup available at the docker-prod branch documentation
 
 ## Testing
 
@@ -72,7 +88,7 @@ python -m pytest tests
     * Get all courses - displays basic information about available courses
 
 - **Authentication Endpoints** (marked with a lock on Swagger) - require login with username and password
-  
+
     - **Features, related to students:**
         * View account
         * Update Account
@@ -105,7 +121,6 @@ python -m pytest tests
         * Deactivate course
         * Generate course reports
 
-
     - **Features, related to admins:**
         * View courses
         * Activate/deactivate user account
@@ -113,7 +128,6 @@ python -m pytest tests
         * Hide course
         * Make student account premium
         * Remove student from course
-
 
 ## Project Structure
 
