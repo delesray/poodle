@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
-from schemas.course import CourseInfo
-from crud import crud_course, crud_admin, crud_user
+from schemas.course import CourseInfo, CourseStudentRatingsSchema
+from schemas.student import StudentRatingSchema
+from crud import crud_course, crud_admin, crud_user, crud_teacher
 from core.oauth import AdminAuthDep
 from crud.crud_user import Role
 from db.database import dbDep
@@ -90,13 +91,19 @@ async def get_course_rating_info(
     **Raises**:
     - HTTPException 404, if no such course.
 
-    **Returns**: a list with the Course and students who have rated it.
+    **Returns**: CourseStudentRatingsSchema containing the course and students who have rated it.
     """
     course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
     students_courses_rating = await crud_admin.get_students_ratings_by_course_id(db, course.course_id)
+    
+    teacher = await crud_user.get_specific_user_or_raise_404(db, course.owner_id, Role.TEACHER)
+    course_base = crud_teacher.get_coursebase_model(teacher, course)
 
-    return [course, students_courses_rating]
+    ratings = [StudentRatingSchema(student_id=studrating.student_id, course_id=studrating.course_id, rating=studrating.rating)
+               for studrating in students_courses_rating]
 
+    return CourseStudentRatingsSchema(course=course_base, ratings=ratings)
+   
 
 @router.patch('/students/{student_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def make_student_premium(
@@ -142,7 +149,7 @@ async def remove_student_from_course(
         db: dbDep, admin: AdminAuthDep, course_id: int, student_id: int
 ):
     """
-    Removes student from course.
+    Removes a student from a course.
 
     **Parameters:**
     - `db` (Session): The SQLAlchemy db session.
@@ -151,9 +158,10 @@ async def remove_student_from_course(
     - `course_id` (integer): The ID of the course to remove.
 
     **Raises**:
-    - HTTPException 404, if no such user or course.
+    - HTTPException 404, if no such user or course or the student is not enrolled in the course.
     """
     course = await crud_course.get_course_by_id_or_raise_404(db, course_id)
     student = await crud_user.get_specific_user_or_raise_404(db, student_id, role=Role.STUDENT)
 
-    await crud_admin.remove_student_from_course(db, student.student_id, course.course_id)
+    if not await crud_admin.remove_student_from_course(db, student.student_id, course.course_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student is not enrolled in this course")
