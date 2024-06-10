@@ -52,6 +52,8 @@ async def get_my_courses(student: Student) -> list[CourseInfo]:
 
     my_courses_pydantic: list[CourseInfo] = []
     for c in my_courses:
+        if c.is_hidden:
+            continue
         tags = [str(t) for t in c.tags]
         my_courses_pydantic.append(CourseInfo.from_query(
             *(c.title, c.description, c.is_premium, tags)))
