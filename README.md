@@ -23,6 +23,7 @@ Python back-end web application, powered by FastAPI. Designed to implement an e-
 **Email Notification:** [Mailjet API](https://dev.mailjet.com/)
 
 ## Installion and setup
+#### For setup with Docker check docker-production branch and README
 
 ### 1. Clone the project using HTTPS
 
