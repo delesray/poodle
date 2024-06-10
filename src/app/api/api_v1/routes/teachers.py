@@ -128,10 +128,10 @@ async def change_password(db: dbDep, teacher: TeacherAuthDep,
     - `pass_update` (UserChangePassword): The form for changing teacher's password.
 
     **Raises**:
-    - HTTPException 401, if the teacher is not authenticated.
-    - HTTPException 401, if old password does not match.
-    - HTTPException 400, if new password is the same as the old one.
-    - HTTPException 400, if new password confirmation does not match.
+    - `HTTPException 401`, if the teacher is not authenticated.
+    - `HTTPException 401`, if old password does not match.
+    - `HTTPException 400`, if new password is the same as the old one.
+    - `HTTPException 400`, if new password confirmation does not match.
     """
     await utils.change_pass_raise(account=teacher.account, pass_update=pass_update)
 
@@ -313,8 +313,8 @@ async def approve_enrollment(db: dbDep,
     - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 404`, if the student or the course is not found.
     - `HTTPException 403`, if the teacher is not the owner of the course.
+    - `HTTPException 400`, if the course is not in the teacher's pending requests list.
     """
-
     course: Course = await crud_course.get_course_by_id(db, course_id)
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
@@ -325,6 +325,10 @@ async def approve_enrollment(db: dbDep,
     student: Student = await crud_student.get_by_email(db, student)
     if not student:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No student with such email')
+    
+    pending_requests = await crud_teacher.view_pending_requests(db, teacher)
+    if not any(req.course == course.title and req.requested_by == student.account.email for req in pending_requests):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Course is not in pending requests list")
 
     return await crud_teacher.student_enroll_response(db, student, teacher, course, response.value)
 
