@@ -48,7 +48,7 @@ git clone https://github.com/delesray/poodle.git
 git clone git@github.com:delesray/poodle.git
 ```
 
-### 2. Install the packages listed in the **requirements.txt** file, located at project root level (`poodle`)
+### 2. Install the packages listed in the **requirements.txt** file, located in `poodle` directory
 
 (Optional) **Inctructions on creating and activating a virtual environment:
 ** [Link](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
@@ -60,7 +60,7 @@ pip install -r requirements.txt
 ### 3. Navigate to `src/app` directory and run the following command to start the application
 
 ```
-uvicorn main:app --reload
+python main.py
 ```
 
 ### 4. Swagger docs: [Link](http://127.0.0.1:8000/docs)
