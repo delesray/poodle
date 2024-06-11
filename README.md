@@ -4,7 +4,7 @@ Make sure:
 
 Clone the docker-production branch in a folder:
 ```bash
-git clone -b docker https://github.com/delesray/poodle.git
+git clone -b docker-production https://github.com/delesray/poodle.git
 ```
 
 Navigate a terminal to poodle:
