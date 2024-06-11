@@ -2,7 +2,7 @@ Make sure:
 - that you have Docker Desktop installed
 - ports 3307 and 8007 are free for the containers
 
-Clone the docker branch in a folder:
+Clone the docker-production branch in a folder:
 ```bash
 git clone -b docker https://github.com/delesray/poodle.git
 ```
