@@ -87,6 +87,7 @@ async def create_dummy_course(db: Session):
 
     db.add(course)
     db.commit()
+    db.refresh(course)
     return course
 
 
@@ -135,11 +136,15 @@ async def create_dummy_section(db):
     section = Section(
         section_id=1,
         title='section',
-        content_type='txt',
+        content_type='text',
         course_id=course.course_id,
     )
+    
+    db.add(section)
+    db.commit()  
+    db.refresh(section)  
     return section, course
-
+   
 
 async def dummy_view_section(db, student_id, section_id):
     visited_section = StudentSection(student_id=student_id,

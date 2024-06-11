@@ -8,6 +8,7 @@ from main import app
 from tests.api.api_v1.endpoints.student_test import dummy_student
 from tests.api.api_v1.endpoints.teacher_test import dummy_teacher
 from tests import dummies
+from typing import Generator
 
 
 @pytest.fixture
@@ -17,7 +18,7 @@ def client():
 
 
 @pytest.fixture(scope='function')
-def db() -> Session:
+def db() -> Generator:
     """
     This fixture returns a session connected to an in-memory SQLite db.
     It's intended for use in tests that require db access but should not

@@ -81,8 +81,8 @@ class Student(Base):
     courses_enrolled: Mapped[List['Course']] = relationship(
         'Course',
         secondary='students_courses',
-        primaryjoin=f"and_(Student.student_id == foreign(StudentCourse.student_id), StudentCourse.status == {
-            Status.active.value})",
+        primaryjoin=f"and_(Student.student_id == foreign(StudentCourse.student_id), "
+                    f"StudentCourse.status == {Status.active.value})",
         secondaryjoin="Course.course_id == foreign(StudentCourse.course_id)",
         back_populates="students_enrolled"
     )

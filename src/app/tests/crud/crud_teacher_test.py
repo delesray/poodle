@@ -260,8 +260,8 @@ async def test_calculate_student_progresses_returns_dict_with_student_progresses
     
     student_progress_dict = await crud_teacher.calculate_student_progresses(db, courses_with_students)
     
-    assert student_progress_dict[student1.student_id] == '75.00'  
-    assert student_progress_dict[student2.student_id] == '25.00' 
+    assert student_progress_dict[(student1.student_id, course.course_id)] == '75.00'
+    assert student_progress_dict[(student2.student_id, course.course_id)] == '25.00'  
  
     
 @pytest.mark.asyncio
@@ -276,7 +276,7 @@ async def test_calculate_student_progresses_returns_zero_for_courses_with_no_sec
     
     student_progress_dict = await crud_teacher.calculate_student_progresses(db, courses_with_students)
     
-    assert student_progress_dict[student.student_id] == '0.00'  
+    assert student_progress_dict[(student.student_id, course.course_id)] == '0.00'
 
    
 @pytest.mark.asyncio
@@ -297,8 +297,8 @@ async def test_generate_reports_returns_reports_filtered_by_min_progress(db: Ses
     await dummies.dummy_view_section(db, student2.student_id, section_1.section_id)
      
     student_progress_dict = {
-        student1.student_id: '100.00',
-        student2.student_id: '50.00'
+        (student1.student_id, course.course_id): '100.00',
+        (student2.student_id, course.course_id): '50.00'
     }
     
     reports = crud_teacher.generate_reports([course], student_progress_dict, min_progress=60.0)

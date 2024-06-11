@@ -52,6 +52,8 @@ async def get_my_courses(student: Student) -> list[CourseInfo]:
 
     my_courses_pydantic: list[CourseInfo] = []
     for c in my_courses:
+        if c.is_hidden:
+            continue
         tags = [str(t) for t in c.tags]
         my_courses_pydantic.append(CourseInfo.from_query(
             *(c.title, c.description, c.is_premium, tags)))
@@ -148,10 +150,11 @@ async def update_add_student_rating(db: Session, student: Student, course_id: in
 
 async def get_course_information(db: Session, course_id: int, student: Student) -> StudentCourseSchema:
     course: Course = await crud_course.get_course_common_info(db=db, course_id=course_id)
-    student_rating = await get_student_rating(db=db, student_id=student.student_id, course_id=course_id)
-    student_progress = await get_student_progress(db=db, student_id=student.student_id, course_id=course_id)
 
     if course:
+        student_rating = await get_student_rating(db=db, student_id=student.student_id, course_id=course_id)
+        student_progress = await get_student_progress(db=db, student_id=student.student_id, course_id=course_id)
+
         return StudentCourseSchema(
             course_id=course.course_id,
             title=course.title,

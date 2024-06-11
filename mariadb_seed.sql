@@ -73,3 +73,7 @@ VALUES (1,1),(1,2),(2,5),(3,3),(3,4);
 -- enroll 2 students to course 1
 INSERT INTO `poodle`.`students_courses` (`student_id`, `course_id`,`status`) VALUES ('4', '1', '2');
 INSERT INTO `poodle`.`students_courses` (`student_id`, `course_id`,`status`) VALUES ('5', '1', '2');
+
+-- rating seed
+INSERT INTO `poodle`.`students_ratings` (`student_id`, `course_id`,`rating`) VALUES ('5', '1', 6);
+UPDATE `poodle`.`courses` SET `rating` = 6, people_rated = 1 WHERE `course_id` = 1;

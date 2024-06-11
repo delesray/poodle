@@ -1,16 +1,14 @@
 from fastapi import APIRouter, HTTPException, Body, status
-from db.models import Course, Student
-from crud import crud_user 
-from crud import crud_teacher, crud_student
-from crud.crud_course import get_course_by_id
-from crud.crud_course import course_exists, get_course_common_info, hide_course
-from crud.crud_section import create_sections, get_section_by_id, update_section_info, delete_section, validate_section
-from crud.crud_tag import create_tags, delete_tag_from_course, course_has_tag, check_tag_associations, delete_tag
+from db.models import Course, Student 
+from crud import crud_user, crud_teacher, crud_student
+from crud import crud_course, crud_section, crud_tag
 from schemas.teacher import TeacherEdit, TeacherCreate, TeacherSchema, TeacherApproveRequest
 from schemas.course import CourseCreate, CourseUpdate, CourseSectionsTags, CourseBase, CoursePendingRequests
 from schemas.section import SectionBase, SectionUpdate
 from schemas.tag import TagBase
 from core.oauth import TeacherAuthDep
+from schemas.user import UserChangePassword
+from api.api_v1.routes import utils
 from typing import List, Dict
 from typing import Union
 from fastapi import UploadFile
@@ -118,6 +116,28 @@ async def update_account(
     return await crud_teacher.get_info(edited_teacher_account, teacher.account.email)
 
 
+@router.patch('/', status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(db: dbDep, teacher: TeacherAuthDep,
+                          pass_update: UserChangePassword) -> None:
+    """
+    Changes authenticated teacher's password.
+
+    **Parameters:**
+    - `db` (Session): The SQLAlchemy db session.
+    - `teacher` (TeacherAuthDep): The authentication dependency for users with role Teacher.
+    - `pass_update` (UserChangePassword): The form for changing teacher's password.
+
+    **Raises**:
+    - `HTTPException 401`, if the teacher is not authenticated.
+    - `HTTPException 401`, if old password does not match.
+    - `HTTPException 400`, if new password is the same as the old one.
+    - `HTTPException 400`, if new password confirmation does not match.
+    """
+    await utils.change_pass_raise(account=teacher.account, pass_update=pass_update)
+
+    await crud_user.change_password(db=db, pass_update=pass_update, account=teacher.account)
+
+
 @router.post("/courses", status_code=status.HTTP_201_CREATED, response_model=CourseSectionsTags)
 async def create_course(
         db: dbDep,
@@ -139,7 +159,7 @@ async def create_course(
     - `HTTPException 401`: If the teacher is not authenticated.
 
     """
-    if await course_exists(db, course.title):
+    if await crud_course.course_exists(db, course.title):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Course with such title already exists",
@@ -171,7 +191,7 @@ async def update_course_home_page_picture(
     - `HTTPException 403`: If the teacher does not have access to the course.
     - `HTTPException 400`: If the file is corrupted or the media type is not supported.
     """
-    course = await get_course_common_info(db, course_id)
+    course = await crud_course.get_course_common_info(db, course_id)
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
@@ -259,7 +279,7 @@ async def view_course_by_id(
             detail=f"Invalid sort_by parameter"
         )
 
-    course = await get_course_common_info(db, course_id)
+    course = await crud_course.get_course_common_info(db, course_id)
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
@@ -293,9 +313,9 @@ async def approve_enrollment(db: dbDep,
     - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 404`, if the student or the course is not found.
     - `HTTPException 403`, if the teacher is not the owner of the course.
+    - `HTTPException 400`, if the course is not in the teacher's pending requests list.
     """
-
-    course: Course = await get_course_by_id(db, course_id)
+    course: Course = await crud_course.get_course_by_id(db, course_id)
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
 
@@ -305,6 +325,10 @@ async def approve_enrollment(db: dbDep,
     student: Student = await crud_student.get_by_email(db, student)
     if not student:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No student with such email')
+    
+    pending_requests = await crud_teacher.view_pending_requests(db, teacher)
+    if not any(req.course == course.title and req.requested_by == student.account.email for req in pending_requests):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Course is not in pending requests list")
 
     return await crud_teacher.student_enroll_response(db, student, teacher, course, response.value)
 
@@ -331,7 +355,7 @@ async def update_course_info(
     - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 403`: If the authenticated teacher does not have permission to update the course.
     """
-    course = await get_course_common_info(db, course_id)
+    course = await crud_course.get_course_common_info(db, course_id)
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
@@ -367,7 +391,7 @@ async def update_section(
     - `HTTPException 403`: If the authenticated teacher does not have permission to update the section.
     - `HTTPException 404`: If the section with the given ID does not exist or is not part of the specified course.
     """
-    course = await get_course_common_info(db, course_id)
+    course = await crud_course.get_course_common_info(db, course_id)
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
@@ -375,15 +399,15 @@ async def update_section(
             detail=msg
         )
 
-    section = await get_section_by_id(db, section_id)
-    valid_section, msg = validate_section(section, course_id)
+    section = await crud_section.get_section_by_id(db, section_id)
+    valid_section, msg = crud_section.validate_section(section, course_id)
     if not valid_section:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=msg
         )
 
-    return await update_section_info(db, section, updates)
+    return await crud_section.update_section_info(db, section, updates)
 
 
 @router.post("/courses/{course_id}/sections", status_code=status.HTTP_201_CREATED, response_model=List[SectionBase])
@@ -408,7 +432,7 @@ async def add_sections(
     - `HTTPException 401`, if the teacher is not authenticated.
     - `HTTPException 403`: If the teacher does not have permission to add sections to the course.
     """
-    course = await get_course_common_info(db, course_id)
+    course = await crud_course.get_course_common_info(db, course_id)
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
@@ -416,7 +440,7 @@ async def add_sections(
             detail=msg
         )
 
-    created_sections = await create_sections(db, sections, course_id)
+    created_sections = await crud_section.create_sections(db, sections, course_id)
     return created_sections
 
 
@@ -443,7 +467,7 @@ async def remove_section(
     - `HTTPException 403`: If the teacher does not have access to the course.
     - `HTTPException 404`: If the section is not found or does not belong to the specified course.
     """
-    course = await get_course_common_info(db, course_id)
+    course = await crud_course.get_course_common_info(db, course_id)
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
@@ -451,15 +475,15 @@ async def remove_section(
             detail=msg
         )
 
-    section = await get_section_by_id(db, section_id)
-    valid_section, msg = validate_section(section, course_id)
+    section = await crud_section.get_section_by_id(db, section_id)
+    valid_section, msg = crud_section.validate_section(section, course_id)
     if not valid_section:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=msg
         )
 
-    await delete_section(db, section)
+    await crud_section.delete_section(db, section)
     return
 
 
@@ -488,7 +512,7 @@ async def add_tags(
     - `HTTPException 401`: If the teacher is not authenticated.
     - `HTTPException 403`: If the teacher does not have permission to add tags to the course.
     """
-    course = await get_course_common_info(db, course_id)
+    course = await crud_course.get_course_common_info(db, course_id)
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
@@ -496,7 +520,7 @@ async def add_tags(
             detail=msg
         )
 
-    created_tags = await create_tags(db, tags, course_id)
+    created_tags = await crud_tag.create_tags(db, tags, course_id)
     return created_tags
 
 
@@ -523,7 +547,7 @@ async def remove_tag(
     - `HTTPException 403`: If the teacher does not have access to the course.
     - `HTTPException 404`: If the tag is not associated with the course.
     """
-    course = await get_course_common_info(db, course_id)
+    course = await crud_course.get_course_common_info(db, course_id)
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
@@ -531,18 +555,18 @@ async def remove_tag(
             detail=msg
         )
 
-    course_tag = await course_has_tag(db, course_id, tag_id)
+    course_tag = await crud_tag.course_has_tag(db, course_id, tag_id)
     if not course_tag:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Tag with ID:{tag_id} not associated with course ID:{course_id}"
         )
 
-    await delete_tag_from_course(db, course_tag)
+    await crud_tag.delete_tag_from_course(db, course_tag)
 
-    tag_associations = await check_tag_associations(db, tag_id)
+    tag_associations = await crud_tag.check_tag_associations(db, tag_id)
     if tag_associations == 0:
-        await delete_tag(db, tag_id)
+        await crud_tag.delete_tag(db, tag_id)
 
     return
 
@@ -564,7 +588,7 @@ async def deactivate_course(db: dbDep, course_id: int, teacher: TeacherAuthDep):
     - `HTTPException 403`: If the teacher does not have access to the course.
     - `HTTPException 400`: If there are students enrolled in the course.
     """
-    course = await get_course_common_info(db, course_id)
+    course = await crud_course.get_course_common_info(db, course_id)
     user_has_access, msg = crud_teacher.validate_course_access(course, teacher)
     if not user_has_access:
         raise HTTPException(
@@ -577,7 +601,7 @@ async def deactivate_course(db: dbDep, course_id: int, teacher: TeacherAuthDep):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot deactivate a course with enrolled students"
         )
-    await hide_course(db, course)
+    await crud_course.hide_course(db, course)
     return
 
 

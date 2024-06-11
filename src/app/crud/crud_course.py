@@ -6,7 +6,7 @@ from typing import List
 
 
 async def get_course_by_id(db: Session, course_id: int, auto_error=False) -> Course | None:
-    query = db.query(Course).filter(Course.course_id == course_id).first()
+    query = db.query(Course).filter(Course.course_id == course_id, Course.is_hidden == False).first()
 
     if query:
         return query
@@ -54,6 +54,7 @@ async def get_all_courses(
     courses_list: List[CourseInfo] = []
 
     for course in courses:
+        # todo refactor n+1 with group concat
         tags = await get_course_tags(course)
         response_model = CourseInfo.from_query(
             *(course.title, course.description, course.is_premium, tags))

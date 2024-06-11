@@ -62,7 +62,7 @@ async def update_profile_picture(db: dbDep, student: StudentAuthDep, file: Uploa
         status_code=status.HTTP_400_BAD_REQUEST, detail='File is corrupted or media type is not supported')
 
 
-@router.get('/', response_model=StudentResponseModel)
+@router.get('/', response_model=StudentResponseModel | None)
 async def view_account(db: dbDep, student: StudentAuthDep) -> StudentResponseModel:
     """
     Shows authenticated student's profile information.
@@ -78,7 +78,7 @@ async def view_account(db: dbDep, student: StudentAuthDep) -> StudentResponseMod
     return await crud_student.get_student(db=db, email=student.account.email)
 
 
-@router.put('/', status_code=status.HTTP_201_CREATED, response_model=StudentResponseModel)
+@router.put('/', status_code=status.HTTP_201_CREATED, response_model=StudentResponseModel | None)
 async def edit_account(db: dbDep, student: StudentAuthDep, updates: StudentEdit) -> StudentResponseModel:
     """
     Edits authenticated student's profile information.
@@ -151,7 +151,7 @@ async def view_pending_courses(db: dbDep, student: StudentAuthDep) -> list[Cours
     return await crud_student.view_pending_requests(db, student)
 
 
-@router.get('/courses/{course_id}', response_model=StudentCourseSchema)
+@router.get('/courses/{course_id}', response_model=StudentCourseSchema | None)
 async def view_course(db: dbDep, student: StudentAuthDep, course_id: int) -> StudentCourseSchema:
     """
     Returns authenticated student's chosen course with details.
