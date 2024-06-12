@@ -307,12 +307,9 @@ async def rate_course(db: dbDep, student: StudentAuthDep, course_id: int,
     - HTTPException 409, if the student is not enrolled in the course.
     """
 
-    course: Course = await crud_course.get_course_by_id(db=db, course_id=course_id, auto_error=True)
+    course: Course = await crud_course.get_course_by_id_or_raise_404(db=db, course_id=course_id)
 
-    if not course:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No such course')
-
-    if not await crud_student.is_student_enrolled(student=student, course_id=course_id):
+    if not await crud_student.is_student_enrolled(student=student, course_id=course.course_id):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail='You have to enroll in this course to rate it')
 
