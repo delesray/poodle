@@ -3,7 +3,7 @@
 Python back-end web application, powered by FastAPI. Designed to implement an e-learning platform where teachers can
 easily create courses, and students can enroll in courses based on their subscription tier.
 ![poodle_intro_img.png](poodle_intro_img.png)
-
+---
 ## Table of contents
 
 * [Technologies](#technologies-used)
@@ -13,7 +13,7 @@ easily create courses, and students can enroll in courses based on their subscri
 * [Structure](#project-structure)
 * [Database](#database)
 
-
+---
 ## Technologies Used
 
 **Framework:** FastAPI
@@ -34,6 +34,7 @@ easily create courses, and students can enroll in courses based on their subscri
 
 **Email Notification:** [Mailjet API](https://dev.mailjet.com/)
 
+---
 ## Installation and setup
 
 ### 1. Clone the project using HTTPS
@@ -67,10 +68,12 @@ python main.py
 
 Available when you run the server (step 3).
 
+---
 ## Docker Setup: [Link](https://github.com/delesray/poodle/tree/docker-production?tab=readme-ov-file)
 
 ### Setup available at the docker-prod branch documentation
 
+---
 ## Testing
 
 ### To run the tests, navigate to `src/app` and execute the following command
@@ -79,6 +82,7 @@ Available when you run the server (step 3).
 python -m pytest tests
 ```
 
+---
 ## Features
 
 - **Public endpoints** - accessible without authentication
@@ -86,6 +90,7 @@ python -m pytest tests
     * Register teacher
     * Login - available through the *Authorize* button on Swagger
     * Get all courses - displays basic information about available courses
+
 
 - **Authentication Endpoints** (marked with a lock on Swagger) - require login with username and password
 
@@ -101,7 +106,7 @@ python -m pytest tests
         * Subscribe to course
         * Unsubscribe from course
         * Rate course
-
+  
     - **Features, related to teachers:**
         * View account
         * Update account
@@ -128,7 +133,8 @@ python -m pytest tests
         * Hide course
         * Make student account premium
         * Remove student from course
-
+    
+---
 ## Project Structure
 
 ```
@@ -146,6 +152,7 @@ README.md                    - project description
 requirements.txt             - project requirements
 ```
 
+---
 ## Database
 
 ![Database Schema](db_schema.png)
