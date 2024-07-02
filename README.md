@@ -7,7 +7,7 @@ easily create courses, and students can enroll in courses based on their subscri
 ## Table of contents
 
 * [Technologies](#technologies-used)
-* [Setup](#installion-and-setup)
+* [Setup](#installation-and-setup)
 * [Setup with Docker](#docker-setup-link)
 * [Features](#features)
 * [Structure](#project-structure)
@@ -34,7 +34,7 @@ easily create courses, and students can enroll in courses based on their subscri
 
 **Email Notification:** [Mailjet API](https://dev.mailjet.com/)
 
-## Installion and setup
+## Installation and setup
 
 ### 1. Clone the project using HTTPS
 
@@ -50,7 +50,7 @@ git clone git@github.com:delesray/poodle.git
 
 ### 2. Install the packages listed in the **requirements.txt** file, located in `poodle` directory
 
-(Optional) **Inctructions on creating and activating a virtual environment:
+(Optional) **Instructions on creating and activating a virtual environment:
 ** [Link](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
 
 ```
