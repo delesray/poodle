@@ -2,8 +2,11 @@
 
 Python back-end web application, powered by FastAPI. Designed to implement an e-learning platform where teachers can
 easily create courses, and students can enroll in courses based on their subscription tier.
+
 ![poodle_intro_img.png](poodle_intro_img.png)
+
 ---
+
 ## Table of contents
 
 * [Technologies](#technologies-used)
@@ -14,6 +17,7 @@ easily create courses, and students can enroll in courses based on their subscri
 * [Database](#database)
 
 ---
+
 ## Technologies Used
 
 **Framework:** FastAPI
@@ -35,6 +39,7 @@ easily create courses, and students can enroll in courses based on their subscri
 **Email Notification:** [Mailjet API](https://dev.mailjet.com/)
 
 ---
+
 ## Installation and setup
 
 ### 1. Clone the project using HTTPS
@@ -43,7 +48,7 @@ easily create courses, and students can enroll in courses based on their subscri
 git clone https://github.com/delesray/poodle.git
 ```
 
-### or SSH
+or SSH
 
 ```
 git clone git@github.com:delesray/poodle.git
@@ -51,8 +56,7 @@ git clone git@github.com:delesray/poodle.git
 
 ### 2. Install the packages listed in the **requirements.txt** file, located in `poodle` directory
 
-(Optional) **Instructions on creating and activating a virtual environment:
-** [Link](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
+(Optional) **Instructions on creating and activating a virtual environment:** [Link](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
 
 ```
 pip install -r requirements.txt
@@ -69,20 +73,23 @@ python main.py
 Available when you run the server (step 3).
 
 ---
+
 ## Docker Setup: [Link](https://github.com/delesray/poodle/tree/docker-production?tab=readme-ov-file)
 
-### Setup available at the docker-prod branch documentation
+Setup available at the docker-prod branch documentation.
 
 ---
+
 ## Testing
 
-### To run the tests, navigate to `src/app` and execute the following command
+To run the tests, navigate to `src/app` and execute the following command:
 
 ```
 python -m pytest tests
 ```
 
 ---
+
 ## Features
 
 - **Public endpoints** - accessible without authentication
@@ -133,8 +140,9 @@ python -m pytest tests
         * Hide course
         * Make student account premium
         * Remove student from course
-    
+
 ---
+
 ## Project Structure
 
 ```
@@ -153,6 +161,7 @@ requirements.txt             - project requirements
 ```
 
 ---
+
 ## Database
 
 ![Database Schema](db_schema.png)
