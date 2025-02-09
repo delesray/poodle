@@ -14,7 +14,7 @@ cd poodle
 
 Build and run the containers:
 ```bash
-docker-compose -f docker-compose.yml up --build
+docker compose -f docker-compose.yml up --build
 ```
 
 Open a browser and access:
