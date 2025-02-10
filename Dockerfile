@@ -10,4 +10,5 @@ COPY src/app /app/
 
 EXPOSE 80
 
+# command runs when container starts
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]

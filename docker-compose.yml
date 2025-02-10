@@ -1,5 +1,9 @@
 version: '3.8'
-# docker-compose -f docker-compose.yml up --build
+# initial run:
+# docker compose -f docker-compose.yml up --build
+# visit: http://localhost:8007/docs
+# run the public endpoint 1 time so that the tables are defined
+# seed db: docker exec -i mariadb_1 mysql -u user -ppassword poodle < mariadb_seed.sql
 
 services:
   db:
