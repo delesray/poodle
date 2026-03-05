@@ -14,8 +14,9 @@ Base = declarative_base()
 def get_engine_and_session() -> tuple:
     DB_USER = os.getenv('DB_USER')
     DB_PASS = os.getenv('DB_PASS')
+    DB_NAME = os.getenv('DB_NAME')
     SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{
-        DB_PASS}@localhost/poodle?charset=utf8mb4"
+        DB_PASS}@localhost/{DB_NAME}?charset=utf8mb4"
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     return engine, SessionLocal

@@ -42,46 +42,53 @@ easily create courses, and students can enroll in courses based on their subscri
 
 ## Installation and setup
 
-### 1. Clone the project using HTTPS
-
+### Clone the project using HTTPS
 ```
 git clone https://github.com/delesray/poodle.git
 ```
-
 or SSH
-
 ```
 git clone git@github.com:delesray/poodle.git
 ```
 
-### 2. Install the packages listed in the **requirements.txt** file, located in `poodle` directory
-
-(Optional) **Instructions on creating and activating a virtual environment:** [Link](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
-
+### Navigate to poodle folder
 ```
-pip install -r requirements.txt
+cd poodle
 ```
 
-### 3. Navigate to `src/app` directory and run the following command to start the application
-
+### Create virtual environment:
 ```
-python main.py
+uv venv --python 3.12
 ```
 
-### 4. Swagger docs: [Link](http://127.0.0.1:8000/docs)
+### Install the packages listed in the **requirements.txt** file, located in `poodle` directory
+```
+uv pip install -r requirements.txt
+```
 
-Available when you run the server (step 3).
+### Setup an instance of MariaDB f.e. through Docker container and name it poodle_db:
+```
+docker run --name poodle_db -e MYSQL_ROOT_PASSWORD=example_password -e MYSQL_DATABASE=poodle_db -e MYSQL_USER=example_user -e MYSQL_PASSWORD=example_password -p 3306:3306 -d mariadb:latest
+```
+
+### Create file .env and paste the content in file .env.example. Then configure it with the db credentials
+
+### Run the following command to start the application
+```
+python src/app/main.py
+```
+
+### Swagger docs: [Link](http://127.0.0.1:8000/docs)
+Available when you run the application.
 
 ---
 
 ## Docker Setup: [Link](https://github.com/delesray/poodle/tree/docker-production?tab=readme-ov-file)
-
 Setup available at the docker-prod branch documentation.
 
 ---
 
 ## Testing
-
 To run the tests, navigate to `src/app` and execute the following command:
 
 ```
