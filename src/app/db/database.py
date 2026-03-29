@@ -24,7 +24,7 @@ def get_engine_and_session() -> tuple:
 
 def get_db() -> Generator:
     engine, SessionLocal = get_engine_and_session()
-    Base.metadata.create_all(bind=engine)
+    # Base.metadata.create_all(bind=engine) # pointless bcs it asks Do these tables exist? each time db created
     db = SessionLocal()
     try:
         yield db
@@ -32,7 +32,7 @@ def get_db() -> Generator:
         db.close()
 
 
-def create_db():
+def create_db_if_missing():
     engine, _ = get_engine_and_session()
     if not database_exists(engine.url):
         create_database(engine.url)
